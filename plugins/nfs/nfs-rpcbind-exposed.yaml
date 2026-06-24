@@ -1,0 +1,17 @@
+id: nfs-rpcbind-exposed
+title: rpcbind/portmapper reachable from NFS host
+severity: low
+source: nfs
+when: rpcbind_open == true
+evidence: '{{ .host }}:{{ .port }} rpcbind on 111/tcp responded to RPC NULL; portmap is reachable for service discovery'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1833
+remediation: |
+  rpcbind on 111/tcp is the service directory for every SunRPC daemon
+  on this host (NFS, NLM, mountd, status, etc.). An unfiltered
+  rpcbind lets remote callers enumerate which RPC services are running
+  and on which ports, which is the first step in NFS reconnaissance.
+  If the host does not need to publish RPC services to the network,
+  stop rpcbind. Otherwise scope it to a trusted subnet via host
+  firewall and run rpcbind with -w -h <bind-iface>.
+tags: [nfs, rpc, info-disclosure]

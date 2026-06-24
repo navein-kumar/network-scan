@@ -1,0 +1,17 @@
+id: mongodb-no-auth
+title: MongoDB isMaster succeeds without authentication
+severity: critical
+source: mongodb
+when: reachable == true and auth_required == false and version != ""
+evidence: '{{ .host }}:{{ .port }} isMaster returned ok=1 with no auth challenge; version = {{ .version }}, maxWireVersion = {{ .max_wire_version }}'
+references:
+  - https://www.mongodb.com/docs/manual/core/security-built-in-roles/
+  - https://attack.mitre.org/techniques/T1078/001/
+remediation: |
+  An unauthenticated MongoDB lets any TCP-reachable client read,
+  modify, and delete every database (see the 2017 mass-ransomware
+  campaign against open MongoDB instances). Set security.authorization:
+  enabled in mongod.conf, create an admin user via use admin; db.createUser
+  before restarting, bind net.bindIp to the application VLAN, and
+  enable mongodb.net.tls.mode = requireTLS.
+tags: [mongodb, no-auth, critical, default-creds]

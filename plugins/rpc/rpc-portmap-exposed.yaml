@@ -1,0 +1,16 @@
+id: rpc-portmap-exposed
+title: SunRPC portmapper exposes program listing
+severity: info
+source: rpc
+when: len(programs) > 0
+evidence: '{{ .host }}:{{ .port }} portmap DUMP returned {{ len .programs }} programs: {{ range .programs }}{{ .name }}/v{{ .version }}/{{ .protocol }}:{{ .port }} {{ end }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1833
+  - https://nvd.nist.gov/vuln/detail/CVE-2018-1273
+remediation: |
+  rpcbind / portmap is the discovery oracle for every SunRPC service on
+  the host (NFS, NIS, NLM, etc.). If the box does not need to publish
+  RPC services to the network, stop rpcbind. Otherwise, restrict TCP/111
+  and UDP/111 to the management subnet via host firewall, and run
+  rpcbind with -w -h <bind-iface> to scope the listener.
+tags: [rpc, info-disclosure]

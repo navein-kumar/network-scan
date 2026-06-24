@@ -1,0 +1,18 @@
+id: finger-user-enum
+title: finger service enumerates local user accounts
+severity: medium
+source: finger
+when: users != nil and len(users) > 0
+evidence: '{{ .host }}:{{ .port }} finger query returned {{ len .users }} account/line(s): {{ range .users }}{{ . }} | {{ end }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1288
+  - https://book.hacktricks.xyz/network-services-pentesting/pentesting-finger
+remediation: |
+  finger leaks valid usernames, login times, home directories, and idle
+  state to any unauthenticated client, which feeds password-spray and
+  social-engineering attacks. There is no safe configuration for an
+  internet-facing finger service. Disable fingerd (systemctl disable
+  --now fingerd, or remove the finger line from /etc/inetd.conf /
+  xinetd) and block TCP/79 at the firewall. If a directory lookup is
+  genuinely required, replace it with an authenticated LDAP query.
+tags: [finger, user-enumeration, info-disclosure]

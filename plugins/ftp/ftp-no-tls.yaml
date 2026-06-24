@@ -1,0 +1,16 @@
+id: ftp-no-tls
+title: FTP server does not offer AUTH TLS
+severity: medium
+source: ftp
+when: auth_tls_offered == false
+evidence: '{{ .host }}:{{ .port }} FEAT response omits AUTH TLS/SSL; control and data channels are forced to cleartext'
+references:
+  - https://www.rfc-editor.org/rfc/rfc4217
+remediation: |
+  Migrate the listener to FTPS (FTP-over-TLS via AUTH TLS) or
+  replace FTP with SFTP entirely. vsftpd: ssl_enable=YES,
+  force_local_data_ssl=YES, force_local_logins_ssl=YES. Cleartext
+  FTP transmits the password and every file in plaintext, with
+  zero protection against MITM credential capture or content
+  modification.
+tags: [ftp, tls, mitm]

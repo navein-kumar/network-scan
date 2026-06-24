@@ -1,0 +1,15 @@
+id: os-heuristic-fingerprint
+title: OS family inferred from service banners
+severity: info
+source: os_heuristic
+when: os_family != nil and os_family != ""
+evidence: '{{ .host }} OS family {{ .os_family }} ({{ .os_guess }}) inferred at {{ .confidence }}% confidence from signals: {{ .signals }}'
+references:
+  - https://nmap.org/book/osdetect.html
+remediation: |
+  This is an informational fingerprint derived from the application
+  banners we already collected (SSH, SMB, HTTP, FTP). It does not
+  imply a vulnerability on its own. Where the OS family or release
+  drives a compliance or EOL finding (Windows 2008, kernel 3.x,
+  etc.) the matching plugin in plugins/os/ will fire separately.
+tags: [os, heuristic, recon]

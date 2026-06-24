@@ -1,0 +1,16 @@
+id: tftp-anonymous-read
+title: TFTP server serves files without authentication
+severity: high
+source: tftp
+when: accepts_requests == true
+evidence: '{{ .host }}:{{ .port }} TFTP returned DATA to anonymous RRQ'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc1350
+remediation: |
+  The TFTP server returned a DATA opcode to an anonymous RRQ. Any file
+  that lives under the TFTP root can be downloaded by anyone on the
+  network, which typically includes router configs and firmware. Lock
+  the listener down to the management subnet, scrub credentials from
+  any file under the TFTP root, and move secret material to an
+  authenticated channel.
+tags: [tftp, anonymous-read]

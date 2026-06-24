@@ -1,0 +1,17 @@
+id: weblogic-exposed
+title: Oracle WebLogic T3 listener reachable
+severity: medium
+source: weblogic
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} WebLogic T3 HELO {{ .weblogic_version }}'
+references:
+  - https://docs.oracle.com/cd/E12839_01/web.1111/e13710/architectural.htm
+  - https://nvd.nist.gov/vuln/detail/CVE-2020-2883
+remediation: |
+  The WebLogic T3 protocol carries Java serialised objects and has
+  hosted a long line of pre-auth deserialisation RCEs
+  (CVE-2020-2883, CVE-2021-2109, CVE-2023-21931, etc.). Restrict the
+  T3 listener via WebLogic's "Connection Filter" feature to the
+  management subnet, disable IIOP, and front the application
+  channels with an HTTP-only proxy where feasible.
+tags: [weblogic, t3, exposure]

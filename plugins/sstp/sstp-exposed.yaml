@@ -1,0 +1,16 @@
+id: sstp-exposed
+title: Microsoft SSTP VPN endpoint reachable
+severity: medium
+source: sstp
+when: sstp_responding == true
+evidence: '{{ .host }}:{{ .port }} SSTP duplex POST accepted (server={{ .server_header }})'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-sstp/
+  - https://learn.microsoft.com/en-us/windows-server/remote/remote-access/sstp
+remediation: |
+  SSTP is a Microsoft VPN tunnel over HTTPS (port 443 by default).
+  Restrict the listener to corporate clients via NPS / RADIUS policy,
+  enforce strong device certificate auth, and keep the RRAS server
+  patched against TLS-layer flaws. If SSTP is not in use, disable the
+  RRAS SSTP listener.
+tags: [sstp, vpn, microsoft]

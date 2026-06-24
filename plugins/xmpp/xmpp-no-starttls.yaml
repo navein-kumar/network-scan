@@ -1,0 +1,15 @@
+id: xmpp-no-starttls
+title: XMPP server does not advertise STARTTLS
+severity: medium
+source: xmpp
+when: reachable == true and starttls_offered == false
+evidence: '{{ .host }}:{{ .port }} XMPP stream:features omits <starttls/>'
+references:
+  - https://xmpp.org/rfcs/rfc6120.html#tls
+remediation: |
+  XMPP without STARTTLS means the SASL handshake (and all subsequent
+  XML stanzas) cross the wire in cleartext. Enable mandatory TLS
+  (`c2s_require_encryption: true` / `s2s_require_encryption: true` on
+  Prosody, `mod_starttls` enforced on ejabberd / Openfire), and
+  publish DNS SRV pointing at the TLS-required listener.
+tags: [xmpp, cleartext]

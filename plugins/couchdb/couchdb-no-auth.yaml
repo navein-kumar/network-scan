@@ -1,0 +1,15 @@
+id: couchdb-no-auth
+title: CouchDB serves /_all_dbs without authentication
+severity: critical
+source: couchdb
+when: all_dbs != nil and len(all_dbs) > 0
+evidence: '{{ .host }}:{{ .port }} CouchDB {{ .version }} returned {{ len .all_dbs }} databases anonymously'
+references:
+  - https://docs.couchdb.org/en/stable/intro/security.html
+remediation: |
+  CouchDB without authentication exposes every database and document
+  for anonymous read and write, which is a complete data-store
+  compromise. Create an admin in /_config/admins (or the equivalent
+  in the local.ini file), set require_valid_user = true, and bind
+  the listener to the application subnet instead of 0.0.0.0.
+tags: [couchdb, no-auth, database]

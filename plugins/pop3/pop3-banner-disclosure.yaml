@@ -1,0 +1,14 @@
+id: pop3-banner-disclosure
+title: POP3 banner discloses MTA product
+severity: info
+source: pop3
+when: banner matches "(?i)(Dovecot|Courier|Cyrus|Exchange)"
+evidence: '{{ .host }}:{{ .port }} +OK banner advertises product/version: {{ .banner }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1939#section-3
+remediation: |
+  Strip the product / version from the +OK greeting. Dovecot:
+  login_greeting = "POP3 ready". Courier: pop3-login banner. Strip the
+  build string from the Cyrus / Exchange greeting so an attacker has
+  to actively fingerprint to pick a CVE-specific exploit.
+tags: [pop3, info-disclosure]

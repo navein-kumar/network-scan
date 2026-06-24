@@ -1,0 +1,15 @@
+id: mysql-version-disclosure
+title: MySQL server version disclosed in handshake
+severity: info
+source: mysql
+when: server_version != ""
+evidence: '{{ .host }}:{{ .port }} announces server version {{ .server_version }} in its initial Handshake V10 packet'
+references:
+  - https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_v10.html
+remediation: |
+  The server version is part of the MySQL handshake and cannot be
+  removed without patching the daemon. Network segmentation and
+  firewalling the database port to application hosts is the practical
+  mitigation. Version disclosure assists attackers in selecting
+  CVE-specific exploits.
+tags: [mysql, info-disclosure, recon]

@@ -1,0 +1,18 @@
+id: postgresql-trust-auth
+title: PostgreSQL accepts the postgres role with trust authentication
+severity: critical
+source: postgresql
+when: auth_method == "trust"
+evidence: '{{ .host }}:{{ .port }} replied AuthenticationOk (type=0) to a postgres/postgres StartupMessage; any network client gets the database role with no password'
+references:
+  - https://www.postgresql.org/docs/current/auth-trust.html
+  - https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+remediation: |
+  Remove every "trust" entry from pg_hba.conf that covers a network
+  range. Trust auth grants the role unconditionally as soon as the
+  client connects. Replace with "scram-sha-256" (PG14+) or "md5"
+  (older) and restart the cluster:
+    host all all 0.0.0.0/0 scram-sha-256
+  Trust is only safe on local Unix sockets restricted to a single OS
+  user.
+tags: [postgresql, no-auth, exposure, critical]

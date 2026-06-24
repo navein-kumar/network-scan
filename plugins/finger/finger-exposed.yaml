@@ -1,0 +1,15 @@
+id: finger-exposed
+title: finger service reachable on the network
+severity: info
+source: finger
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} responded to a finger query on TCP/79'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1288
+remediation: |
+  The finger protocol (TCP/79) is an obsolete information service that
+  predates any access control and discloses user and host detail to
+  anonymous callers. Decommission it: disable fingerd and block port 79
+  at the host and perimeter firewalls. No modern environment needs a
+  network-reachable finger daemon.
+tags: [finger, exposure]

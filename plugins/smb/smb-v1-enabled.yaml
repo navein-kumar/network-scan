@@ -1,0 +1,17 @@
+id: smb-v1-enabled
+title: SMB v1 protocol supported
+severity: high
+source: smb
+when: smbv1_enabled == true
+evidence: '{{ .host }}:{{ .port }} accepts SMB1 NEGOTIATE PROTOCOL (CIFS dialect)'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2017-0144
+  - https://learn.microsoft.com/en-us/windows-server/storage/file-server/troubleshoot/detect-enable-and-disable-smbv1-v2-v3
+remediation: |
+  Disable SMBv1 entirely. Windows: remove the "SMB 1.0/CIFS File Sharing
+  Support" feature, or via PowerShell:
+    Set-SmbServerConfiguration -EnableSMB1Protocol $false
+  Samba: in smb.conf set "min protocol = SMB2", restart smbd.
+  SMBv1 carries CVE-2017-0144 (EternalBlue) and the broader ETERNAL*
+  exploit family.
+tags: [smb, eol, eternalblue, critical-cve]

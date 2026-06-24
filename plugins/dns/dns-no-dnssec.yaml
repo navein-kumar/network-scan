@@ -1,0 +1,14 @@
+id: dns-no-dnssec
+title: DNS resolver does not return DNSSEC records
+severity: low
+source: dns
+when: recursion_allowed == true and dnssec_capable == false
+evidence: '{{ .host }}:{{ .port }} answered RD=1 queries but did not return DNSSEC RRs for "." DNSKEY with EDNS DO=1'
+references:
+  - https://www.rfc-editor.org/rfc/rfc4034
+remediation: |
+  Enable DNSSEC validation on the resolver. BIND: dnssec-validation auto;
+  in named.conf options. Unbound: auto-trust-anchor-file: "/var/lib/unbound/root.key".
+  Without DNSSEC the resolver cannot detect cache-poisoning attacks
+  that forge upstream responses.
+tags: [dns, dnssec]

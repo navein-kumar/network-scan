@@ -1,0 +1,16 @@
+id: informix-exposed
+title: IBM Informix listener reachable
+severity: medium
+source: informix
+when: reachable == true and product_match == true
+evidence: '{{ .host }}:{{ .port }} Informix SQLI banner: {{ .banner_text }}'
+references:
+  - https://www.ibm.com/docs/en/informix-servers
+  - https://www.ibm.com/support/pages/informix-product-security
+remediation: |
+  Informix database ports (1526 sqli, 9088 onstat) should be reachable
+  only from the application tier. Restrict the listener to the app
+  subnet via host firewall, enable Informix Connection Manager + SSL
+  (configured in `sqlhosts`), and ensure the `informix` and `root`
+  database accounts are not used remotely.
+tags: [informix, ibm, database]

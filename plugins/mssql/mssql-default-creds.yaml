@@ -1,0 +1,17 @@
+id: mssql-default-creds
+title: MSSQL server accepts default credentials
+severity: critical
+source: mssql
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  Disable the sa account or assign a strong password. Use Windows
+  Authentication where possible and audit SQL logins regularly. Enforce
+  account lockout policies to slow brute-force attacks.
+tags: [creds, default-credentials, critical-cve]

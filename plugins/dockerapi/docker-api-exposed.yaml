@@ -1,0 +1,18 @@
+id: docker-api-exposed
+title: Docker remote API exposed without authentication
+severity: critical
+source: dockerapi
+when: reachable == true and containers_accessible == true
+evidence: '{{ .host }}:{{ .port }} Docker {{ .version }} (API {{ .api_version }}) anonymous, {{ .container_count }} containers visible'
+references:
+  - https://docs.docker.com/engine/security/protect-access/
+  - https://blog.aquasec.com/docker-security-vulnerabilities
+remediation: |
+  An anonymous Docker daemon socket bound to a TCP port is full root
+  on the host. An attacker can launch a privileged container that
+  bind-mounts the host filesystem, then write to /etc/cron.d or read
+  any secret on disk. Stop the daemon listening on TCP entirely
+  (remove -H tcp:// from dockerd flags), or if remote management is
+  required, switch to 2376 with mutual TLS (--tlsverify, --tlscacert,
+  --tlscert, --tlskey).
+tags: [docker, container, rce]

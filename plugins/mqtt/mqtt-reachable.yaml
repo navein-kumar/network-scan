@@ -1,0 +1,16 @@
+id: mqtt-reachable
+title: MQTT broker reachable on the network
+severity: info
+source: mqtt
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} MQTT broker responded to CONNECT (CONNACK rc={{ .connack_return_code }})'
+references:
+  - https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html
+remediation: |
+  An MQTT broker that is reachable from outside the intended IoT or
+  application segment is a potential lateral-movement and data-leakage
+  target even if authentication is required. Restrict 1883/TCP to
+  device subnets, prefer 8883/TLS with mutual auth, and consider
+  reverse-proxy patterns (e.g. broker bridges) so the broker is not
+  on a routable management network.
+tags: [mqtt, exposure]

@@ -1,0 +1,14 @@
+id: ssh-dh-group1
+title: SSH key exchange offers diffie-hellman-group1-sha1 (1024-bit MODP)
+severity: low
+source: ssh
+when: '"diffie-hellman-group1-sha1" in kex_algorithms'
+evidence: '{{ .host }}:{{ .port }} kex_algorithms contains diffie-hellman-group1-sha1 (1024-bit MODP, LOGJAM-class weakness)'
+references:
+  - https://weakdh.org/
+  - https://datatracker.ietf.org/doc/html/rfc8270
+remediation: |
+  Remove diffie-hellman-group1-sha1 from /etc/ssh/sshd_config "KexAlgorithms"
+  line. Prefer curve25519-sha256 and DH groups >= 3072 bits
+  (diffie-hellman-group16-sha512, diffie-hellman-group18-sha512).
+tags: [ssh, weak-crypto, logjam]

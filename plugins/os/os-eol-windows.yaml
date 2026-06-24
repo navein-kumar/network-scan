@@ -1,0 +1,18 @@
+id: os-eol-windows
+title: Host runs an end-of-life Microsoft Windows release
+severity: critical
+source: os
+when: |
+  best.family == "Windows" and
+  (best.generation matches "(?i)^(2000|2003|2008|XP|Vista|7|8|8\\.1)( R2)?$" or
+   best.name matches "(?i)\\bWindows (Server )?(2000|2003|2008|XP|Vista|7|8|8\\.1)\\b")
+evidence: 'nmap OS match: {{ .best.name }} (accuracy {{ .best.accuracy }}%, family={{ .best.family }} gen={{ .best.generation }})'
+references:
+  - https://learn.microsoft.com/en-us/lifecycle/products/
+remediation: |
+  The host runs an unsupported Windows version no longer receiving
+  security updates. Migrate the workload to a supported release
+  (Windows Server 2019+ for servers, Windows 10/11 LTSC for endpoints)
+  or isolate the host on a segmented network with strict egress and
+  no domain join.
+tags: [os, eol, windows]

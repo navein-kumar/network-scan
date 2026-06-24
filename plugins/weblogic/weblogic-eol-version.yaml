@@ -1,0 +1,14 @@
+id: weblogic-eol-version
+title: WebLogic version is past Premier Support
+severity: high
+source: weblogic
+when: reachable == true and weblogic_version matches "(?i)^(10\\.|11\\.|12\\.[12])"
+evidence: '{{ .host }}:{{ .port }} WebLogic {{ .weblogic_version }} (out of mainline support)'
+references:
+  - https://www.oracle.com/support/lifetime-support/resources.html
+remediation: |
+  WebLogic Server 10.x, 11.x, and the 12.1 / 12.2 lines are past
+  Premier Support and accumulate unpatched deserialisation chains.
+  Plan a migration to a current version (14c+) and apply the latest
+  Oracle CPU; in the interim restrict the T3 listener and disable IIOP.
+tags: [weblogic, eol]

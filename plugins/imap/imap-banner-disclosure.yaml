@@ -1,0 +1,14 @@
+id: imap-banner-disclosure
+title: IMAP banner discloses MTA product
+severity: info
+source: imap
+when: banner matches "(?i)(Dovecot|Courier|Cyrus|Exchange)"
+evidence: '{{ .host }}:{{ .port }} * OK banner advertises product/version: {{ .banner }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc3501#section-7.1.1
+remediation: |
+  Strip the product / version from the * OK greeting. Dovecot:
+  login_greeting = "IMAP ready". Cyrus: imapd.conf admins / stripversion.
+  Exchange: remove Get-ImapSettings -ProtocolLogEnabled details from the
+  banner. Banner brevity slows down opportunistic CVE matching.
+tags: [imap, info-disclosure]

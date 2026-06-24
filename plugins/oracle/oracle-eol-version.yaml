@@ -1,0 +1,17 @@
+id: oracle-eol-version
+title: Oracle Database end-of-life release
+severity: medium
+source: oracle
+when: version != nil and version != "" and version matches "(?i)^(8|9|10|11|12)\\."
+evidence: '{{ .host }}:{{ .port }} runs Oracle Database release {{ .version }} (Oracle 11g and earlier are End of Support)'
+references:
+  - https://www.oracle.com/us/support/library/lifetime-support-technology-069183.pdf
+  - https://www.oracle.com/security-alerts/
+remediation: |
+  Oracle Database 11g and earlier (8, 9i, 10g, 11g) are out of all
+  vendor support; security patches stopped years ago. Migrate to a
+  supported release (19c LTS or 23ai) and use Data Pump or transportable
+  tablespaces for migration. Until upgraded, restrict TNS Listener
+  access to application hosts only and enable Database Vault if
+  available.
+tags: [oracle, eol]

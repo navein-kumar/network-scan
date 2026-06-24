@@ -1,0 +1,18 @@
+id: tls-sslv3-enabled
+title: SSLv3 protocol offered (deprecated, POODLE-vulnerable)
+severity: medium
+source: tlsvuln
+when: |
+  protocols != nil and any(protocols, {
+    .id matches "(?i)SSLv3" and .finding matches "(?i)offered"
+  })
+evidence: '{{ .host }}:{{ .port }} SSLv3 negotiated successfully'
+references:
+  - https://datatracker.ietf.org/doc/rfc7568/
+  - https://www.openssl.org/~bodo/ssl-poodle.pdf
+remediation: |
+  Disable SSLv3 entirely. RFC 7568 formally deprecates SSLv3 and the
+  POODLE attack (CVE-2014-3566) exploits its CBC padding oracle. Modern
+  browsers refuse SSLv3 and major OS distributions remove it from
+  default OpenSSL builds. Require TLS 1.2 minimum.
+tags: [tls, sslv3, poodle, deprecated]

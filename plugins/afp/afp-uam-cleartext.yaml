@@ -1,0 +1,15 @@
+id: afp-uam-cleartext
+title: AFP server advertises Cleartxt Passwrd UAM
+severity: high
+source: afp
+when: reachable == true and "Cleartxt Passwrd" in uams
+evidence: '{{ .host }}:{{ .port }} AFP UAMs: {{ .uams }}'
+references:
+  - https://developer.apple.com/library/archive/documentation/Networking/Conceptual/AFP/Introduction/Introduction.html
+remediation: |
+  The AFP "Cleartxt Passwrd" User Authentication Method sends user
+  passwords on the wire in plaintext. Disable the cleartext UAM in
+  the AFP server config (afp.conf: uam list = uams_dhx2.so on
+  netatalk; "Authentication" pane in macOS sharing prefs) and require
+  DHX2 or Kerberos.
+tags: [afp, cleartext, auth]

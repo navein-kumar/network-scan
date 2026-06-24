@@ -1,0 +1,18 @@
+id: kerberos-asrep-roastable
+title: Kerberos account is AS-REP roastable
+severity: high
+source: kerberos
+when: len(as_rep_roastable) > 0
+evidence: 'KDC at {{ .host }}:{{ .port }} returned an AS-REP for {{ .as_rep_roastable }} with no preauth, yielding an offline-crackable hash'
+references:
+  - https://attack.mitre.org/techniques/T1558/004/
+  - https://www.harmj0y.net/blog/activedirectory/roasting-as-reps/
+remediation: |
+  Turn preauth back on for the listed user accounts. AD: clear the
+  "Do not require Kerberos preauthentication" account-control flag
+  on the user object (Set-ADUser -DoesNotRequirePreAuth $false).
+  Heimdal/MIT KDC: ensure the principal does not have the
+  +requires_preauth disabled. The AS-REP blob can be hashcat-cracked
+  with mode 18200; until preauth is re-enabled every connected
+  attacker can extract the hash.
+tags: [kerberos, ad, asreproast, t1558-004]

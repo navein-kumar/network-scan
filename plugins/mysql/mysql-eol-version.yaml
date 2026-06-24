@@ -1,0 +1,17 @@
+id: mysql-eol-version
+title: MySQL end-of-life version
+severity: medium
+source: mysql
+when: server_version matches "^(3\\.|4\\.|5\\.[0-6])"
+evidence: '{{ .host }}:{{ .port }} runs an EOL MySQL release: {{ .server_version }}'
+references:
+  - https://endoflife.date/mysql
+  - https://www.mysql.com/support/eol-notice.html
+remediation: |
+  Upgrade MySQL to a supported branch. MySQL 5.6 reached EOL in
+  February 2021, 5.5 in December 2018, and earlier branches years
+  before that. Migrate to MySQL 8.0 (or MariaDB 10.6 / 10.11 LTS)
+  and apply current patches. EOL releases accumulate unpatched
+  privilege-escalation and auth-bypass CVEs (CVE-2021-2154,
+  CVE-2018-2696, CVE-2016-6662 etc).
+tags: [mysql, eol]

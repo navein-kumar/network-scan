@@ -1,0 +1,17 @@
+id: smtp-open-relay
+title: SMTP server accepts mail for arbitrary external recipients
+severity: high
+source: smtp
+when: open_relay == true
+evidence: '{{ .host }}:{{ .port }} accepted MAIL FROM:<probe@external.invalid> + RCPT TO:<recipient@another.invalid> with no relay restriction'
+references:
+  - https://www.rfc-editor.org/rfc/rfc5321#section-7.1
+  - https://owasp.org/www-community/vulnerabilities/SMTP_Open_Relay
+remediation: |
+  Restrict the relay to authenticated users and to your own
+  destination domains. Postfix: smtpd_recipient_restrictions =
+  permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination.
+  Exim: relay_from_hosts and relay_to_domains. An open relay will
+  be enrolled in spam campaigns within hours, blocklisting the
+  sending IP and the brand.
+tags: [smtp, open-relay, abuse]

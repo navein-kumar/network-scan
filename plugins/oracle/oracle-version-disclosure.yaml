@@ -1,0 +1,17 @@
+id: oracle-version-disclosure
+title: Oracle TNS Listener discloses database version
+severity: info
+source: oracle
+when: version != nil and version != ""
+evidence: '{{ .host }}:{{ .port }} TNS REFUSE/REDIRECT leaks version: {{ .version }}'
+references:
+  - https://www.oracle.com/security-alerts/
+  - https://nvd.nist.gov/vuln/search/results?form_type=Basic&results_type=overview&query=oracle+database
+remediation: |
+  The TNS Listener returns version and release info in its REFUSE
+  payload before any authentication. Disable verbose error reporting
+  by setting "DIAG_ADR_ENABLED_listener_name = OFF" and
+  "ADMIN_RESTRICTIONS_listener_name = ON" in listener.ora, and
+  require listener password authentication. Restrict 1521/TCP to
+  application tiers via host firewall or network ACL.
+tags: [oracle, info-disclosure]

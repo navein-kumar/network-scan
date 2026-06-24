@@ -1,0 +1,15 @@
+id: couchdb-admin-party
+title: CouchDB admin party mode (no admins configured)
+severity: critical
+source: couchdb
+when: admin_party_mode == true
+evidence: '{{ .host }}:{{ .port }} CouchDB admin-party: anonymous can list and write any database'
+references:
+  - https://docs.couchdb.org/en/stable/intro/security.html#the-admin-party
+remediation: |
+  "Admin party" means CouchDB has no admin defined, so every
+  unauthenticated request runs as admin. An attacker can create or
+  delete databases, replicate data out, and on older builds chain to
+  Erlang RCE. Define at least one admin via /_node/_local/_config/admins
+  and reload the listener.
+tags: [couchdb, no-auth, admin-party]

@@ -1,0 +1,16 @@
+id: imap-plaintext-auth
+title: IMAP server accepts plaintext LOGIN
+severity: medium
+source: imap
+when: starttls_offered == false and login_disabled == false
+evidence: '{{ .host }}:{{ .port }} CAPABILITY does not include STARTTLS and does not include LOGINDISABLED; plaintext LOGIN is accepted'
+references:
+  - https://www.rfc-editor.org/rfc/rfc3501#section-6.2.3
+  - https://www.rfc-editor.org/rfc/rfc8314
+remediation: |
+  RFC 3501 says: "A server implementation MUST implement a configuration
+  in which it advertises LOGINDISABLED, and does not permit any
+  plaintext password authentication, when an insecure connection is
+  used." Advertise STARTTLS and refuse LOGIN until the channel is
+  protected. Dovecot: disable_plaintext_auth = yes.
+tags: [imap, no-tls, plaintext-auth]

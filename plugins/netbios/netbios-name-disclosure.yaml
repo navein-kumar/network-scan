@@ -1,0 +1,16 @@
+id: netbios-name-disclosure
+title: NetBIOS name service responds with the host name table
+severity: info
+source: netbios
+when: len(names) > 0
+evidence: '{{ .host }}:{{ .port }} replied to an NBSTAT query with {{ len .names }} name(s); MAC={{ .mac }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1002.html
+  - https://nmap.org/nsedoc/scripts/nbstat.html
+remediation: |
+  Restrict UDP 137 to the LAN, or disable NetBIOS over TCP/IP on
+  hosts that have nothing depending on it (modern Windows works
+  fine over SMB-direct on 445). The name table reveals the
+  workstation name, logged-on user, domain membership, and MAC
+  address; these all assist lateral-movement targeting.
+tags: [netbios, info-disclosure, recon]

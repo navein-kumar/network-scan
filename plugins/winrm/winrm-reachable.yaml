@@ -1,0 +1,15 @@
+id: winrm-reachable
+title: Windows Remote Management endpoint reachable
+severity: info
+source: winrm
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} responded to POST /wsman (status {{ .status_code }}, server="{{ .server_header }}", auth={{ .auth_methods_offered }})'
+references:
+  - https://learn.microsoft.com/en-us/windows/win32/winrm/portal
+remediation: |
+  Informational: WinRM is the Windows remote-management surface used
+  by PowerShell Remoting, Ansible (winrm transport), and lateral
+  movement tools (evil-winrm). Confirm exposure outside the
+  management network is intentional; restrict via Windows Firewall
+  rules and Network Security Groups where it is not.
+tags: [winrm, recon, lateral-movement]

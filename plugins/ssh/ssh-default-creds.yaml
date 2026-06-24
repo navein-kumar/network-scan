@@ -1,0 +1,18 @@
+id: ssh-default-creds
+title: SSH server accepts default credentials
+severity: critical
+source: ssh
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  Change default credentials immediately. Disable password
+  authentication where possible (PasswordAuthentication no in sshd_config)
+  and enforce key-based authentication. Where passwords are unavoidable,
+  enforce a strong password policy and rotate compromised passwords.
+tags: [creds, default-credentials, critical-cve]

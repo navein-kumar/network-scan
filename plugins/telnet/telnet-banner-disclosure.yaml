@@ -1,0 +1,17 @@
+id: telnet-banner-disclosure
+title: Telnet banner discloses platform or vendor information
+severity: info
+source: telnet
+when: banner matches "(?i)(Cisco|HP|Brocade|Juniper|Linux|Windows|Ubuntu|Debian|metasploitable)"
+evidence: '{{ .host }}:{{ .port }} login banner reveals platform information: {{ .banner }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc854
+remediation: |
+  Strip the issue / login banner of OS, vendor, and version
+  fingerprints before authentication. Linux: edit /etc/issue.net
+  (telnetd reads this) and /etc/motd. Cisco IOS: remove "banner
+  motd" and "banner login" stanzas, or replace with an authorized-
+  use-only legal notice. Pre-auth banner disclosure helps attackers
+  pick an exploit chain matching the platform without further
+  probing.
+tags: [telnet, info-disclosure]

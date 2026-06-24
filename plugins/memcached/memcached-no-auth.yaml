@@ -1,0 +1,17 @@
+id: memcached-no-auth
+title: memcached TCP listener exposes stats without authentication
+severity: high
+source: memcached
+when: reachable == true and version != ""
+evidence: '{{ .host }}:{{ .port }} STAT version = {{ .version }}; memcached TCP protocol has no auth, so reachability == compromise of stored entries'
+references:
+  - https://github.com/memcached/memcached/wiki/ProtocolText
+  - https://github.com/memcached/memcached/wiki/SASLHowto
+remediation: |
+  The memcached text protocol has no authentication. Anything that can
+  TCP-connect can read and overwrite cached entries (session tokens,
+  rendered pages, rate-limit counters). Bind the listener to localhost
+  with -l 127.0.0.1, restrict TCP/11211 via host firewall, and if
+  cross-host access is required switch to the binary protocol with
+  SASL (-S) and a strong key.
+tags: [memcached, no-auth, exposure]

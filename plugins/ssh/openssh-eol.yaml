@@ -1,0 +1,14 @@
+id: openssh-eol
+title: OpenSSH end-of-life version
+severity: medium
+source: ssh
+when: banner matches "(?i)OpenSSH_([0-6]\\.|7\\.[0-3])"
+evidence: '{{ .host }}:{{ .port }} runs an EOL OpenSSH release: {{ .banner }}'
+references:
+  - https://www.openssh.com/releasenotes.html
+remediation: |
+  Upgrade OpenSSH to the current stable release (>= 9.0). Older OpenSSH
+  versions ship vulnerable defaults (CBC ciphers, ssh-dss host keys,
+  hmac-sha1) and several enumerable CVEs accumulate per minor version.
+  On Debian/Ubuntu: apt full-upgrade openssh-server.
+tags: [ssh, eol]

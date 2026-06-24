@@ -1,0 +1,16 @@
+id: telnet-cleartext
+title: Telnet service exposed (cleartext protocol)
+severity: high
+source: telnet
+when: port > 0
+evidence: '{{ .host }}:{{ .port }} is running a Telnet listener; usernames, passwords, and session data cross the wire in plaintext'
+references:
+  - https://www.rfc-editor.org/rfc/rfc854
+  - https://attack.mitre.org/techniques/T1021/
+remediation: |
+  Replace Telnet with SSH. Every modern OS ships an OpenSSH-compatible
+  server. Disable telnetd (systemctl disable inetd / disable telnet
+  service on network appliances). If the host is a legacy industrial
+  device that cannot do SSH, terminate Telnet inside a VPN or jump
+  host and never expose port 23 on the routed network.
+tags: [telnet, cleartext, mitm]

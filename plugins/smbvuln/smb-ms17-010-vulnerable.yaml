@@ -1,0 +1,16 @@
+id: smb-ms17-010-vulnerable
+title: SMB MS17-010 / EternalBlue (CVE-2017-0144)
+severity: critical
+source: smbvuln
+when: ms17010_vulnerable == true
+evidence: '{{ .host }}:{{ .port }} confirmed vulnerable to MS17-010 (nxc smb -M ms17-010)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0144
+  - https://docs.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010
+remediation: |
+  Apply Microsoft MS17-010 security update on every affected host. As an
+  interim mitigation disable SMBv1 entirely (Set-SmbServerConfiguration
+  -EnableSMB1Protocol $false on Windows; remove from /etc/samba/smb.conf
+  on Linux Samba). MS17-010 is wormable (WannaCry / NotPetya) and any
+  reachable instance is an emergency-priority finding.
+tags: [smb, ms17-010, eternalblue, cve-2017-0144, wormable]

@@ -1,0 +1,16 @@
+id: imap-no-starttls
+title: IMAP server does not offer STARTTLS
+severity: medium
+source: imap
+when: starttls_offered == false and banner != ""
+evidence: '{{ .host }}:{{ .port }} CAPABILITY does not advertise STARTTLS; mailbox credentials would transit in cleartext'
+references:
+  - https://www.rfc-editor.org/rfc/rfc3501#section-6.2.1
+  - https://www.rfc-editor.org/rfc/rfc8314
+remediation: |
+  Without STARTTLS, the IMAP LOGIN command sends the password in
+  cleartext on port 143. Enable STARTTLS on the existing listener
+  (Dovecot: ssl = yes + disable_plaintext_auth = yes), and per
+  RFC 8314 prefer the implicit-TLS IMAPS listener on 993 outright,
+  deprecating 143 for client traffic.
+tags: [imap, cleartext, no-tls]

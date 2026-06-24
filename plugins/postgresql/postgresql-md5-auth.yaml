@@ -1,0 +1,17 @@
+id: postgresql-md5-auth
+title: PostgreSQL uses deprecated MD5 password authentication
+severity: low
+source: postgresql
+when: auth_method == "md5"
+evidence: '{{ .host }}:{{ .port }} responded AuthenticationMD5Password (type=5); MD5 password storage was deprecated by upstream in PG14 (2021)'
+references:
+  - https://www.postgresql.org/docs/current/auth-password.html
+  - https://www.postgresql.org/docs/14/release-14.html
+remediation: |
+  Migrate to SCRAM-SHA-256. In postgresql.conf set
+    password_encryption = scram-sha-256
+  Have each user re-set their password (\\password in psql) so the
+  hash is re-stored under SCRAM. Then change pg_hba.conf entries
+  from "md5" to "scram-sha-256". MD5 hashes are unsalted across
+  users (salt = username) and can be replayed if leaked.
+tags: [postgresql, deprecated-crypto]

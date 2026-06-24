@@ -1,0 +1,15 @@
+id: db2-exposed
+title: IBM DB2 DRDA listener reachable
+severity: medium
+source: db2
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} DB2 server class={{ .server_class }} name={{ .server_name }}'
+references:
+  - https://www.ibm.com/docs/en/db2/11.5
+remediation: |
+  DB2 listens for DRDA on TCP 50000 by default. An exposed DRDA
+  listener leaks SRVCLSNM (server class, including the platform
+  identifier) and is a target for credential stuffing and the DB2
+  CVE backlog. Restrict the listener to the database client subnet
+  and rotate to current DB2 fix packs.
+tags: [db2, drda, database]

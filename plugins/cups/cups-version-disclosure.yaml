@@ -1,0 +1,14 @@
+id: cups-version-disclosure
+title: CUPS Server header discloses exact version
+severity: info
+source: cups
+when: reachable == true and version != ""
+evidence: '{{ .host }}:{{ .port }} Server: {{ .server_header }}'
+references:
+  - https://www.cups.org/doc/security.html
+remediation: |
+  The Server header on the CUPS HTTP listener leaks the exact CUPS
+  version, which lines up with CVE matching for the 2024 cups-browsed
+  RCE chain (CVE-2024-47176 and friends) and older info-disclosure
+  bugs. Patch CUPS to a current release and / or restrict access.
+tags: [cups, info-disclosure]

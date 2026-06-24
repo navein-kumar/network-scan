@@ -1,0 +1,15 @@
+id: svn-exposed
+title: Subversion (svnserve) reachable
+severity: medium
+source: svn
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} svnserve protocol min={{ .protocol_min_version }} max={{ .protocol_max_version }} realm={{ .realm }}'
+references:
+  - https://subversion.apache.org/docs/community-guide/general.html
+  - http://svn.apache.org/repos/asf/subversion/trunk/subversion/libsvn_ra_svn/protocol
+remediation: |
+  svn:// (3690) is plaintext and reveals repository structure to any
+  network neighbour. Front the repository with svn+ssh:// or HTTPS
+  via DAV (mod_dav_svn), enforce authn:authz on every listed realm,
+  and restrict 3690 to maintainer IPs.
+tags: [svn, scm, exposure]

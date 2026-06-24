@@ -1,0 +1,17 @@
+id: rpc-nfs-exports-readable
+title: mountd EXPORT lists shared paths without authentication
+severity: high
+source: rpc
+when: exported_paths != nil and len(exported_paths) > 0
+evidence: '{{ .host }}:{{ .port }} mountd EXPORT returned {{ len .exported_paths }} paths: {{ range .exported_paths }}{{ . }} {{ end }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1813#section-5.2
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  An unauthenticated mountd dump reveals every exported NFS path on the
+  server. Combined with a default-allow access list in /etc/exports
+  (the classic "*:rw") this gives any client read-write access to user
+  homes or application data. Tighten /etc/exports to explicit subnets,
+  add root_squash + all_squash where appropriate, switch to sec=krb5p,
+  and front the listener with the host firewall.
+tags: [rpc, nfs, info-disclosure, exposure]

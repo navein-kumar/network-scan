@@ -1,0 +1,18 @@
+id: dns-open-resolver
+title: DNS server is an open recursive resolver
+severity: medium
+source: dns
+when: recursion_allowed == true
+evidence: '{{ .host }}:{{ .port }} recursively resolved google.com for an external client (RA flag + answer returned)'
+references:
+  - https://www.us-cert.gov/ncas/alerts/TA13-088A
+  - https://nmap.org/nsedoc/scripts/dns-recursion.html
+remediation: |
+  Restrict recursion to authorized clients. BIND: in options { ... }
+    allow-recursion { trusted-clients; };
+  Unbound: access-control: <subnet> allow + access-control: 0.0.0.0/0 refuse.
+  Knot Resolver: rate-limit views to the LAN.
+  Open recursive resolvers are abused in DNS amplification DDoS
+  attacks (50x bandwidth multiplier) and indicate the resolver is
+  reachable from networks it should not be serving.
+tags: [dns, open-resolver, amplification]

@@ -1,0 +1,18 @@
+id: msrpc-endpoint-mapper-exposed
+title: Microsoft RPC Endpoint Mapper exposed to network
+severity: medium
+source: msrpc
+when: bind_ack_received == true
+evidence: '{{ .host }}:{{ .port }} responded with DCERPC BIND_ACK; epmapper reachable'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rpce/
+  - https://attack.mitre.org/techniques/T1135/
+remediation: |
+  TCP/135 (epmapper) on the public network exposes a metadata service
+  used by every Windows RPC client. It leaks named pipes, dynamic
+  ports, and service UUIDs that aid attacker reconnaissance and has
+  historically been the entry point for worms (Blaster, Sasser).
+  Block TCP/135 at the perimeter firewall, restrict to management VLANs,
+  or use IPsec to require authentication before the RPC port is
+  reachable. Disable unused RPC services with Group Policy.
+tags: [msrpc, exposure, microsoft]

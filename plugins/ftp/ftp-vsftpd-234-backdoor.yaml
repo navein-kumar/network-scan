@@ -1,0 +1,17 @@
+id: ftp-vsftpd-234-backdoor
+title: vsftpd 2.3.4 backdoor (CVE-2011-2523)
+severity: critical
+source: ftp
+when: banner matches "(?i)vsftpd 2\\.3\\.4"
+evidence: '{{ .host }}:{{ .port }} banner identifies vsftpd 2.3.4, which shipped with a backdoor root shell on port 6200 triggered by a USER ending with ":)"'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2011-2523
+  - https://www.openwall.com/lists/oss-security/2011/07/11/4
+remediation: |
+  Replace the vsftpd 2.3.4 binary immediately. The official source
+  tarball was tampered with on the mirror in July 2011 and contains
+  a hard-coded shell on port 6200. Any sender of "USER xyz:)\\r\\n"
+  pops an unauthenticated root shell. Upgrade to a current vsftpd
+  release shipped by your distribution and verify the binary
+  checksum against the upstream signing key.
+tags: [ftp, cve-2011-2523, backdoor, critical]

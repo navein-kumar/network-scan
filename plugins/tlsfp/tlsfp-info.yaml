@@ -1,0 +1,15 @@
+id: tlsfp-info
+title: TLS handshake fingerprint captured
+severity: info
+source: tlsfp
+when: ja4 != nil and ja4 != ""
+evidence: |
+  {{ .host }}:{{ .port }} TLS={{ .tls_version }} cipher={{ .cipher_suite }} alpn={{ .alpn }} ja4={{ .ja4 }} ja4s={{ .ja4s }}{{ if .peer_cn }} cn={{ .peer_cn }}{{ end }}
+references:
+  - https://github.com/FoxIO-LLC/ja4
+remediation: |
+  Informational: TLS fingerprint recorded for cross-host correlation.
+  Use ja4 / ja4s tags to identify reused server stacks across the
+  scope, or to flag impersonated services (e.g. an Apache front
+  pretending to be IIS but with an IIS-flavoured TLS profile).
+tags: [tls, fingerprint, info]

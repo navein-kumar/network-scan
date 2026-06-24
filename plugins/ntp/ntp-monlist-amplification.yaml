@@ -1,0 +1,18 @@
+id: ntp-monlist-amplification
+title: NTP server responds to monlist (CVE-2013-5211 amplification)
+severity: high
+source: ntp
+when: monlist_responding == true
+evidence: '{{ .host }}:{{ .port }} answered an NTPv2 mode 7 REQ_MON_GETLIST_1; entries seen = {{ .monlist_entries }}. Amplification factor up to ~556x.'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2013-5211
+  - https://www.us-cert.gov/ncas/alerts/TA14-013A
+remediation: |
+  CVE-2013-5211: a single 234-byte monlist query yields up to a
+  48 KB response, with the source address spoofable, making the
+  server a high-ratio reflector for UDP DDoS. Upgrade ntpd to
+  4.2.7p26 or later, and add "disable monitor" plus
+  "restrict default noquery nomodify notrap nopeer" to /etc/ntp.conf.
+  Better: replace ntpd with chrony, which does not implement the
+  mode 7 control protocol at all.
+tags: [ntp, amplification, cve-2013-5211]

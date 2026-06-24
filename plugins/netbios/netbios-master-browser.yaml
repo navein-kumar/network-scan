@@ -1,0 +1,17 @@
+id: netbios-master-browser
+title: Host advertises itself as a NetBIOS master browser
+severity: low
+source: netbios
+when: any(names, {.suffix == "0x1D"})
+evidence: '{{ .host }}:{{ .port }} responds to NBSTAT with a 0x1D (master-browser) entry; the host owns the local browse list'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-brws/
+remediation: |
+  The master browser maintains the LAN browse list of every other
+  participating workstation; querying it discloses the workstation
+  inventory of the segment. Disable the Computer Browser service
+  on Windows (Set-Service Browser -StartupType Disabled) and turn
+  off "browser election" on Samba (disable browseable, disable
+  domain master). NetBIOS browse is an SMB1-era feature with no
+  modern equivalent need.
+tags: [netbios, info-disclosure, recon]

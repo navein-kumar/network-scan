@@ -1,0 +1,16 @@
+id: msrpc-endpoint-disclosure
+title: MS-RPC endpoint mapper discloses registered endpoints
+severity: info
+source: msrpc
+when: endpoints != nil and len(endpoints) > 0
+evidence: '{{ .host }}:{{ .port }} epmapper returned {{ len .endpoints }} registered endpoints'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rpce/
+remediation: |
+  Endpoint mapper EPM Lookup returns the registered DCERPC services
+  (UUIDs, dynamic ports, named pipes) which gives an attacker a
+  shortlist of LSASS, SAMR, DRSUAPI, LSARPC etc. interfaces to attack.
+  This is mostly recon-grade information disclosure: the operational
+  fix is to block 135/TCP from untrusted segments and require IPsec
+  for the dynamic high-port range used by RPC services.
+tags: [msrpc, info-disclosure]

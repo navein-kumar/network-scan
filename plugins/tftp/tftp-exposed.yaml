@@ -1,0 +1,16 @@
+id: tftp-exposed
+title: TFTP server reachable on the network
+severity: medium
+source: tftp
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} TFTP responded (opcode={{ .error_code }} msg={{ .error_message }})'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc1350
+remediation: |
+  TFTP has no authentication, no integrity, and no confidentiality. A
+  reachable TFTP server is typically used for network device config
+  backup and firmware staging, both of which carry credentials and
+  secrets. Restrict 69/udp to the management subnet via host firewall,
+  prefer SFTP or HTTPS where possible, and ensure the TFTP root holds
+  only the files that need to be served.
+tags: [tftp, exposure]

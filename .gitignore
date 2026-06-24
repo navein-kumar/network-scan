@@ -1,0 +1,5 @@
+fastscan
+fastscan-old
+*.exe
+tmp/
+.env

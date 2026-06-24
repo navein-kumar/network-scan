@@ -1,0 +1,9 @@
+service: redis
+attempts:
+  - { user: "", pass: "" }
+  - { user: "", pass: redis }
+  - { user: "", pass: password }
+  - { user: "", pass: admin }
+  - { user: "", pass: root }
+  - { user: "", pass: foobared }
+  - { user: "", pass: "123456" }

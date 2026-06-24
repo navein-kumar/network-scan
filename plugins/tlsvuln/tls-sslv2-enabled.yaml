@@ -1,0 +1,17 @@
+id: tls-sslv2-enabled
+title: SSLv2 protocol offered (obsolete and insecure)
+severity: high
+source: tlsvuln
+when: |
+  protocols != nil and any(protocols, {
+    .id matches "(?i)SSLv2" and .finding matches "(?i)offered"
+  })
+evidence: '{{ .host }}:{{ .port }} SSLv2 negotiated successfully'
+references:
+  - https://datatracker.ietf.org/doc/rfc6176/
+remediation: |
+  Disable SSLv2 on this listener. RFC 6176 prohibits SSLv2 in any
+  setting, and exposed SSLv2 enables the DROWN cross-protocol attack
+  (CVE-2016-0800) against every other listener that shares the same
+  RSA private key.
+tags: [tls, sslv2, deprecated]

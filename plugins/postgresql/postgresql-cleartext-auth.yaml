@@ -1,0 +1,14 @@
+id: postgresql-cleartext-auth
+title: PostgreSQL offers cleartext password authentication
+severity: high
+source: postgresql
+when: auth_method == "cleartext"
+evidence: '{{ .host }}:{{ .port }} responded AuthenticationCleartextPassword (type=3); credentials are sent unhashed'
+references:
+  - https://www.postgresql.org/docs/current/auth-password.html
+remediation: |
+  Replace every "password" entry in pg_hba.conf with "scram-sha-256"
+  (PG14+) or at minimum "md5". Cleartext password auth sends the
+  user password verbatim over the connection, recoverable by any
+  passive MITM and by the server logs if log_connections is on.
+tags: [postgresql, weak-auth, mitm]

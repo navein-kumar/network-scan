@@ -1,0 +1,9 @@
+service: postgresql
+attempts:
+  - { user: postgres, pass: postgres }
+  - { user: postgres, pass: "" }
+  - { user: postgres, pass: password }
+  - { user: postgres, pass: admin }
+  - { user: admin,    pass: admin }
+  - { user: root,     pass: root }
+  - { user: user,     pass: user }

@@ -1,0 +1,17 @@
+id: mysql-default-creds
+title: MySQL server accepts default credentials
+severity: critical
+source: mysql
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  Change the root password immediately. Run mysql_secure_installation,
+  remove anonymous users, restrict root login to localhost, and create
+  least-privilege application accounts in place of root.
+tags: [creds, default-credentials, critical-cve]

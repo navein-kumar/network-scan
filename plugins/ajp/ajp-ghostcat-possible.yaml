@@ -1,0 +1,17 @@
+id: ajp-ghostcat-possible
+title: Tomcat AJP connector accepts Forward-Request (Ghostcat candidate)
+severity: high
+source: ajp
+when: ajp13_responding == true and ghostcat_probe_status == "got_response"
+evidence: '{{ .host }}:{{ .port }} replied to an AJP13 Forward-Request; CVE-2020-1938 (Ghostcat) candidate. Manual verification still required.'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2020-1938
+  - https://www.chaitin.cn/en/ghostcat
+remediation: |
+  CVE-2020-1938 lets an unauthenticated AJP client read arbitrary files
+  from the Tomcat webapp directory (and, on servers that store
+  uploaded JSP under webapps/ROOT, achieve RCE). Apply the upstream
+  patch (Tomcat 7.0.100, 8.5.51, 9.0.31, or 10.0.0-M5+) and either
+  shut down the connector or set requireSecret + secret="..." so a
+  remote attacker cannot send raw AJP packets.
+tags: [ajp, tomcat, ghostcat, cve-2020-1938]

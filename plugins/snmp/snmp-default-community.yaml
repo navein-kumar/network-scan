@@ -1,0 +1,18 @@
+id: snmp-default-community
+title: SNMP service accepts a default community string
+severity: high
+source: snmp
+when: community_hit != "" and community_hit in ["public", "private"]
+evidence: '{{ .host }}:{{ .port }} answered SNMPv2c GetRequest for sysDescr.0 with community "{{ .community_hit }}"; sysDescr = {{ .sys_descr }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc3411.html
+  - https://attack.mitre.org/techniques/T1078/001/
+remediation: |
+  Change the SNMP community from the iconic defaults ("public" /
+  "private") to a long random string, or migrate the agent to
+  SNMPv3 with authPriv (HMAC-SHA + AES). Restrict the listener to
+  the management VLAN via host firewall or net-snmp's "com2sec".
+  A public community grants read access to the full MIB, including
+  software inventory, ARP/route tables, and CPU/RAM telemetry that
+  primes follow-on attacks.
+tags: [snmp, default-creds, info-disclosure]

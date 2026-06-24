@@ -1,0 +1,16 @@
+id: ipmi-anonymous-auth
+title: IPMI BMC permits anonymous login
+severity: medium
+source: ipmi
+when: anonymous_auth_allowed == true
+evidence: '{{ .host }}:{{ .port }} Get Channel Authentication Capabilities reports anonymous login enabled (auth_status bit 0)'
+references:
+  - https://www.intel.com/content/dam/www/public/us/en/documents/product-briefs/ipmi-second-gen-interface-spec-v2-rev1-1.pdf
+remediation: |
+  Disable the anonymous login flag on the BMC channel via ipmitool
+  lan set <channel> auth <level> ... ensuring "anonymous" is not
+  in the selected auth-mask, or via the vendor remote-console UI.
+  Anonymous BMC access is documented for vendor "lights-out" use
+  cases that are rarely required and routinely abused for lateral
+  movement onto the hypervisor.
+tags: [ipmi, anonymous-auth]

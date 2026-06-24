@@ -1,0 +1,16 @@
+id: mssql-encryption-not-required
+title: SQL Server does not require encryption
+severity: medium
+source: mssql
+when: encryption_required == false
+evidence: '{{ .host }}:{{ .port }} accepts unencrypted TDS sessions (encryption_required=false); login credentials and result sets are in cleartext on the wire'
+references:
+  - https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine
+remediation: |
+  Configure SQL Server to force encrypted connections. In SQL Server
+  Configuration Manager set "Force Encryption" = Yes on the protocol
+  properties for the instance, and provision a TLS certificate via the
+  Network Configuration > Protocols > Certificate tab. Clients that
+  cannot meet the cipher requirement will be rejected, but the cleartext
+  TDS exposure of credentials goes away.
+tags: [mssql, plaintext, weak-crypto]

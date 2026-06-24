@@ -1,0 +1,16 @@
+id: pjl-exposed
+title: HP PJL / raw print (9100) reachable
+severity: medium
+source: pjl
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} PJL listener returned data ({{ .model_id }})'
+references:
+  - https://www.hp.com/ctg/Manual/bpl13208.pdf
+  - https://hacking-printers.net/wiki/index.php/PJL
+remediation: |
+  PJL on port 9100 is the printer command channel. With no
+  authentication an attacker can read and reset the device counters,
+  modify the panel display, exfiltrate stored documents, and on some
+  models alter the firmware. Disable raw print on the device admin
+  page, or restrict 9100/tcp to print servers via host firewall.
+tags: [pjl, printer, exposure]

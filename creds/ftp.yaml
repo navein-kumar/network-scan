@@ -1,0 +1,10 @@
+service: ftp
+attempts:
+  - { user: anonymous, pass: "anonymous@example.com" }
+  - { user: anonymous, pass: "" }
+  - { user: ftp,       pass: ftp }
+  - { user: ftp,       pass: "" }
+  - { user: admin,     pass: admin }
+  - { user: admin,     pass: password }
+  - { user: root,      pass: root }
+  - { user: user,      pass: user }

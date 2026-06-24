@@ -1,0 +1,16 @@
+id: mongodb-replica-set-exposure
+title: MongoDB replica set topology disclosed to anonymous clients
+severity: medium
+source: mongodb
+when: replica_set != ""
+evidence: '{{ .host }}:{{ .port }} isMaster: setName = {{ .replica_set }}, primary = {{ .primary }}'
+references:
+  - https://www.mongodb.com/docs/manual/reference/command/isMaster/
+remediation: |
+  An anonymous isMaster against a replica set reveals the cluster
+  name and the current primary host:port, which lets an attacker
+  enumerate every node in the cluster (and the primary will accept
+  writes). Bind net.bindIp to internal interfaces and require auth so
+  isMaster cannot be issued before authentication. On 4.4+ this
+  command is also reachable as hello and the same exposure applies.
+tags: [mongodb, info-disclosure]

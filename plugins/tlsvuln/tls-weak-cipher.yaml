@@ -1,0 +1,18 @@
+id: tls-weak-cipher
+title: TLS weak cipher (RC4 / BEAST)
+severity: medium
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    (.id matches "(?i)RC4" or .id matches "(?i)BEAST") and .finding matches "(?i)VULNERABLE"
+  })
+evidence: '{{ .host }}:{{ .port }} weak cipher offered (RC4 stream cipher or CBC-mode TLS 1.0 BEAST)'
+references:
+  - https://datatracker.ietf.org/doc/rfc7465/
+  - https://datatracker.ietf.org/doc/rfc8996/
+remediation: |
+  Remove RC4 from the cipher list entirely (RFC 7465 prohibits it). For
+  BEAST, the supported fix is to disable TLS 1.0 (RFC 8996 deprecates
+  TLS 1.0 and TLS 1.1) and require TLS 1.2 minimum. Prefer AEAD cipher
+  suites (AES-GCM, ChaCha20-Poly1305).
+tags: [tls, weak-cipher, rc4, beast]

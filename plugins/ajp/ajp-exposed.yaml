@@ -1,0 +1,17 @@
+id: ajp-exposed
+title: Tomcat AJP13 connector reachable from this network
+severity: medium
+source: ajp
+when: ajp13_responding == true
+evidence: '{{ .host }}:{{ .port }} answered AJP13 CPing with CPong; AJP connector is reachable beyond loopback'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2020-1938
+  - https://tomcat.apache.org/connectors-doc/ajp/ajpv13a.html
+remediation: |
+  AJP13 has no authentication by design. The Tomcat connector should
+  only listen on 127.0.0.1, fronted by a reverse proxy (mod_proxy_ajp,
+  mod_jk). If you don't actually use mod_jk, comment out the Connector
+  port="8009" line in server.xml and restart Tomcat. If you do, bind
+  it to localhost and set a shared secret (Tomcat 9.0.31+: requireSecret
+  + secret="...").
+tags: [ajp, tomcat, exposure]

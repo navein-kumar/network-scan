@@ -1,0 +1,17 @@
+id: sip-banner-disclosure
+title: SIP endpoint discloses product/version in Server header
+severity: info
+source: sip
+when: server_header != nil and server_header != ""
+evidence: '{{ .host }}:{{ .port }} SIP OPTIONS reply Server/User-Agent: {{ .server_header }}'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc3261#section-20.35
+remediation: |
+  The Server (or User-Agent) header on a SIP OPTIONS reply identifies
+  the PBX vendor and exact build (Asterisk, FreePBX, Cisco CUCM,
+  3CX, Avaya, etc.) which speeds up exploit selection against the
+  large catalogue of SIP authentication and signaling CVEs. Strip
+  the header in your PBX config (e.g. useragent = "" in
+  asterisk.conf [options]) and front-end the listener with a
+  Session Border Controller.
+tags: [sip, info-disclosure, voip]

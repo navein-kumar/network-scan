@@ -1,0 +1,16 @@
+id: pop3-plaintext-auth-only
+title: POP3 server only offers plaintext authentication
+severity: medium
+source: pop3
+when: stls_offered == false and ("USER" in capabilities or len(sasl_mechanisms) > 0)
+evidence: '{{ .host }}:{{ .port }} advertises USER/SASL ({{ .sasl_mechanisms }}) without STLS; PLAIN / LOGIN passwords cross the wire'
+references:
+  - https://www.rfc-editor.org/rfc/rfc5034
+remediation: |
+  Without STLS, every SASL PLAIN / LOGIN exchange (and the basic
+  USER / PASS sequence) hands the mailbox password to anyone on the
+  network path. Either enable STLS so authentication only happens
+  under TLS, or disable cleartext auth (Dovecot:
+  disable_plaintext_auth = yes) and require clients to use POP3S on
+  port 995.
+tags: [pop3, no-tls, plaintext-auth]

@@ -1,0 +1,14 @@
+id: hadoop-version-disclosure
+title: Hadoop /jmx leaks Hadoop version and cluster ID
+severity: info
+source: hadoop
+when: reachable == true and version != nil and version != ""
+evidence: '{{ .host }}:{{ .port }} {{ .component }} version={{ .version }} cluster={{ .cluster_id }}'
+references:
+  - https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html
+remediation: |
+  /jmx returns Hadoop version + cluster ID without authentication.
+  Enable HTTP SPNEGO auth on the admin UI ports and patch any Hadoop
+  release with a known CVE (Spark / Yarn RCE chains tend to depend on
+  the cluster ID for context).
+tags: [hadoop, info-disclosure]

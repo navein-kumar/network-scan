@@ -1,0 +1,19 @@
+id: dns-version-bind
+title: DNS server reveals software version via version.bind CHAOS TXT
+severity: info
+source: dns
+when: version_bind != nil and version_bind != ""
+evidence: '{{ .host }}:{{ .port }} version.bind CHAOS TXT = "{{ .version_bind }}"'
+references:
+  - https://www.rfc-editor.org/rfc/rfc4892
+  - https://www.tenable.com/plugins/nessus/35371
+remediation: |
+  Suppress version.bind. CHAOS TXT responses. BIND: add
+    options { version "none"; hostname "none"; };
+  to named.conf. Knot DNS: in server config set
+    nsid: ""
+    identity: ""
+  Unbound: hide-version: yes and hide-identity: yes.
+  Disclosure of the resolver version makes targeted exploit selection
+  trivial.
+tags: [dns, info-disclosure]

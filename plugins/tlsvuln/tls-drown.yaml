@@ -1,0 +1,18 @@
+id: tls-drown
+title: TLS DROWN (CVE-2016-0800)
+severity: high
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    .id matches "(?i)DROWN" and .finding matches "(?i)VULNERABLE"
+  })
+evidence: '{{ .host }}:{{ .port }} DROWN (SSLv2 cross-protocol attack)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-0800
+  - https://drownattack.com/
+remediation: |
+  Disable SSLv2 on every service that shares the certificate / key. Even
+  one SSLv2-enabled listener anywhere on the network undermines TLS on
+  all peers that reuse the same key. Upgrade OpenSSL to 1.0.2g / 1.0.1s
+  or later.
+tags: [tls, drown, cve-2016-0800]

@@ -1,0 +1,19 @@
+id: rsync-module-listing
+title: rsync daemon exposes modules
+severity: medium
+source: rsync
+when: modules != nil and len(modules) > 0
+evidence: '{{ .host }}:{{ .port }} rsync daemon listed {{ len .modules }} module(s) without authentication: {{ range .modules }}{{ . }} {{ end }}'
+references:
+  - https://download.samba.org/pub/rsync/rsyncd.conf.5
+  - https://book.hacktricks.xyz/network-services-pentesting/873-pentesting-rsync
+remediation: |
+  An anonymous module listing leaks the names of every share the rsync
+  daemon exports, and any module without "auth users" / "secrets file"
+  can be read (and often written) by any client. Require authentication
+  per module (auth users + secrets file with 0600 perms), set
+  "read only = true" where writes are not needed, restrict callers with
+  "hosts allow" / "hosts deny", and bind the daemon to internal
+  interfaces only. Prefer rsync over SSH instead of the standalone
+  daemon on port 873.
+tags: [rsync, info-disclosure, exposure]

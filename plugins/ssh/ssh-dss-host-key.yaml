@@ -1,0 +1,17 @@
+id: ssh-dss-host-key
+title: SSH server offers deprecated DSA (ssh-dss) host key
+severity: medium
+source: ssh
+when: '"ssh-dss" in host_key_algorithms'
+evidence: '{{ .host }}:{{ .port }} advertises ssh-dss host key (banner: {{ .banner }})'
+references:
+  - https://www.openssh.com/legacy.html
+  - https://www.openssh.com/txt/release-7.0
+remediation: |
+  DSA host keys were disabled by default in OpenSSH 7.0 (2015) due to
+  forensic recoverability of the per-message nonce. Regenerate the
+  server host key set without DSA:
+    rm /etc/ssh/ssh_host_dsa_key*
+    ssh-keygen -A
+  and ensure /etc/ssh/sshd_config does not enumerate HostKey ssh_host_dsa_key.
+tags: [ssh, weak-crypto, eol]

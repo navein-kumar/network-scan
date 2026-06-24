@@ -1,0 +1,17 @@
+id: hnap-exposed
+title: HNAP1 management interface exposed
+severity: medium
+source: hnap
+when: reachable == true and (model_name != "" or device_name != "" or firmware_version != "")
+evidence: '{{ .host }}:{{ .port }} HNAP1 GetDeviceSettings responded ({{ .vendor_name }} {{ .model_name }})'
+references:
+  - https://www.kb.cert.org/vuls/id/678029
+  - https://blog.0x42424242.in/2015/04/exploiting-hnap.html
+remediation: |
+  HNAP1 (Home Network Administration Protocol) is the SOAP control
+  surface on a long line of D-Link and similar consumer routers and
+  has a history of pre-auth command injection (e.g. CVE-2014-100005).
+  Disable HNAP in the router admin UI where supported, ensure the WAN
+  side of the router does not expose 80 / 8080, and update firmware
+  to the latest available release.
+tags: [hnap, router, exposure]

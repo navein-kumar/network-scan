@@ -1,0 +1,183 @@
+# Current stable versions per product.
+# Update a version number when a new release ships — no rebuild needed.
+# The engine auto-generates a "Vulnerable Outdated {Product} Server" finding
+# for any detected version older than the value listed here.
+#
+# Sources map to fastscan driver names. Products under each source are matched
+# case-insensitively against the product field from the driver report.
+
+# ── HTTP / HTTPS ──────────────────────────────────────────────────────────────
+# Detected via: Server: header (server_product / server_version)
+# Extra headers / tech fingerprints fill gaps where Server: is absent.
+http:
+  # Web servers — Server: header
+  nginx: "1.26.3"
+  apache: "2.4.63"
+  tomcat: "11.0.7"
+  microsoft-iis: "10.0"
+  lighttpd: "1.4.76"
+  litespeed: "6.3.2"
+  openresty: "1.25.3.2"
+  caddy: "2.9.1"
+  jetty: "12.0.15"
+  cherokee: "1.2.104"
+  gunicorn: "23.0.0"
+  varnish: "7.6.1"
+  haproxy: "3.0.7"
+  squid: "6.13"
+  # Scripting runtimes — X-Powered-By or tech fingerprint
+  php: "8.3.22"
+  # TLS library — embedded in Server: token
+  openssl: "3.5.0"
+  # App platforms — detected via tech fingerprint or X-* header
+  wordpress: "6.8.1"
+  drupal: "11.1.7"
+  jenkins: "2.504.3"
+  grafana: "11.6.1"
+  elasticsearch: "8.18.1"
+  kibana: "8.18.1"
+  jira: "10.4.1"
+  confluence: "8.9.5"
+  gitlab: "17.11.2"
+  weblogic: "14.1.2"
+  # InfluxDB detected via X-Influxdb-Version response header
+  influxdb: "2.7.10"
+  # Palo Alto PAN-OS detected via Server: PAN/x.y.z
+  pan: "11.2.4"
+
+# ── SSH ───────────────────────────────────────────────────────────────────────
+# Detected via: SSH version banner (product / product_version)
+ssh:
+  openssh: "9.9"
+  dropbear: "2024.86"
+
+# ── FTP ───────────────────────────────────────────────────────────────────────
+# Detected via: FTP greeting banner (product / product_version)
+ftp:
+  proftpd: "1.3.9"
+  vsftpd: "3.0.5"
+  filezilla: "1.8.0"
+  pure-ftpd: "1.0.52"
+  bftpd: "6.2"
+
+# ── SMTP ─────────────────────────────────────────────────────────────────────
+# Detected via: SMTP 220 banner (product / product_version)
+smtp:
+  postfix: "3.10.1"
+  exim: "4.98.1"
+  sendmail: "8.18.1"
+  dovecot: "2.3.21"
+  qmail: "1.06"
+  exchange: "15.2.1544"
+
+# ── IMAP ─────────────────────────────────────────────────────────────────────
+# Detected via: IMAP greeting banner (product / product_version)
+imap:
+  dovecot: "2.3.21"
+  cyrus: "3.8.3"
+  courier: "5.1.7"
+  exchange: "15.2.1544"
+
+# ── POP3 ─────────────────────────────────────────────────────────────────────
+# Detected via: POP3 greeting banner (product / product_version)
+pop3:
+  dovecot: "2.3.21"
+  cyrus: "3.8.3"
+  courier: "5.1.7"
+
+# ── Relational databases ──────────────────────────────────────────────────────
+mysql:
+  mysql: "9.3.0"
+  mariadb: "11.4.5"
+
+postgresql:
+  postgresql: "17.5"
+
+mssql:
+  microsoft: "16.0"
+
+oracle:
+  oracle: "21.17"
+
+db2:
+  db2: "11.5.9"
+  ibm: "11.5.9"
+
+# ── NoSQL / caching ───────────────────────────────────────────────────────────
+mongodb:
+  mongodb: "8.0.11"
+
+redis:
+  redis: "8.0.2"
+
+memcached:
+  memcached: "1.6.37"
+
+couchdb:
+  couchdb: "3.3.3"
+
+# ── Message queues ────────────────────────────────────────────────────────────
+# amqp source = AMQP probe (RabbitMQ); product field = "product"
+amqp:
+  rabbitmq: "4.1.1"
+
+# ── Search / analytics ────────────────────────────────────────────────────────
+elasticsearch:
+  elasticsearch: "8.18.1"
+
+# ── DevOps / CI ───────────────────────────────────────────────────────────────
+jenkins:
+  jenkins: "2.504.3"
+
+# ── Apache Cassandra ───────────────────────────────────────────────────────────────────────
+# Detected via: CQL native probe, system.local release_version query
+cassandra:
+  cassandra: "5.0.3"
+
+# ── Apache Kafka ────────────────────────────────────────────────────────────────────────
+# Detected via: ApiVersionsRequest v3 (KIP-511, Kafka 2.4+)
+kafka:
+  kafka: "3.9.0"
+
+# ── Network equipment (SNMP) ──────────────────────────────────────────────────────────
+# Detected via: SNMP sysDescr version extraction (parseSNMPDeviceVersion)
+# sys_product is the normalised device family; sys_version is the extracted OS version.
+snmp:
+  cisco-ios: "15.9.3M6"
+  cisco-nxos: "10.4.5"
+  pan-os: "11.2.4"
+  fortios: "7.6.3"
+  bigip: "17.1.2"
+  esxi: "8.0.3"
+  junos: "24.2R1"
+  checkpoint: "R82.00"
+
+# ── Kubernetes ───────────────────────────────────────────────────────────────
+# Detected via: GET /version JSON (gitVersion field)
+kubernetes:
+  kubernetes: "1.33.0"
+
+# ── HashiCorp Consul ─────────────────────────────────────────────────────────
+# Detected via: GET /v1/agent/self JSON (Config.Version field)
+consul:
+  consul: "1.21.0"
+
+# ── HashiCorp Vault ──────────────────────────────────────────────────────────
+# Detected via: GET /v1/sys/seal-status JSON (version field, no auth needed)
+vault:
+  vault: "1.18.4"
+
+# ── Prometheus ───────────────────────────────────────────────────────────────
+# Detected via: GET /api/v1/status/buildinfo JSON (data.version field)
+prometheus:
+  prometheus: "3.4.0"
+
+# ── Neo4j ────────────────────────────────────────────────────────────────────
+# Detected via: GET / JSON (neo4j_version field)
+neo4j:
+  neo4j: "5.26.4"
+
+# ── Apache ActiveMQ ───────────────────────────────────────────────────────────
+# Detected via: GET /api/jolokia/version JSON (value.info.version field)
+activemq:
+  activemq: "6.1.3"

@@ -1,0 +1,16 @@
+id: mssql-eol-version
+title: SQL Server end-of-life version
+severity: medium
+source: mssql
+when: version matches "(?i)Microsoft SQL Server (2008|2012|2014)"
+evidence: '{{ .host }}:{{ .port }} runs an EOL SQL Server release: {{ .version }}'
+references:
+  - https://learn.microsoft.com/en-us/lifecycle/products/sql-server-2014
+  - https://learn.microsoft.com/en-us/lifecycle/products/sql-server-2012
+  - https://learn.microsoft.com/en-us/lifecycle/products/sql-server-2008
+remediation: |
+  Upgrade the instance to a supported release (SQL Server 2019 or 2022).
+  EOL releases stop receiving security updates: 2008/2008 R2 ended July
+  2019, 2012 ended July 2022, 2014 ended July 2024. Extended Security
+  Updates via Azure Arc buy time but are not a long-term plan.
+tags: [mssql, eol]

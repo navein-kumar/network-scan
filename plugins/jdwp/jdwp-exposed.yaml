@@ -1,0 +1,18 @@
+id: jdwp-exposed
+title: JDWP debugger interface exposed (remote code execution)
+severity: critical
+source: jdwp
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} JDWP handshake accepted, VM {{ .vm_name }} {{ .vm_version }}'
+references:
+  - https://docs.oracle.com/javase/8/docs/technotes/guides/jpda/jdwp-spec.html
+  - https://www.exploit-db.com/exploits/40070
+remediation: |
+  Exposing JDWP (Java Debug Wire Protocol) on a routable network gives
+  any client full debugger control over the JVM, which includes loading
+  bytecode and running arbitrary code as the Java process owner. This is
+  a remote code execution surface. Disable JDWP on production hosts
+  (drop the -agentlib:jdwp= or -Xdebug JVM options), or bind the
+  listener to 127.0.0.1 only and reach it via an SSH tunnel for
+  authorised debugging.
+tags: [jdwp, java, rce]

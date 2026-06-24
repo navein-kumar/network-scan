@@ -1,0 +1,19 @@
+id: winrm-plaintext
+title: WinRM listener exposed without TLS (port 5985)
+severity: high
+source: winrm
+when: reachable == true and is_tls == false
+evidence: '{{ .host }}:{{ .port }} is the plaintext WinRM listener; credentials and SOAP payloads transit unencrypted'
+references:
+  - https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management
+remediation: |
+  Disable the plaintext HTTP listener and require TLS on 5986.
+  PowerShell:
+    Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value $false
+    winrm delete winrm/config/Listener?Address=*+Transport=HTTP
+    winrm quickconfig -transport:https
+  Provision a server certificate from the enterprise CA so the
+  HTTPS listener (5986) presents a trusted cert. NTLM/Negotiate auth
+  over the plaintext listener is brute-forceable offline if the
+  challenge is captured.
+tags: [winrm, no-tls, ntlm]

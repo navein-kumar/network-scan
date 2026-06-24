@@ -1,0 +1,15 @@
+id: ntp-version-disclosure
+title: NTP server reachable and discloses version
+severity: info
+source: ntp
+when: version > 0 and reachable == true
+evidence: '{{ .host }}:{{ .port }} SNTPv4 reply: version = {{ .version }}, stratum = {{ .stratum }}, reference id = {{ .reference_id }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc5905
+remediation: |
+  Version + stratum + reference-ID disclosure is informational on its
+  own. The operational fix is to lock down the daemon: chrony, or ntpd
+  with "restrict default noquery nomodify notrap nopeer" so only
+  time-of-day queries are accepted, and front the listener with the
+  host firewall if cross-network NTP is not required.
+tags: [ntp, info-disclosure]

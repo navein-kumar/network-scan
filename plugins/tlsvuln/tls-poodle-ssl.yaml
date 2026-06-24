@@ -1,0 +1,17 @@
+id: tls-poodle-ssl
+title: TLS POODLE (CVE-2014-3566)
+severity: high
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    .id matches "(?i)POODLE" and .finding matches "(?i)VULNERABLE"
+  })
+evidence: '{{ .host }}:{{ .port }} POODLE (SSLv3 CBC padding oracle)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-3566
+  - https://www.openssl.org/~bodo/ssl-poodle.pdf
+remediation: |
+  Disable SSLv3 entirely on this listener. POODLE exploits SSLv3's CBC
+  padding oracle and there is no protocol-level fix. Configure the
+  server to require TLS 1.2 minimum and remove all SSLv3 cipher suites.
+tags: [tls, poodle, cve-2014-3566]

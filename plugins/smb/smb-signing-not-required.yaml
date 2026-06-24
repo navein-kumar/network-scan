@@ -1,0 +1,17 @@
+id: smb-signing-not-required
+title: SMB signing not required (NTLM relay target)
+severity: medium
+source: smb
+when: signing_required == false
+evidence: '{{ .host }}:{{ .port }} does not require SMB signing (server accepts unsigned packets)'
+references:
+  - https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/overview-server-message-block-signing
+  - https://attack.mitre.org/techniques/T1557/001/
+remediation: |
+  Enforce SMB signing on the server. Windows domain controllers:
+  enabled by default; member servers and workstations: Group Policy
+  "Microsoft network server: Digitally sign communications (always)" = Enabled.
+  Samba: in smb.conf set "server signing = mandatory", restart smbd.
+  Without signing, the host is a valid target for NTLM relay attacks
+  (mitm6 + ntlmrelayx).
+tags: [smb, relay, ntlm]

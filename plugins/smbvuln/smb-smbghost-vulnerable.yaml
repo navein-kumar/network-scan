@@ -1,0 +1,17 @@
+id: smb-smbghost-vulnerable
+title: SMBGhost / SMBv3 compression RCE (CVE-2020-0796)
+severity: high
+source: smbvuln
+when: smbghost_vulnerable == true
+evidence: '{{ .host }}:{{ .port }} confirmed vulnerable to SMBGhost (nxc smb -M smbghost)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0796
+  - https://msrc.microsoft.com/update-guide/vulnerability/CVE-2020-0796
+remediation: |
+  Apply Microsoft KB4551762 (March 2020) on every Windows 10 1903/1909
+  and Server 1903/1909 host. As an interim mitigation disable SMBv3
+  compression: Set-ItemProperty
+    -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"
+    -Name DisableCompression -Type DWORD -Value 1 -Force
+  SMBGhost is pre-auth remote code execution against SMBv3 listeners.
+tags: [smb, smbghost, cve-2020-0796]

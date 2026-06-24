@@ -1,0 +1,18 @@
+id: os-eol-linux
+title: Host runs an end-of-life Linux kernel
+severity: medium
+source: os
+when: |
+  best.family == "Linux" and
+  (best.name matches "(?i)Linux 2\\.[0-6]" or
+   best.generation matches "(?i)(2\\.[0-6]|3\\.[0-9])(\\.|$)")
+evidence: 'nmap OS match: {{ .best.name }} (accuracy {{ .best.accuracy }}%, gen={{ .best.generation }})'
+references:
+  - https://www.kernel.org/category/releases.html
+remediation: |
+  Linux kernels 2.x and 3.x are no longer supported by mainline.
+  Distros built on these kernels (Ubuntu 12.04 and earlier, RHEL/CentOS
+  6 and earlier, Debian 7 and earlier) likewise no longer receive
+  security updates. Plan migration to a supported distribution or
+  apply a long-term support kernel from your vendor.
+tags: [os, eol, linux]

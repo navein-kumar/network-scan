@@ -1,0 +1,16 @@
+id: hadoop-exposed
+title: Hadoop admin web UI reachable (HDFS / YARN / JobHistory)
+severity: high
+source: hadoop
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} {{ .component }} {{ .version }} cluster={{ .cluster_id }} live={{ .live_data_nodes }}'
+references:
+  - https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html
+  - https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/HttpAuthentication.html
+remediation: |
+  Hadoop ships with the HDFS NameNode, YARN ResourceManager, and
+  JobHistory web UIs (and /jmx) wide open. Enable SPNEGO + Kerberos
+  on the HTTP endpoints (`hadoop.http.authentication.type=kerberos`),
+  bind the UIs to the management VLAN, and restrict 9870 / 50070 /
+  8088 / 19888 via host firewall.
+tags: [hadoop, web-ui, hdfs, yarn]

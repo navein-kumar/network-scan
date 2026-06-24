@@ -1,0 +1,13 @@
+id: couchdb-version-disclosure
+title: CouchDB welcome banner discloses version
+severity: info
+source: couchdb
+when: reachable == true and version != ""
+evidence: '{{ .host }}:{{ .port }} CouchDB version {{ .version }}'
+references:
+  - https://docs.couchdb.org/en/stable/intro/api.html
+remediation: |
+  The unauthenticated welcome banner at / leaks the exact CouchDB
+  version, which feeds CVE selection. Restrict the listener to the
+  application subnet and patch CouchDB on a regular cadence.
+tags: [couchdb, info-disclosure]

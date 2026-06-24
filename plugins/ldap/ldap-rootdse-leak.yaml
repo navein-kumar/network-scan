@@ -1,0 +1,14 @@
+id: ldap-rootdse-leak
+title: LDAP rootDSE leaks naming context without authentication
+severity: info
+source: ldap
+when: anonymous_bind_ok == true and len(naming_contexts) > 0
+evidence: '{{ .host }}:{{ .port }} exposes naming contexts via anonymous rootDSE read: {{ .naming_contexts }}'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/c0d6a07a-5e92-4a09-985f-7c2e8a1c7a9f
+remediation: |
+  rootDSE is by design partially readable, but the namingContexts /
+  defaultNamingContext attributes expose the domain DN, useful for
+  pivoting attacks. If the directory is internet-facing, restrict the
+  rootDSE attribute list via ACL or block port 389 at the firewall.
+tags: [ldap, info-disclosure, recon]

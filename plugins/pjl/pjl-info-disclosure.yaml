@@ -1,0 +1,14 @@
+id: pjl-info-disclosure
+title: PJL discloses printer model and firmware
+severity: info
+source: pjl
+when: reachable == true and model_id != ""
+evidence: '{{ .host }}:{{ .port }} PJL INFO ID: {{ .model_id }} firmware={{ .firmware }}'
+references:
+  - https://hacking-printers.net/wiki/index.php/PJL
+remediation: |
+  PJL INFO ID and INFO CONFIG leak the printer model and firmware
+  version, which line up with public exploit lists for HP, Brother,
+  Lexmark and similar. Disable PJL access where not required, or
+  firewall 9100/tcp to the print server subnet.
+tags: [pjl, info-disclosure, printer]

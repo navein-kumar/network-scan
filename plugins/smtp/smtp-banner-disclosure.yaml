@@ -1,0 +1,15 @@
+id: smtp-banner-disclosure
+title: SMTP banner discloses MTA product and version
+severity: info
+source: smtp
+when: banner matches "(?i)(Postfix|Sendmail|Exim|Microsoft|Postmaster)"
+evidence: '{{ .host }}:{{ .port }} 220 banner advertises MTA product/version: {{ .banner }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc5321#section-4.2
+remediation: |
+  Strip the MTA name and version from the 220 greeting. Postfix:
+  smtpd_banner = $myhostname ESMTP. Sendmail: define(`confSMTP_LOGIN_MSG\\').
+  Exim: smtp_banner = $primary_hostname ESMTP. Version disclosure
+  helps an attacker pick a CVE-specific exploit (CVE-2019-10149
+  Exim, CVE-2017-7693 Postfix, etc.) without further probing.
+tags: [smtp, info-disclosure]

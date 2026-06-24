@@ -1,0 +1,14 @@
+id: jdwp-version
+title: JDWP discloses JVM version
+severity: info
+source: jdwp
+when: reachable == true and vm_version != ""
+evidence: '{{ .host }}:{{ .port }} VM {{ .vm_name }} {{ .vm_version }} (JDWP {{ .jdwp_version }})'
+references:
+  - https://docs.oracle.com/javase/8/docs/technotes/guides/jpda/jdwp-spec.html
+remediation: |
+  The JDWP handshake reveals the JVM vendor, version, and JDWP wire
+  version, which feeds CVE matching and Java exploit selection. The
+  fix is the same as for the parent JDWP exposure finding: disable
+  JDWP in production or bind to localhost.
+tags: [jdwp, info-disclosure]

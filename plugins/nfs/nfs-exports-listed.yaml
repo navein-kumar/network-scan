@@ -1,0 +1,16 @@
+id: nfs-exports-listed
+title: NFS mountd lists exported shares without authentication
+severity: low
+source: nfs
+when: exports != nil and len(exports) > 0
+evidence: '{{ .host }}:{{ .port }} mountd EXPORT returned {{ len .exports }} share(s): {{ range .exports }}{{ .path }} {{ end }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1813
+remediation: |
+  An unauthenticated mountd EXPORT reply leaks the list of NFS share
+  paths on the server. By itself this is information disclosure (helps
+  an attacker pick targets) but it becomes serious when combined with a
+  permissive /etc/exports access list. Restrict mountd to the storage
+  VLAN via host firewall, prefer Kerberos (sec=krb5p), and avoid
+  publishing share names to unauthenticated callers.
+tags: [nfs, info-disclosure, exposure]

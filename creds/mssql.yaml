@@ -1,0 +1,9 @@
+service: mssql
+attempts:
+  - { user: sa,            pass: "" }
+  - { user: sa,            pass: sa }
+  - { user: sa,            pass: password }
+  - { user: sa,            pass: Password1 }
+  - { user: sa,            pass: sql }
+  - { user: administrator, pass: administrator }
+  - { user: admin,         pass: admin }

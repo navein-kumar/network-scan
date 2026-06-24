@@ -1,0 +1,16 @@
+id: cassandra-exposed
+title: Apache Cassandra CQL native port reachable
+severity: medium
+source: cassandra
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} Cassandra CQL supports CQL={{ .cql_versions }} proto={{ .protocol_versions }}'
+references:
+  - https://cassandra.apache.org/doc/latest/cassandra/operating/security.html
+remediation: |
+  By default Cassandra accepts CQL connections with PasswordAuthenticator
+  set to "AllowAllAuthenticator", which means any client on the network
+  reads and writes every keyspace. Switch authenticator to
+  "PasswordAuthenticator" in cassandra.yaml, define users via cassandra
+  GRANT, enable client_encryption_options, and restrict 9042/tcp to the
+  app subnet.
+tags: [cassandra, cql, database]

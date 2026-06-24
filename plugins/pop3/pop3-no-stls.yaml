@@ -1,0 +1,15 @@
+id: pop3-no-stls
+title: POP3 server does not offer STLS
+severity: medium
+source: pop3
+when: stls_offered == false and banner != ""
+evidence: '{{ .host }}:{{ .port }} CAPA reply does not advertise STLS; mailbox credentials would transit in cleartext'
+references:
+  - https://www.rfc-editor.org/rfc/rfc2595
+remediation: |
+  Without STLS, USER + PASS authentication crosses the wire in
+  cleartext, where any on-path observer can capture the mailbox
+  password. Enable STLS on the existing 110 listener (Dovecot:
+  ssl = yes + disable_plaintext_auth = yes) or, better, decommission
+  the cleartext port and require POP3S on 995 only.
+tags: [pop3, cleartext, no-tls]

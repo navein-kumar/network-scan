@@ -1,0 +1,19 @@
+id: winrm-default-creds
+title: WinRM endpoint accepts default credentials
+severity: critical
+source: winrm
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://attack.mitre.org/techniques/T1021/006/
+remediation: |
+  Change the administrator password immediately. Disable Basic
+  authentication on WinRM and enforce Kerberos or NTLM with strong
+  passwords. Restrict the WinRM listener to trusted management
+  networks via firewall rules.
+tags: [creds, default-credentials, critical-cve]

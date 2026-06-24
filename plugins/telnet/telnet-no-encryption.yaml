@@ -1,0 +1,15 @@
+id: telnet-no-encryption
+title: Telnet server does not offer the ENCRYPT option
+severity: medium
+source: telnet
+when: encrypt_offered == false
+evidence: '{{ .host }}:{{ .port }} IAC negotiation does not advertise the ENCRYPT (38) option; the session is unencrypted'
+references:
+  - https://www.rfc-editor.org/rfc/rfc2946
+remediation: |
+  RFC 2946 telnet-with-encryption is rare in the field; rather than
+  trying to enable it on the device, decommission Telnet altogether
+  and run SSH. Keeping a Telnet listener even with line-mode
+  encryption negotiated leaves the option for any client to opt out
+  and revert to cleartext.
+tags: [telnet, no-encryption]

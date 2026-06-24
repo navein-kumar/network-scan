@@ -1,0 +1,17 @@
+id: ftp-default-creds
+title: FTP server accepts default credentials
+severity: critical
+source: ftp
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  Disable anonymous FTP if not strictly required. Change default
+  credentials, enforce a strong password policy, and migrate to SFTP or
+  FTPS so credentials are not exposed on the wire.
+tags: [creds, default-credentials, critical-cve]

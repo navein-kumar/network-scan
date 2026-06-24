@@ -1,0 +1,16 @@
+id: amqp-exposed
+title: AMQP 0-9-1 broker reachable (RabbitMQ / equivalent)
+severity: medium
+source: amqp
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} AMQP broker responded (product={{ .product }} version={{ .version }})'
+references:
+  - https://www.rabbitmq.com/networking.html
+  - https://www.rabbitmq.com/access-control.html
+remediation: |
+  AMQP 5672 should be reachable only from application workers, not
+  from the wider network. Bind the broker to the management VLAN,
+  delete the default `guest` account, enforce TLS on 5671, and front
+  the management UI (15672) with VPN / SSO. RabbitMQ in particular
+  ships with guest/guest enabled on the loopback by default.
+tags: [amqp, rabbitmq, mq]

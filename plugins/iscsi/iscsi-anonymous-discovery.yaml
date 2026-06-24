@@ -1,0 +1,17 @@
+id: iscsi-anonymous-discovery
+title: iSCSI target portal allows anonymous SendTargets discovery
+severity: high
+source: iscsi
+when: reachable == true and len(targets) > 0
+evidence: '{{ .host }}:{{ .port }} returned {{ len .targets }} iSCSI target(s) without authentication'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc7143
+  - https://docs.oracle.com/cd/E26505_01/html/E37386/fmvcd.html
+remediation: |
+  iSCSI portals should require CHAP (one-way at minimum, mutual CHAP
+  preferred) for the discovery session, so target names and portals
+  aren't enumerable from the network. Configure
+  auth-method=CHAP on the discovery session in the target server,
+  restrict initiator ACLs to known IQNs, and front the storage VLAN
+  with a host firewall.
+tags: [iscsi, storage, discovery]

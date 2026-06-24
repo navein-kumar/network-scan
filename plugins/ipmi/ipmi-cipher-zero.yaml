@@ -1,0 +1,18 @@
+id: ipmi-cipher-zero
+title: IPMI 2.0 Cipher Suite 0 accepted (CVE-2013-4786 admin auth bypass)
+severity: critical
+source: ipmi
+when: cipher_zero_allowed == true
+evidence: '{{ .host }}:{{ .port }} accepted an RMCP+ Open Session Request with Cipher Suite 0 (auth=integ=conf=0); the BMC grants admin access with no password'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2013-4786
+  - https://www.us-cert.gov/ncas/alerts/TA13-207A
+remediation: |
+  Disable Cipher Suite 0 in the BMC channel cipher-suite priv table.
+  ipmitool: ipmitool lan set <channel> cipher_privs XXXXXXXXXXXXXXXX
+  with X for every slot that maps to a valid cipher and "X" (or 'a'
+  for admin only) for none of them. Vendor remote consoles (Dell
+  iDRAC, HP iLO, Supermicro) also offer a web-UI toggle. Cipher
+  Zero combined with any user account name grants admin-level IPMI
+  access on the LAN.
+tags: [ipmi, cve-2013-4786, no-auth, critical]

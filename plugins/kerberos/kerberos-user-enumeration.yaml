@@ -1,0 +1,16 @@
+id: kerberos-user-enumeration
+title: Kerberos KDC distinguishes existing from nonexistent users
+severity: low
+source: kerberos
+when: len(existing_users) > 0 and len(nonexistent_users) > 0
+evidence: 'KDC at {{ .host }}:{{ .port }} returned KDC_ERR_PREAUTH_REQUIRED for {{ .existing_users }} but KDC_ERR_C_PRINCIPAL_UNKNOWN for {{ .nonexistent_users }}; valid accounts are enumerable without authentication'
+references:
+  - https://attack.mitre.org/techniques/T1087/002/
+remediation: |
+  This is RFC-correct behaviour but assists username brute-forcing.
+  Mitigation is detection-side: monitor for high volumes of AS-REQ
+  with PREAUTH_REQUIRED replies from a single client IP. Microsoft
+  AD does not offer a configuration toggle to mask the distinction;
+  feeding the KDC a username-lockout policy and tying alerting to
+  it is the practical control.
+tags: [kerberos, ad, user-enum, t1087-002]

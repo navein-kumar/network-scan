@@ -1,0 +1,16 @@
+id: citrix-exposed
+title: Citrix ICA listener reachable
+severity: medium
+source: citrix
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} replied to ICA browser hello'
+references:
+  - https://support.citrix.com/article/CTX116146
+  - https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/secure.html
+remediation: |
+  ICA (1494) and ICA over CGP (2598) should only be reachable from the
+  Citrix StoreFront / NetScaler Gateway tier, not from arbitrary client
+  networks. Place the VDA / XenApp servers behind StoreFront, enforce
+  ICA proxy through NetScaler Gateway, and restrict 1494 / 2598 to the
+  gateway subnet via host firewall.
+tags: [citrix, ica, exposure]

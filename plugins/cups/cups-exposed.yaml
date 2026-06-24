@@ -1,0 +1,15 @@
+id: cups-exposed
+title: CUPS print server reachable from the network
+severity: medium
+source: cups
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} CUPS {{ .version }} reachable ({{ .server_header }})'
+references:
+  - https://www.cups.org/doc/security.html
+remediation: |
+  CUPS bound to a routable IP exposes print queues, the IPP control
+  surface, and (depending on version) historic remote pre-auth bugs.
+  Bind cupsd to 127.0.0.1 in /etc/cups/cupsd.conf (Listen
+  localhost:631), or restrict the network listener via Allow / Order
+  directives to the print subnet only.
+tags: [cups, ipp, exposure]

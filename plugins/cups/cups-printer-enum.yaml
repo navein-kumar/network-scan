@@ -1,0 +1,15 @@
+id: cups-printer-enum
+title: CUPS allows anonymous printer enumeration
+severity: medium
+source: cups
+when: reachable == true and printer_count > 0
+evidence: '{{ .host }}:{{ .port }} {{ .printer_count }} printers visible: {{ .accessible_printers }}'
+references:
+  - https://www.cups.org/doc/security.html
+remediation: |
+  Anonymous access to /printers/ on cupsd leaks the printer queue
+  names, which fingerprint the deployment and feed targeted attacks
+  against IPP and the CUPS web UI. Add Require user @SYSTEM (or
+  equivalent) to the printer Location blocks in cupsd.conf, and bind
+  cupsd to localhost where possible.
+tags: [cups, info-disclosure, printer]

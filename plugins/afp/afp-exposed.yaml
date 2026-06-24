@@ -1,0 +1,15 @@
+id: afp-exposed
+title: Apple Filing Protocol (AFP) server reachable
+severity: info
+source: afp
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} AFP server {{ .server_name }} ({{ .machine_type }})'
+references:
+  - https://developer.apple.com/library/archive/documentation/Networking/Conceptual/AFP/Introduction/Introduction.html
+remediation: |
+  AFP is largely deprecated by SMB on modern macOS deployments and
+  often runs with default UAMs that include cleartext. If AFP is not
+  required, disable the listener (uncheck "Share files via AFP" in
+  System Settings, or stop afpd on a netatalk host). Restrict the
+  listener to a trusted subnet otherwise.
+tags: [afp, exposure]

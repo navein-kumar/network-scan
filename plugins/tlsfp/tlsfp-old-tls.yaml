@@ -1,0 +1,16 @@
+id: tlsfp-old-tls
+title: Server negotiates deprecated SSL/TLS version
+severity: medium
+source: tlsfp
+when: tls_version != nil and tls_version matches "(?i)(SSL|TLS) ?1\\.[01]"
+evidence: '{{ .host }}:{{ .port }} negotiated {{ .tls_version }} with cipher {{ .cipher_suite }}'
+references:
+  - https://datatracker.ietf.org/doc/rfc8996/
+  - https://www.pcisecuritystandards.org/document_library
+remediation: |
+  Disable SSLv3, TLS 1.0, and TLS 1.1 on this listener. RFC 8996
+  formally deprecates TLS 1.0/1.1, PCI DSS 4.0 forbids them, and major
+  browsers no longer support them. Configure the server to require
+  TLS 1.2 minimum (TLS 1.3 preferred) and remove cipher suites that
+  depend on RC4 / 3DES / CBC-mode with SHA-1.
+tags: [tls, deprecated, compliance]

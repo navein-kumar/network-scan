@@ -1,0 +1,14 @@
+id: vnc-protocol-3.3
+title: VNC server speaks legacy RFB 3.3
+severity: medium
+source: vnc
+when: protocol_version == "RFB 003.003"
+evidence: '{{ .host }}:{{ .port }} negotiates RFB 003.003; server unilaterally picks the security type, no SecurityResult phase, weak VNC-Auth is the only common option'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc6143#section-7.1.1
+remediation: |
+  Upgrade the VNC server to a build that speaks RFB 3.7 or 3.8. RFB 3.3
+  predates the security-type negotiation phase and cannot offer
+  VeNCrypt / TLS / SASL transports; an MITM cannot be detected by the
+  client. Modern tightvnc / tigervnc / realvnc default to RFB 3.8.
+tags: [vnc, legacy-protocol]

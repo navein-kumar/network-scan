@@ -1,0 +1,9 @@
+service: winrm
+attempts:
+  - { user: administrator, pass: administrator }
+  - { user: administrator, pass: password }
+  - { user: administrator, pass: "Password1" }
+  - { user: administrator, pass: "P@ssw0rd" }
+  - { user: admin,         pass: admin }
+  - { user: admin,         pass: password }
+  - { user: user,          pass: user }

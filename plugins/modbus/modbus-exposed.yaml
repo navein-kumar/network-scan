@@ -1,0 +1,18 @@
+id: modbus-exposed
+title: Modbus/TCP industrial control device reachable on the network
+severity: high
+source: modbus
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} responded to Modbus/TCP function 0x2B; units responding: {{ .units_responding }}'
+references:
+  - https://www.modbus.org/docs/Modbus_Messaging_Implementation_Guide_V1_0b.pdf
+  - https://www.cisa.gov/topics/industrial-control-systems
+remediation: |
+  Modbus/TCP has no authentication or encryption: any IP that can reach
+  502/TCP can read and write coils, holding registers, and (depending on
+  the slave) cause physical actions in industrial processes. Place the
+  device in an isolated OT VLAN, allow Modbus only from the engineering
+  workstation and SCADA polling servers, log and alert on writes from
+  unexpected source IPs, and front legacy slaves with a Modbus-capable
+  IDS or data-diode where possible.
+tags: [modbus, ics, ot, exposure]

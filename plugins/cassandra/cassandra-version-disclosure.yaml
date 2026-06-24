@@ -1,0 +1,13 @@
+id: cassandra-version-disclosure
+title: Cassandra discloses CQL and protocol versions
+severity: info
+source: cassandra
+when: reachable == true and len(cql_versions) > 0
+evidence: '{{ .host }}:{{ .port }} CQL versions {{ .cql_versions }}, protocol {{ .protocol_versions }}'
+references:
+  - https://cassandra.apache.org/doc/latest/cassandra/developing/cql/index.html
+remediation: |
+  The SUPPORTED frame from an unauthenticated OPTIONS leaks the CQL
+  version range and protocol versions, which both line up with the
+  Cassandra release matrix. Restrict the listener and patch.
+tags: [cassandra, info-disclosure]

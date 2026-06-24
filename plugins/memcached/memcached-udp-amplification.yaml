@@ -1,0 +1,15 @@
+id: memcached-udp-amplification
+title: memcached UDP listener is a DDoS amplification surface
+severity: medium
+source: memcached
+when: reachable == true
+evidence: 'TCP probe succeeded on {{ .host }}:{{ .port }}; UDP 11211 should be checked separately. CVE-2018-1000115: a spoofed-source UDP "stats" packet yields a 51,000x reflection ratio.'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2018-1000115
+  - https://blog.cloudflare.com/memcrashed-major-amplification-attacks-from-port-11211/
+remediation: |
+  memcached 1.5.6+ disables UDP by default. Start memcached with -U 0
+  to turn off the UDP listener, or block UDP/11211 at the host or
+  network firewall. Even if TCP/11211 is properly scoped, an exposed
+  UDP listener is a free reflector for amplification campaigns.
+tags: [memcached, udp, amplification, cve-2018-1000115]

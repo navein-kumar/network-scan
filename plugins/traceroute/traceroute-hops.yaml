@@ -1,0 +1,15 @@
+id: traceroute-hops
+title: Traceroute path to host enumerated
+severity: info
+source: traceroute
+when: hops != nil and len(hops) > 0
+evidence: '{{ .host }} reached via {{ len .hops }} traceroute hops'
+references:
+  - https://nmap.org/book/man-host-discovery.html
+remediation: |
+  Internal traceroute results are normal pentest artefacts; they
+  document the path your scanner took to reach the target. The
+  finding records hop count and the final-hop IP so the report can
+  show which gateways and firewalls sit between the scanner and the
+  asset. No remediation is needed.
+tags: [traceroute, recon]

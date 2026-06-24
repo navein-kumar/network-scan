@@ -1,0 +1,14 @@
+id: memcached-version-disclosure
+title: memcached stats discloses version
+severity: info
+source: memcached
+when: version != ""
+evidence: '{{ .host }}:{{ .port }} STAT version = {{ .version }}'
+references:
+  - https://github.com/memcached/memcached/wiki/ProtocolText
+remediation: |
+  Version disclosure helps an attacker pick CVE-specific exploits
+  (CVE-2016-8704/8705/8706 buffer overflows, CVE-2018-1000115 UDP
+  amplification). Mitigation is to make the listener unreachable;
+  see memcached-no-auth.
+tags: [memcached, info-disclosure]

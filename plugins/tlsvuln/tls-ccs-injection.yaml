@@ -1,0 +1,16 @@
+id: tls-ccs-injection
+title: OpenSSL CCS Injection (CVE-2014-0224)
+severity: high
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    .id matches "(?i)^CCS" and .finding matches "(?i)VULNERABLE"
+  })
+evidence: '{{ .host }}:{{ .port }} OpenSSL CCS Injection'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-0224
+remediation: |
+  Upgrade OpenSSL to 1.0.1h / 1.0.0m / 0.9.8za or later. An attacker on
+  the network path can force the use of a predictable master secret and
+  decrypt or modify traffic.
+tags: [tls, ccs-injection, cve-2014-0224]

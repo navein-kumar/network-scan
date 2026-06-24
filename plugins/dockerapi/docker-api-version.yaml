@@ -1,0 +1,14 @@
+id: docker-api-version
+title: Docker daemon discloses version and host info
+severity: info
+source: dockerapi
+when: reachable == true and version != ""
+evidence: '{{ .host }}:{{ .port }} Docker {{ .version }} (API {{ .api_version }}) on {{ .os }}/{{ .arch }} kernel {{ .kernel_version }}'
+references:
+  - https://docs.docker.com/engine/api/
+remediation: |
+  /version on the Docker socket leaks the daemon version, host OS,
+  architecture, and kernel version. Even when authentication is
+  enforced, this aids CVE selection. Bind the Docker socket to a Unix
+  socket or to localhost with TLS instead of an open TCP port.
+tags: [docker, info-disclosure]

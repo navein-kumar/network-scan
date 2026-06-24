@@ -1,0 +1,15 @@
+id: ldap-no-tls
+title: LDAP plaintext port (389) without TLS
+severity: medium
+source: ldap
+when: port == 389 and is_tls == false
+evidence: '{{ .host }}:389 is plaintext LDAP; credentials and directory data traverse the network without encryption'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc4513#section-3
+remediation: |
+  Require LDAPS (636) or LDAP+StartTLS. Active Directory: enable LDAP
+  channel binding and signing, and require LDAPS via the
+  "Domain controller: LDAP server channel binding token requirements"
+  GPO. OpenLDAP: in slapd.conf set TLS certificate paths and apply
+  "security tls=1" to refuse plaintext binds.
+tags: [ldap, plaintext, no-tls]

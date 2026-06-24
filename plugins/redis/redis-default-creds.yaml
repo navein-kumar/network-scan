@@ -1,0 +1,25 @@
+id: redis-default-creds
+title: Redis server accepts default credentials or has no AUTH set
+severity: critical
+source: redis
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success -}}
+  {{- if eq .pass "" -}}
+  {{ .host }}:{{ .port }} answered PING +PONG without AUTH (no password set)
+  {{ else -}}
+  {{ .host }}:{{ .port }} authenticated with AUTH pass={{ .pass }}
+  {{ end -}}
+  {{- end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://redis.io/docs/management/security/
+remediation: |
+  Set a strong requirepass in redis.conf or migrate to ACL-based
+  authentication (Redis 6+). Bind Redis to a non-public interface, and
+  disable or rename CONFIG, FLUSHALL, and EVAL commands on
+  internet-exposed instances. No-AUTH Redis often allows RCE via SSH
+  authorized_keys overwrite or cron-job injection.
+tags: [creds, default-credentials, critical-cve]

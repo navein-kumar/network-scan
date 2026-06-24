@@ -1,0 +1,14 @@
+id: hnap-info-disclosure
+title: HNAP1 leaks router model and firmware version
+severity: medium
+source: hnap
+when: reachable == true and model_name != ""
+evidence: '{{ .host }}:{{ .port }} HNAP discloses model={{ .model_name }} fw={{ .firmware_version }} device={{ .device_name }}'
+references:
+  - https://www.kb.cert.org/vuls/id/678029
+remediation: |
+  Anonymous GetDeviceSettings leaks the exact router model and
+  firmware build, both of which line up with the public CVE list for
+  consumer router brands. Disable HNAP, update firmware, and confirm
+  the WAN side of the router is not exposing the management surface.
+tags: [hnap, info-disclosure]

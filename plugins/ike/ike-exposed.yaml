@@ -1,0 +1,15 @@
+id: ike-exposed
+title: IKE / IPsec endpoint reachable
+severity: medium
+source: ike
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} ISAKMP/IKE responded (version {{ .ike_version }})'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc2408
+  - https://datatracker.ietf.org/doc/html/rfc5996
+remediation: |
+  IKE on UDP 500 (and NAT-T 4500) is typically only needed from known
+  peer IPs. Restrict the listener with peer-IP allowlists on the
+  firewall / IPsec gateway. If this is a VPN concentrator, consider
+  enforcing certificate auth and disabling Aggressive Mode entirely.
+tags: [ike, ipsec, vpn]

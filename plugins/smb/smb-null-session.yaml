@@ -1,0 +1,20 @@
+id: smb-null-session
+title: SMB anonymous (null) session permitted
+severity: medium
+source: smb
+when: null_session == true
+evidence: '{{ .host }}:{{ .port }} accepts anonymous SMB authentication'
+references:
+  - https://attack.mitre.org/techniques/T1135/
+  - https://learn.microsoft.com/en-us/troubleshoot/windows-server/security/enable-restrictanonymous-registry-value
+remediation: |
+  Disable anonymous SMB access. Windows: set
+  "Network access: Allow anonymous SID/Name translation" = Disabled and
+  "Network access: Restrict anonymous access to Named Pipes and Shares" = Enabled
+  via Group Policy. Samba: in smb.conf set
+    restrict anonymous = 2
+  to refuse the anonymous SMB session entirely.
+  Anonymous sessions enable share / user / domain enumeration without
+  credentials, used as a foothold in the recon phase of every internal
+  engagement.
+tags: [smb, info-disclosure, recon]

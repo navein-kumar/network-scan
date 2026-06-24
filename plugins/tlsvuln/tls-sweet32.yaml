@@ -1,0 +1,17 @@
+id: tls-sweet32
+title: TLS SWEET32 (CVE-2016-2183) - 64-bit block cipher in CBC mode
+severity: medium
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    .id matches "(?i)SWEET32" and .finding matches "(?i)VULNERABLE"
+  })
+evidence: '{{ .host }}:{{ .port }} SWEET32 (3DES or other 64-bit block cipher offered)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-2183
+  - https://sweet32.info/
+remediation: |
+  Remove all cipher suites that use 64-bit block ciphers (3DES, IDEA,
+  Blowfish). For OpenSSL-style configs add !3DES !IDEA to the cipher
+  list. PCI DSS 4.0 forbids 3DES in any new deployment.
+tags: [tls, sweet32, cve-2016-2183]

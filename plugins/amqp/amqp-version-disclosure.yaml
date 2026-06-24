@@ -1,0 +1,16 @@
+id: amqp-version-disclosure
+title: AMQP Connection.Start leaks broker product and version
+severity: info
+source: amqp
+when: reachable == true and version != nil and version != ""
+evidence: '{{ .host }}:{{ .port }} AMQP server-properties {{ .product }} {{ .version }} ({{ .platform }})'
+references:
+  - https://www.rabbitmq.com/specification.html
+remediation: |
+  The unauthenticated AMQP Connection.Start method exposes broker
+  product, version, and platform via server-properties. This is
+  intrinsic to AMQP 0-9-1, so the right mitigation is reachability:
+  restrict 5672 to the application tier, expose only the TLS-enabled
+  5671 port externally, and patch broker versions on the public CVE
+  list.
+tags: [amqp, info-disclosure]

@@ -1,0 +1,18 @@
+id: ssh-weak-mac
+title: SSH server permits weak MAC algorithms (MD5 / SHA-1)
+severity: low
+source: ssh
+when: |
+  "hmac-md5" in macs_s2c or "hmac-md5" in macs_c2s or
+  "hmac-md5-96" in macs_s2c or "hmac-md5-96" in macs_c2s or
+  "hmac-sha1" in macs_s2c or "hmac-sha1" in macs_c2s or
+  "hmac-sha1-96" in macs_s2c or "hmac-sha1-96" in macs_c2s
+evidence: '{{ .host }}:{{ .port }} permits MD5/SHA-1 MAC algorithms'
+references:
+  - https://www.openssh.com/legacy.html
+remediation: |
+  Restrict MACs to SHA-2 / Encrypt-then-MAC constructions only. In
+  /etc/ssh/sshd_config add:
+    MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,umac-128-etm@openssh.com
+  Reload sshd.
+tags: [ssh, weak-crypto]

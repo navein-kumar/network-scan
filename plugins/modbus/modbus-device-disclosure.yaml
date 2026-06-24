@@ -1,0 +1,17 @@
+id: modbus-device-disclosure
+title: Modbus/TCP device discloses vendor and product identification
+severity: info
+source: modbus
+when: vendor_name != nil and vendor_name != ""
+evidence: '{{ .host }}:{{ .port }} Modbus Read Device Identification: vendor={{ .vendor_name }} product={{ .product_code }} rev={{ .major_minor_revision }}'
+references:
+  - https://www.modbus.org/docs/Modbus_Messaging_Implementation_Guide_V1_0b.pdf
+remediation: |
+  Read Device Identification (function 0x2B / MEI 0x0E) is an
+  optional but commonly enabled diagnostic that returns vendor,
+  product code, and firmware revision strings (e.g. "Schneider
+  Electric / Modicon M340"). This narrows attacker effort to a
+  small set of firmware CVEs. Disable the optional 0x2B response on
+  the PLC if the vendor supports it, and restrict 502/TCP access at
+  the network layer.
+tags: [modbus, ics, info-disclosure]

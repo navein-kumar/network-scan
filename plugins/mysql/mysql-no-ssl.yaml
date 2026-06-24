@@ -1,0 +1,19 @@
+id: mysql-no-ssl
+title: MySQL server does not advertise SSL/TLS support
+severity: medium
+source: mysql
+when: ssl_supported == false
+evidence: '{{ .host }}:{{ .port }} handshake omits the CLIENT_SSL capability flag, so client connections fall back to cleartext'
+references:
+  - https://dev.mysql.com/doc/refman/8.0/en/encrypted-connections.html
+remediation: |
+  Configure MySQL to support TLS. In my.cnf set:
+    ssl_ca=/path/ca.pem
+    ssl_cert=/path/server-cert.pem
+    ssl_key=/path/server-key.pem
+    require_secure_transport=ON
+  and force clients to use --ssl-mode=REQUIRED. Without TLS, the
+  authentication handshake (including the scrambled hash that backs
+  caching_sha2_password) and all query traffic crosses the wire in
+  plaintext and is trivially recoverable by a network MITM.
+tags: [mysql, tls, mitm]

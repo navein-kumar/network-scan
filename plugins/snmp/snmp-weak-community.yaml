@@ -1,0 +1,15 @@
+id: snmp-weak-community
+title: SNMP service accepts a guessable non-default community
+severity: medium
+source: snmp
+when: community_hit != "" and not (community_hit in ["public", "private"])
+evidence: '{{ .host }}:{{ .port }} answered SNMPv2c GetRequest with community "{{ .community_hit }}"; sysDescr = {{ .sys_descr }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc3411.html
+remediation: |
+  The community in use is not the literal "public" / "private" default
+  but still appears on common wordlists ("community", "manager",
+  "admin", "snmp", "guest"). Replace with a long random secret or
+  move the agent to SNMPv3 with authPriv. Restrict the UDP listener
+  to the management VLAN.
+tags: [snmp, weak-creds]

@@ -1,0 +1,17 @@
+id: winrm-basic-auth
+title: WinRM listener advertises Basic authentication
+severity: medium
+source: winrm
+when: reachable == true and "Basic" in auth_methods_offered
+evidence: '{{ .host }}:{{ .port }} WWW-Authenticate includes Basic (auth methods: {{ .auth_methods_offered }})'
+references:
+  - https://learn.microsoft.com/en-us/windows/win32/winrm/authentication-for-remote-connections
+remediation: |
+  Disable Basic auth on the WinRM service. PowerShell:
+    Set-Item WSMan:\localhost\Service\Auth\Basic -Value $false
+    Set-Item WSMan:\localhost\Client\Auth\Basic -Value $false
+  Basic auth sends the password base64-encoded on every SOAP request.
+  Combined with the plaintext listener (port 5985) this leaks
+  credentials directly. Prefer Negotiate (Kerberos when on-domain) or
+  CredSSP for legitimate use cases.
+tags: [winrm, basic-auth, credential-exposure]

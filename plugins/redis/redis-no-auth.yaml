@@ -1,0 +1,17 @@
+id: redis-no-auth
+title: Redis server accepts commands without authentication
+severity: high
+source: redis
+when: auth_required == false and reachable == true
+evidence: '{{ .host }}:{{ .port }} answered PING without an AUTH challenge; version = {{ .version }}, role = {{ .role }}'
+references:
+  - https://redis.io/docs/management/security/
+  - https://attack.mitre.org/techniques/T1078/001/
+remediation: |
+  Unauthenticated Redis is a one-step compromise: SLAVEOF / CONFIG SET
+  / MODULE LOAD all allow attacker-controlled code paths. Set a long
+  requirepass in redis.conf (or enable the ACL system on Redis 6+),
+  bind the listener to internal interfaces only ("bind 127.0.0.1
+  10.0.0.5"), enable protected-mode yes, and front the daemon with the
+  host firewall.
+tags: [redis, no-auth, default-creds]

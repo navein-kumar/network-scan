@@ -1,0 +1,14 @@
+id: vnc-weak-vncauth
+title: VNC server offers VNCAuth (DES-based, 8-char truncation)
+severity: low
+source: vnc
+when: '"VNCAuth" in security_types'
+evidence: '{{ .host }}:{{ .port }} offers VNCAuth (security type 2); the password is truncated to 8 characters and protected by a 64-bit DES challenge/response, brute-forceable offline once a challenge is captured'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc6143#section-7.2.2
+remediation: |
+  Disable VNCAuth and require a stronger security type. Configure the
+  VNC server for VeNCrypt+x509 (TLS-tunneled VNC) or SASL, or front the
+  service with SSH/TLS at the network layer. Avoid relying on the
+  8-character VNC password as an access control.
+tags: [vnc, weak-crypto]

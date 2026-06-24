@@ -1,0 +1,18 @@
+id: tls-logjam-common-primes
+title: TLS Logjam / weak DH primes (CVE-2015-4000)
+severity: medium
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    .id matches "(?i)LOGJAM"
+  })
+evidence: '{{ .host }}:{{ .port }} Logjam (export-grade DH or common 512/1024-bit primes)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-4000
+  - https://weakdh.org/
+remediation: |
+  Disable export-grade (DHE_EXPORT) cipher suites. Replace any 512 or
+  1024-bit Diffie-Hellman parameters with freshly generated 2048-bit (or
+  larger) DH params. Prefer ECDHE cipher suites with a strong curve
+  (X25519 or P-256).
+tags: [tls, logjam, cve-2015-4000]

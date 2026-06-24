@@ -1,0 +1,13 @@
+id: os-fingerprint
+title: OS detection result
+severity: info
+source: os
+when: best.name != ""
+evidence: '{{ .host }} fingerprinted as {{ .best.name }} ({{ .best.accuracy }}% confidence, vendor={{ .best.vendor }})'
+references:
+  - https://nmap.org/book/man-os-detection.html
+remediation: |
+  Informational: nmap's TCP/IP stack fingerprint identified the host's
+  operating system. Use this to correlate with other findings
+  (banner versions, SMB OS discovery, SNMP sysDescr).
+tags: [os, recon]

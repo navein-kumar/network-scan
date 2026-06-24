@@ -1,0 +1,17 @@
+id: isns-exposed
+title: Internet Storage Name Service (iSNS) reachable
+severity: medium
+source: isns
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} iSNS server responded to DevAttrQry ({{ .device_count }} device tags)'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc4171
+  - https://learn.microsoft.com/en-us/windows-server/storage/iscsi/isns-server
+remediation: |
+  iSNS aggregates the storage fabric (iSCSI / FC / iFCP) topology. Any
+  client reaching 3205/tcp can enumerate registered targets and their
+  portals, which gives an attacker the map of the storage tier. Bind
+  the iSNS server to the storage management VLAN, restrict TCP/UDP
+  3205 with a host firewall, and enable CHAP on the iSCSI tier itself
+  so that target enumeration alone is not enough to mount LUNs.
+tags: [isns, storage]

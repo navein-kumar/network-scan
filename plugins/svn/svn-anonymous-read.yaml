@@ -1,0 +1,18 @@
+id: svn-anonymous-read
+title: Subversion advertises ANONYMOUS or EDIT-PIPELINE without auth
+severity: high
+source: svn
+when: reachable == true and ("ANONYMOUS" in capabilities or "anonymous" in capabilities or "EXTERNAL" in capabilities)
+evidence: '{{ .host }}:{{ .port }} svnserve advertises ANONYMOUS / EXTERNAL ({{ .capabilities }})'
+references:
+  - https://subversion.apache.org/docs/community-guide/general.html
+remediation: |
+  Anonymous svnserve access allows full repository read without
+  credentials. Edit `conf/svnserve.conf`:
+    [general]
+    anon-access = none
+    auth-access = write
+    password-db = passwd
+  Restart svnserve. Better: deprecate svnserve in favour of HTTPS +
+  mod_dav_svn behind SSO.
+tags: [svn, scm, anonymous]

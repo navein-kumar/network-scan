@@ -1,0 +1,18 @@
+id: hbase-exposed
+title: Apache HBase web UI / JMX reachable
+severity: high
+source: hbase
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} HBase {{ .role }} {{ .version }} ({{ .live_servers }} live, {{ .dead_servers }} dead)'
+references:
+  - https://hbase.apache.org/book.html#security
+  - https://nvd.nist.gov/vuln/detail/CVE-2017-3161
+remediation: |
+  HBase ships with the Master and Region Server web UIs open to the
+  network by default, exposing /jmx and table metadata to anyone who
+  can reach the port. Bind hbase.master.info.bindAddress and
+  hbase.regionserver.info.bindAddress to the management subnet (or
+  127.0.0.1 with an authenticated reverse proxy), enable SPNEGO on
+  the web UI, and lock down 60010 / 60030 / 16010 / 16030 via host
+  firewall.
+tags: [hbase, hadoop, web-ui]

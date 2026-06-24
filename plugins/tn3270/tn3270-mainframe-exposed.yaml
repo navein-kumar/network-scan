@@ -1,0 +1,15 @@
+id: tn3270-mainframe-exposed
+title: TN3270 / TN3270E listener reachable (likely mainframe)
+severity: medium
+source: tn3270
+when: tn3270e_offered == true
+evidence: '{{ .host }}:{{ .port }} negotiated TN3270E option ({{ .lu_name }})'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc2355
+  - https://www.ibm.com/docs/en/zos/2.5.0?topic=server-tn3270e-overview
+remediation: |
+  TN3270 ports lead to a z/OS / IBM i logon screen and become a high-
+  value brute-force target. Move TN3270 behind a VPN, enforce
+  TLS-secured TN3270E (port 992), and rate-limit login attempts at
+  the network policy server (e.g. Communications Server policies).
+tags: [tn3270, mainframe, ibm]

@@ -1,0 +1,15 @@
+id: ike-aggressive-mode
+title: IKE Aggressive Mode accepted (PSK hash recovery surface)
+severity: high
+source: ike
+when: aggressive_mode_accepted == true
+evidence: '{{ .host }}:{{ .port }} accepted IKEv1 Aggressive Mode SA proposal'
+references:
+  - https://www.nccgroup.com/uk/research-blog/cracking-aggressive-mode-pre-shared-keys/
+  - https://datatracker.ietf.org/doc/html/rfc2409
+remediation: |
+  IKEv1 Aggressive Mode reveals the responder's PSK hash before
+  authentication, enabling offline brute force. Either disable
+  Aggressive Mode in the IPsec gateway (force Main Mode), switch the
+  tunnel to IKEv2, or move from PSK to certificate auth.
+tags: [ike, ipsec, aggressive-mode, psk]

@@ -1,0 +1,18 @@
+id: postgresql-no-ssl
+title: PostgreSQL server does not support SSL/TLS
+severity: medium
+source: postgresql
+when: ssl_supported == false
+evidence: '{{ .host }}:{{ .port }} replied "N" to an SSLRequest; client connections are forced to plaintext'
+references:
+  - https://www.postgresql.org/docs/current/ssl-tcp.html
+remediation: |
+  Enable TLS on the PostgreSQL listener. In postgresql.conf set
+    ssl = on
+    ssl_cert_file = '/path/server.crt'
+    ssl_key_file  = '/path/server.key'
+  and in pg_hba.conf use "hostssl" entries (not "host") so plaintext
+  connections are refused. Without TLS, the SCRAM challenge-response
+  is observable by a MITM and rows returned by SELECT cross the wire
+  in cleartext.
+tags: [postgresql, tls, mitm]

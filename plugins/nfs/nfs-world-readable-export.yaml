@@ -1,0 +1,17 @@
+id: nfs-world-readable-export
+title: NFS export is world-readable (no host ACL)
+severity: high
+source: nfs
+when: exports != nil and any(exports, {.world_readable == true})
+evidence: '{{ .host }}:{{ .port }} world-readable NFS share(s): {{ range .exports }}{{ if .world_readable }}{{ .path }} {{ end }}{{ end }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1813#section-5.2
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  At least one /etc/exports entry on this server is mountable by any
+  client (host ACL is empty or contains "*"). Anyone on the network can
+  mount the share and read (often write) its contents, bypassing all
+  Unix permission checks via UID spoofing. Replace the wildcard with an
+  explicit subnet list, add root_squash and all_squash, and switch to
+  sec=krb5p so identity is verified by Kerberos rather than client IP.
+tags: [nfs, exposure, misconfiguration]

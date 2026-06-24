@@ -1,0 +1,14 @@
+id: mongodb-version-disclosure
+title: MongoDB isMaster discloses server version
+severity: info
+source: mongodb
+when: version != ""
+evidence: '{{ .host }}:{{ .port }} isMaster: version = {{ .version }}, maxWireVersion = {{ .max_wire_version }}'
+references:
+  - https://www.mongodb.com/docs/manual/reference/command/isMaster/
+remediation: |
+  Version disclosure on its own is informational, but it tells an
+  attacker which CVEs apply (CVE-2021-20329 SCRAM auth bypass on
+  <4.0.27, CVE-2024-7553 Compass-driver SSRF on <8.0.0). The
+  operational fix is to make isMaster unreachable; see mongodb-no-auth.
+tags: [mongodb, info-disclosure]

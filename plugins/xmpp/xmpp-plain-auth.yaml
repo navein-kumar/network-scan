@@ -1,0 +1,17 @@
+id: xmpp-plain-auth
+title: XMPP offers SASL PLAIN authentication
+severity: medium
+source: xmpp
+when: reachable == true and "PLAIN" in auth_mechanisms
+evidence: '{{ .host }}:{{ .port }} XMPP advertises SASL PLAIN (mechanisms: {{ .auth_mechanisms }})'
+references:
+  - https://xmpp.org/rfcs/rfc6120.html#sasl
+  - https://datatracker.ietf.org/doc/html/rfc4616
+remediation: |
+  SASL PLAIN sends the password (base64-encoded) in cleartext, so it
+  must be confined to TLS-protected sessions and ideally replaced
+  with SCRAM-SHA-256 or EXTERNAL (cert). Disable PLAIN over plaintext
+  streams in the server config (`allow_unencrypted_plain_auth = false`
+  on Prosody; equivalent setting on ejabberd / Openfire) and prefer
+  SCRAM mechanisms.
+tags: [xmpp, auth, sasl]

@@ -1,0 +1,12 @@
+service: ssh
+attempts:
+  - { user: root,     pass: root }
+  - { user: root,     pass: toor }
+  - { user: root,     pass: "" }
+  - { user: root,     pass: password }
+  - { user: admin,    pass: admin }
+  - { user: admin,    pass: password }
+  - { user: user,     pass: user }
+  - { user: pi,       pass: raspberry }
+  - { user: ubuntu,   pass: ubuntu }
+  - { user: msfadmin, pass: msfadmin }

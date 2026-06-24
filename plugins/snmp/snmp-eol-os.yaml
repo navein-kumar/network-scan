@@ -1,0 +1,15 @@
+id: snmp-eol-os
+title: SNMP sysDescr advertises an end-of-life operating system
+severity: medium
+source: snmp
+when: sys_descr matches "(?i)(Windows.*2003|Windows.*XP|Windows.*Server 2008|Linux.*2\\.[46]\\.|HPUX)"
+evidence: '{{ .host }}:{{ .port }} sysDescr indicates an EOL platform: {{ .sys_descr }}'
+references:
+  - https://learn.microsoft.com/en-us/lifecycle/products/
+remediation: |
+  The system MIB exposes an operating system the vendor no longer
+  ships security patches for. Migrate the host to a supported OS
+  release. In the interim, segment the host off any path reachable
+  from untrusted networks; an EOL kernel accumulates remote-code
+  CVEs with no fix path.
+tags: [snmp, eol]

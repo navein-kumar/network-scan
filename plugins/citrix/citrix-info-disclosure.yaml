@@ -1,0 +1,14 @@
+id: citrix-info-disclosure
+title: Citrix ICA reply leaks server name
+severity: info
+source: citrix
+when: reachable == true and server_name != nil and server_name != ""
+evidence: '{{ .host }}:{{ .port }} ICA reply contains printable string {{ .server_name }}'
+references:
+  - https://support.citrix.com/article/CTX116146
+remediation: |
+  The ICA browser response embeds a printable string that often
+  matches the XenApp / VDA server hostname. Limit who can reach the
+  listener so this enumeration surface is not available to attackers
+  outside the trust boundary.
+tags: [citrix, ica, info-disclosure]

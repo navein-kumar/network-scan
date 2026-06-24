@@ -1,0 +1,14 @@
+id: vnc-no-auth-required
+title: VNC server permits unauthenticated access
+severity: critical
+source: vnc
+when: no_auth_required == true
+evidence: '{{ .host }}:{{ .port }} offers security type None (1); any client can connect to the framebuffer with no password'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc6143#section-7.2
+remediation: |
+  Configure the VNC server to require authentication. For tightvnc /
+  tigervnc / realvnc, set a password via vncpasswd and disable the
+  SecurityTypes=None option in the server config. Better: front the VNC
+  service with an SSH or TLS tunnel and bind the listener to localhost.
+tags: [vnc, no-auth, exposure]

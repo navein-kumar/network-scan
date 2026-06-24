@@ -1,0 +1,16 @@
+id: ftp-anonymous-login
+title: FTP server accepts anonymous login
+severity: medium
+source: ftp
+when: anonymous_login == true
+evidence: '{{ .host }}:{{ .port }} returned 230 for USER anonymous; anyone can list and download from the public area'
+references:
+  - https://attack.mitre.org/techniques/T1078/001/
+remediation: |
+  Disable anonymous FTP unless the directory served is genuinely
+  intended for public download (which is almost never the modern
+  pattern). vsftpd: anonymous_enable=NO. proftpd: AnonymousAuthAllowed
+  off. ftpd-BSD: -A flag. Where public download IS required, move
+  to HTTPS so credentials and listings are not negotiable in
+  cleartext.
+tags: [ftp, no-auth]

@@ -1,0 +1,17 @@
+id: rdp-standard-security
+title: RDP server allows standard RDP security without TLS
+severity: high
+source: rdp
+when: rdp_security_offered == true and tls_offered == false
+evidence: '{{ .host }}:{{ .port }} accepts standard RDP security; the legacy MITM-able RC4 RDP encryption is the only protection on the channel'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/05073f5a-c3b1-4e29-b5a1-66a52f53b8c5
+remediation: |
+  Force SSL/TLS (or CredSSP/NLA) on the RDP listener. Group Policy:
+  "Computer Configuration > Administrative Templates > Windows Components
+   > Remote Desktop Services > Remote Desktop Session Host > Security >
+   Require use of specific security layer for remote (RDP) connections" =
+  Enabled, "Security Layer" = SSL (TLS 1.0). Standard RDP security uses
+  RC4 with a key derived from the client nonce and is well-documented
+  MITM-able. Modern Windows hosts should not offer this layer at all.
+tags: [rdp, weak-crypto, mitm]

@@ -1,0 +1,16 @@
+id: rpc-nfs-enabled
+title: NFS server registered with portmap
+severity: medium
+source: rpc
+when: nfs_enabled == true
+evidence: '{{ .host }}:{{ .port }} portmap lists NFS (program 100003); mountd port = {{ .mountd_port }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc1813
+remediation: |
+  An NFS listener visible from outside the host network is a frequent
+  source of accidental file-sharing exposures. Confirm the service is
+  intentional. If it is, restrict TCP/UDP 2049 plus the mountd
+  ephemeral port (or pin mountd via /etc/nfs.conf "port = 32767") to
+  the storage VLAN, require Kerberos sec=krb5p, and disable
+  rpcbind/portmap on hosts that don't need RPC discovery.
+tags: [rpc, nfs, exposure]

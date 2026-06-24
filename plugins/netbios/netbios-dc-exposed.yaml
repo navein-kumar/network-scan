@@ -1,0 +1,16 @@
+id: netbios-dc-exposed
+title: Domain controller discoverable via NetBIOS name service
+severity: medium
+source: netbios
+when: any(names, {.suffix == "0x1C"})
+evidence: '{{ .host }}:{{ .port }} responds to NBSTAT with a 0x1C (domain-controllers) entry, identifying it as a DC'
+references:
+  - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-brws/
+remediation: |
+  A 0x1C name registration tells any LAN client this host is a
+  domain controller for the named NT4-style domain. Restrict UDP
+  137 (and 138) to the management VLAN with host firewall rules
+  and rely on DNS SRV records (\\_ldap._tcp.dc._msdcs) for DC
+  discovery instead. The NetBIOS browser service is unsupported
+  by modern AD deployments.
+tags: [netbios, ad, info-disclosure]

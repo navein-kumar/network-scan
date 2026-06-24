@@ -1,0 +1,16 @@
+id: ldap-anonymous-bind
+title: LDAP anonymous bind permitted
+severity: medium
+source: ldap
+when: anonymous_bind_ok == true
+evidence: '{{ .host }}:{{ .port }} accepts anonymous BIND; rootDSE and (depending on ACL) directory contents are readable without credentials'
+references:
+  - https://learn.microsoft.com/en-us/troubleshoot/windows-server/identity/anonymous-ldap-operations-active-directory-disabled
+remediation: |
+  Disable anonymous LDAP BIND. Active Directory: set
+  dsHeuristics[7]=2 to block anonymous operations beyond rootDSE, or
+  configure "ms-DS-Other-Settings: dSHeuristics" via ADSI Edit.
+  OpenLDAP: in slapd.conf set "disallow bind_anon" or in cn=config set
+  olcDisallows: bind_anon. Anonymous bind is exploited by every internal
+  recon workflow (BloodHound, ldapsearch, ldapdomaindump).
+tags: [ldap, anonymous, recon]

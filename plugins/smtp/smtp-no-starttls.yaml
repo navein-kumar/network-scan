@@ -1,0 +1,15 @@
+id: smtp-no-starttls
+title: SMTP server does not advertise STARTTLS
+severity: medium
+source: smtp
+when: starttls_offered == false
+evidence: '{{ .host }}:{{ .port }} EHLO response omits STARTTLS; capabilities = {{ .capabilities }}'
+references:
+  - https://www.rfc-editor.org/rfc/rfc3207
+remediation: |
+  Configure the MTA to advertise STARTTLS on submission and MX
+  ports. Postfix: smtpd_tls_security_level = may (or = encrypt for
+  587 submission). Exim: tls_advertise_hosts = *. Without TLS,
+  upstream relays send mail bodies and auth (PLAIN / LOGIN) in
+  cleartext, observable by any path-on-net adversary.
+tags: [smtp, tls, mitm]

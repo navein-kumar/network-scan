@@ -1,0 +1,10 @@
+service: mysql
+attempts:
+  - { user: root,  pass: "" }
+  - { user: root,  pass: root }
+  - { user: root,  pass: password }
+  - { user: root,  pass: toor }
+  - { user: root,  pass: mysql }
+  - { user: admin, pass: admin }
+  - { user: mysql, pass: mysql }
+  - { user: user,  pass: user }

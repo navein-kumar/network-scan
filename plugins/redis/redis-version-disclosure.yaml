@@ -1,0 +1,15 @@
+id: redis-version-disclosure
+title: Redis INFO discloses server version
+severity: info
+source: redis
+when: version != ""
+evidence: '{{ .host }}:{{ .port }} INFO server: redis_version = {{ .version }}'
+references:
+  - https://redis.io/commands/info/
+remediation: |
+  Version disclosure is a recon-aid: knowing the precise build lets an
+  attacker pick a CVE-specific exploit (CVE-2022-0543 Lua sandbox
+  escape, CVE-2023-25155 INCRBYFLOAT integer overflow, etc.). On its
+  own this is informational; the operational fix is to require AUTH
+  and restrict the listener so INFO is not reachable to begin with.
+tags: [redis, info-disclosure]

@@ -1,0 +1,18 @@
+id: rdp-no-nla
+title: RDP server does not require Network Level Authentication
+severity: medium
+source: rdp
+when: nla_enabled == false
+evidence: '{{ .host }}:{{ .port }} does not offer CredSSP/Hybrid security; the logon UI is reachable before authentication, enabling pre-auth resource consumption and CVE-class attacks like BlueKeep'
+references:
+  - https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/remote-desktop-allow-access
+  - https://www.cisa.gov/news-events/cybersecurity-advisories/aa19-168a
+remediation: |
+  Require Network Level Authentication for RDP. Group Policy:
+  "Computer Configuration > Administrative Templates > Windows Components
+   > Remote Desktop Services > Remote Desktop Session Host > Security >
+   Require user authentication for remote connections by using NLA" =
+  Enabled. NLA pushes credential validation in front of the session
+  setup and was the mitigation Microsoft recommended for BlueKeep
+  (CVE-2019-0708).
+tags: [rdp, no-nla]

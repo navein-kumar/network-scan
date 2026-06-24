@@ -1,0 +1,16 @@
+id: redis-info-leak
+title: Redis CONFIG GET dir reveals on-disk data directory
+severity: medium
+source: redis
+when: auth_required == false and data_dir != ""
+evidence: '{{ .host }}:{{ .port }} CONFIG GET dir = {{ .data_dir }}; CONFIG SET dir + SAVE is the canonical Redis-to-RCE chain'
+references:
+  - https://book.hacktricks.xyz/network-services-pentesting/6379-pentesting-redis
+  - https://redis.io/commands/config-set/
+remediation: |
+  An unauth-reachable CONFIG SET dir lets an attacker pivot Redis into
+  arbitrary file write (e.g. dropping an SSH authorized_keys or a PHP
+  webshell into a known docroot). Either rename / disable the CONFIG
+  command in redis.conf ("rename-command CONFIG \"\"") or, better,
+  fix the root cause and require AUTH per redis-no-auth.
+tags: [redis, info-disclosure, no-auth]

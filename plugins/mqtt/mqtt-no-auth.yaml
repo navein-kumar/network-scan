@@ -1,0 +1,18 @@
+id: mqtt-no-auth
+title: MQTT broker accepts CONNECT with no authentication
+severity: high
+source: mqtt
+when: connack_return_code == 0
+evidence: '{{ .host }}:{{ .port }} broker returned CONNACK rc=0 (accepted) to an unauthenticated CONNECT'
+references:
+  - https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html
+  - https://owasp.org/www-project-internet-of-things-top-10/2018/I1_Weak_Guessable_or_Hardcoded_Passwords
+remediation: |
+  An open MQTT broker lets an attacker subscribe to all topics and
+  publish arbitrary control messages, exfiltrating sensor data or
+  pushing rogue commands to actuators. Enable password_file in
+  mosquitto.conf (or the equivalent in HiveMQ / EMQX), set
+  allow_anonymous false, require TLS via the 8883 listener with
+  client certificates, and lock topic ACLs to the smallest grant
+  needed.
+tags: [mqtt, no-auth, iot]

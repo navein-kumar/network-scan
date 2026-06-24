@@ -1,0 +1,17 @@
+id: postgresql-default-creds
+title: PostgreSQL server accepts default credentials
+severity: critical
+source: postgresql
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+remediation: |
+  Change the postgres superuser password and avoid using it for
+  application connections. Restrict access through pg_hba.conf
+  (host-based auth) and prefer SCRAM-SHA-256 password hashing.
+tags: [creds, default-credentials, critical-cve]

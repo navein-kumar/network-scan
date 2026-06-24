@@ -1,0 +1,16 @@
+id: sip-allow-methods
+title: SIP endpoint advertises Allow methods in OPTIONS reply
+severity: info
+source: sip
+when: allow_methods != nil and len(allow_methods) > 0
+evidence: '{{ .host }}:{{ .port }} SIP OPTIONS Allow: {{ .allow_methods }}'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc3261#section-20.5
+remediation: |
+  The Allow header lists the SIP methods the endpoint accepts (INVITE,
+  REGISTER, MESSAGE, REFER, NOTIFY, etc.), which is recon-grade
+  information that helps an attacker plan toll-fraud or
+  denial-of-service campaigns. The fix is not to remove Allow (it is
+  spec-required) but to put a hardened SBC in front of the PBX and
+  rate-limit REGISTER and INVITE per source IP.
+tags: [sip, info-disclosure, voip]

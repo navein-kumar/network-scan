@@ -1,0 +1,17 @@
+id: ssh-cbc-ciphers
+title: SSH server permits CBC-mode ciphers (CVE-2008-5161)
+severity: low
+source: ssh
+when: |
+  any(ciphers_s2c, {# endsWith "-cbc"}) or
+  any(ciphers_c2s, {# endsWith "-cbc"})
+evidence: '{{ .host }}:{{ .port }} accepts CBC-mode ciphers in S2C/C2S algorithm lists'
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2008-5161
+  - https://www.kb.cert.org/vuls/id/958563
+remediation: |
+  Remove CBC ciphers from /etc/ssh/sshd_config "Ciphers" line. Keep only
+  AEAD constructions (chacha20-poly1305@openssh.com, aes128-gcm@openssh.com,
+  aes256-gcm@openssh.com) and CTR fallbacks (aes128-ctr, aes192-ctr,
+  aes256-ctr). Reload sshd.
+tags: [ssh, weak-crypto, cve-2008-5161]

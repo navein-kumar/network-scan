@@ -1,0 +1,16 @@
+id: smb-zerologon-vulnerable
+title: Zerologon / Netlogon elevation of privilege (CVE-2020-1472)
+severity: critical
+source: smbvuln
+when: zerologon_vulnerable == true
+evidence: '{{ .host }}:{{ .port }} confirmed vulnerable to Zerologon (nxc smb -M zerologon)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-1472
+  - https://msrc.microsoft.com/update-guide/vulnerability/CVE-2020-1472
+remediation: |
+  Apply the August 2020 (and February 2021 enforcement) Windows updates
+  on every domain controller. CVE-2020-1472 lets an unauthenticated
+  attacker reset the DC machine-account password to a zero value, which
+  means full domain compromise. Confirm enforcement mode is enabled
+  (FullSecureChannelProtection = 1).
+tags: [smb, zerologon, netlogon, cve-2020-1472, dc]

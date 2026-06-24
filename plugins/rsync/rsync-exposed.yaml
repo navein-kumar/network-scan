@@ -1,0 +1,16 @@
+id: rsync-exposed
+title: rsync daemon reachable on the network
+severity: info
+source: rsync
+when: reachable == true
+evidence: '{{ .host }}:{{ .port }} responded to the @RSYNCD handshake (protocol {{ .version }})'
+references:
+  - https://download.samba.org/pub/rsync/rsyncd.conf.5
+remediation: |
+  A reachable rsync daemon (TCP/873) is a frequent source of data
+  exposure. Confirm it must be network-facing at all; if it does,
+  require per-module authentication, enable "read only", lock down
+  "hosts allow", and place the listener behind the host firewall on a
+  management VLAN. Where possible run rsync tunnelled over SSH and
+  disable the standalone daemon.
+tags: [rsync, exposure]

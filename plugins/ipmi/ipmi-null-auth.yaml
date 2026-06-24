@@ -1,0 +1,16 @@
+id: ipmi-null-auth
+title: IPMI BMC allows null username authentication
+severity: high
+source: ipmi
+when: null_auth_allowed == true
+evidence: '{{ .host }}:{{ .port }} Get Channel Authentication Capabilities reports null-username login enabled (auth_status bit 1)'
+references:
+  - https://www.intel.com/content/dam/www/public/us/en/documents/product-briefs/ipmi-second-gen-interface-spec-v2-rev1-1.pdf
+remediation: |
+  Disable null-user logon on the BMC channel. ipmitool: ipmitool
+  lan set <channel> auth ADMIN MD5 (or none of "+null user"). HP
+  iLO / Dell iDRAC / Supermicro web UI: clear the "Anonymous login"
+  toggle. A null username paired with the configured anonymous
+  password gives unauthenticated read access (and write access on
+  many BMC firmwares).
+tags: [ipmi, null-auth]
