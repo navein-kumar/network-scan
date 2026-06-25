@@ -455,7 +455,7 @@ func makeVersionRule(source, product, currentVer string) (*PluginRule, error) {
 	displayName := strings.ToUpper(firstWord[:1]) + firstWord[1:]
 	ruleID := "version-outdated-" + strings.ReplaceAll(strings.ToLower(product), " ", "-")
 
-	evidStr := fmt.Sprintf("Vulnerable Outdated %s Server — %s detected, current stable release is %s. "+
+	evidStr := fmt.Sprintf("Vulnerable Outdated %s Server: %s detected, current stable release is %s. "+
 		"Upgrade to eliminate known CVE exposure. See vendor advisory for the full list of fixed vulnerabilities.",
 		displayName, evidField, currentVer)
 
