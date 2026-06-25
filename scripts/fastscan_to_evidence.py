@@ -436,6 +436,7 @@ def build_txt(finding, driver_report, httpx_rec=None):
             "tls-sweet32":              "SWEET32",
             "tls-ticketbleed":          "TICKETBLEED",
             "tls-freak":                "FREAK",
+            "tls-deprecated-protocol": None,
             "tls-weak-cipher":          "RC4,BEAST",
         }
         key_pat = _RULE_VULN.get(rule_id, "")
@@ -489,6 +490,16 @@ def build_txt(finding, driver_report, httpx_rec=None):
                     parts = c["finding"].split()
                     if len(parts) >= 3:
                         lines.extend(wrap_line(label, host, port, "[*]", "  " + parts[2]))
+
+        # Deprecated TLS (1.0/1.1): list which deprecated versions are offered.
+        if rule_id == "tls-deprecated-protocol":
+            for p in protos:
+                pid = p.get("id", "")
+                pf  = p.get("finding", "")
+                if pid in ("TLS1", "TLS1_1") and "offered" in pf.lower() and "not offered" not in pf.lower():
+                    label_map = {"TLS1": "TLS 1.0", "TLS1_1": "TLS 1.1"}
+                    lines.extend(wrap_line(label, host, port, "[*]",
+                        "%s: %s" % (label_map.get(pid, pid), pf)))
 
         # Protocol context lines for SSLv2 / SSLv3 rules.
         if rule_id in ("tls-poodle-ssl", "tls-sslv3-enabled"):
