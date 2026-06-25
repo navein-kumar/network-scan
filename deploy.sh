@@ -30,6 +30,7 @@ tar -czf - -C "$SCRIPT_DIR" \
 echo "  source sync done"
 
 echo "=== [2/5] Building UI on $REMOTE ==="
+ssh "$REMOTE" "cd $REMOTE_DIR/ui/web && npm ci --silent && npm run build --silent && rm -rf $REMOTE_DIR/ui/server/static && cp -r $REMOTE_DIR/ui/web/dist $REMOTE_DIR/ui/server/static && echo '  frontend build OK'"
 ssh "$REMOTE" "cd $REMOTE_DIR/ui/server && go build -buildvcs=false -o $REMOTE_DIR/ui/fastscan-ui . && echo '  ui build OK'"
 
 echo "=== [3/5] Building engine on $REMOTE ==="
