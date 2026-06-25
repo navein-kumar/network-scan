@@ -1,0 +1,17 @@
+id: tls-freak
+title: TLS FREAK - export-grade RSA key exchange (CVE-2015-0204)
+severity: high
+source: tlsvuln
+when: |
+  vulnerabilities != nil and any(vulnerabilities, {
+    .id matches "(?i)FREAK" and .finding matches "(?i)VULNERABLE"
+  })
+evidence: '{{ .host }}:{{ .port }} FREAK (export RSA key downgrade, CVE-2015-0204)'
+references:
+  - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-0204
+  - https://freakattack.com/
+remediation: |
+  Remove all EXPORT-grade cipher suites from your TLS configuration
+  (RSA_EXPORT, DHE_RSA_EXPORT, etc.). Upgrade OpenSSL to 1.0.1k / 1.0.2a
+  or later. Verify with: openssl s_client -cipher EXPORT -connect host:port
+tags: [tls, freak, cve-2015-0204]
