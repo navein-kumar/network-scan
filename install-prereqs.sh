@@ -20,6 +20,7 @@
 #   sudo ./install-prereqs.sh            # install everything that is missing
 #   sudo ./install-prereqs.sh --check    # report only, install nothing
 #   sudo ./install-prereqs.sh --build    # also build the engine afterwards
+#   sudo ./install-prereqs.sh --start    # build engine + UI, install systemd service, start it
 #
 set -u
 
@@ -31,10 +32,12 @@ FASTSCAN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 CHECK_ONLY=0
 DO_BUILD=0
+DO_START=0
 for arg in "$@"; do
   case "$arg" in
     --check) CHECK_ONLY=1 ;;
     --build) DO_BUILD=1 ;;
+    --start) DO_BUILD=1; DO_START=1 ;;
     *) echo "unknown option: $arg"; exit 2 ;;
   esac
 done
@@ -396,12 +399,81 @@ echo "----------------------------------------------"
 
 if [ "$DO_BUILD" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
   if go_ok; then
-    log "building fastscan engine with ${GO_BIN:-$GO_ROOT/bin/go}"
-    ( cd "$FASTSCAN_DIR" && "${GO_BIN:-$GO_ROOT/bin/go}" build -buildvcs=false -o "$FASTSCAN_DIR/fastscan" . ) \
+    local_go="${GO_BIN:-$GO_ROOT/bin/go}"
+
+    log "building fastscan engine"
+    ( cd "$FASTSCAN_DIR" && "$local_go" build -buildvcs=false -o "$FASTSCAN_DIR/fastscan" . ) \
       && green "built: $FASTSCAN_DIR/fastscan" \
-      || red "build failed"
+      || { red "engine build failed"; exit 1; }
+
+    UI_SERVER="$FASTSCAN_DIR/ui/server"
+    UI_BIN="$FASTSCAN_DIR/ui/fastscan-ui"
+    if [ -d "$UI_SERVER" ]; then
+      log "building fastscan UI"
+      ( cd "$UI_SERVER" && "$local_go" build -buildvcs=false -o "$UI_BIN" . ) \
+        && green "built: $UI_BIN" \
+        || red "UI build failed (engine still works standalone)"
+    fi
   else
     red "cannot build: Go toolchain missing"
+    exit 1
+  fi
+fi
+
+if [ "$DO_START" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
+  UI_BIN="$FASTSCAN_DIR/ui/fastscan-ui"
+  if [ ! -x "$UI_BIN" ]; then
+    red "--start requires the UI binary; build failed or ui/server missing"
+    exit 1
+  fi
+
+  ENV_FILE="$FASTSCAN_DIR/fastscan.env"
+  if [ ! -f "$ENV_FILE" ] && [ -f "$FASTSCAN_DIR/fastscan.env.example" ]; then
+    cp "$FASTSCAN_DIR/fastscan.env.example" "$ENV_FILE"
+    # Generate a random password
+    RAND_PASS=$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 16)
+    sed -i "s/^UI_PASS=.*/UI_PASS=$RAND_PASS/" "$ENV_FILE"
+    green "created $ENV_FILE (UI_PASS=$RAND_PASS)"
+  fi
+
+  UI_USER=$(grep '^UI_USER=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo admin)
+  UI_PASS=$(grep '^UI_PASS='  "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo changeme)
+  UI_ADDR=$(grep '^UI_ADDR='  "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo 0.0.0.0:8888)
+  DATA_DIR="$FASTSCAN_DIR/data"
+  mkdir -p "$DATA_DIR"
+
+  SERVICE_FILE="/etc/systemd/system/fastscan.service"
+  log "installing systemd service: $SERVICE_FILE"
+  cat > "$SERVICE_FILE" <<UNIT
+[Unit]
+Description=fastscan vulnerability scanner UI
+After=network.target
+
+[Service]
+ExecStart=$UI_BIN -addr $UI_ADDR -data $DATA_DIR -auth ${UI_USER}:${UI_PASS}
+WorkingDirectory=$FASTSCAN_DIR
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+  systemctl daemon-reload
+  systemctl enable fastscan
+  systemctl restart fastscan
+  sleep 2
+
+  if systemctl is-active --quiet fastscan; then
+    green "fastscan service started (auto-starts on boot)"
+    green "  URL  : http://$(hostname -I | awk '{print $1}'):${UI_ADDR##*:}"
+    green "  user : $UI_USER"
+    green "  pass : $UI_PASS"
+    green "  logs : journalctl -u fastscan -f"
+  else
+    red "service failed to start — check: journalctl -u fastscan -n 20"
   fi
 fi
 
