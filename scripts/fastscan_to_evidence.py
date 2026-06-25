@@ -419,6 +419,111 @@ def build_txt(finding, driver_report, httpx_rec=None):
             lines.extend(wrap_line(label, host, port, "[*]",
                                    f"severity: {finding.get('severity')}"))
 
+    # tlsvuln findings: render actual protocol/cipher detail from driver report
+    # so the evidence proves the vulnerability rather than just asserting it.
+    if source == "tlsvuln" and driver_report:
+        vulns    = driver_report.get("vulnerabilities") or []
+        protos   = driver_report.get("protocols") or []
+        clists   = driver_report.get("cipher_lists") or []
+
+        # Show the matching vulnerability row (CVE + testssl finding text).
+        # Map rule_id prefix to the vuln id substring testssl uses.
+        _vuln_key = {
+            "tls-drown":              "DROWN",
+            "tls-ccs-injection":      "CCS",
+            "tls-poodle-ssl":         "POODLE",
+            "tls-heartbleed":         "HEARTBLEED",
+            "tls-logjam":             "LOGJAM",
+            "tls-sweet32":            "SWEET32",
+            "tls-ticketbleed":        "TICKETBLEED",
+            "tls-weak-cipher":        None,   # cipher-based, no vuln row
+            "tls-sslv2-enabled":      None,
+            "tls-sslv3-enabled":      None,
+        }.get(rule_id)
+        for v in vulns:
+            vid = v.get("id", "")
+            vf  = v.get("finding", "")
+            cve = v.get("cve", "")
+            if _vuln_key and _vuln_key.lower() in vid.lower():
+                detail = f"{vid}: {vf}"
+                if cve:
+                    detail = f"{vid} ({cve}): {vf}"
+                lines.extend(wrap_line(label, host, port, "[*]", detail))
+
+        # For DROWN: list every SSLv2 cipher from serverPreferences.
+        # Each server_cipher entry with id cipher-ssl2_* has finding:
+        # "SSLv2  xHEX  CIPHER-NAME  KEY-EXCHANGE  ENC  BITS  RFC-NAME"
+        if rule_id == "tls-drown":
+            sc = driver_report.get("server_ciphers") or []
+            ssl2 = [c for c in sc if c.get("id", "").startswith("cipher-ssl2_")]
+            if ssl2:
+                lines.extend(wrap_line(label, host, port, "[*]",
+                    f"SSLv2 accepted ciphers ({len(ssl2)}):"))
+                for c in ssl2:
+                    parts = c["finding"].split()
+                    if len(parts) >= 6:
+                        name = parts[2]
+                        enc  = parts[4]
+                        bits = parts[5]
+                        lines.extend(wrap_line(label, host, port, "[*]",
+                            f"  {name:<30} {enc} {bits}"))
+            else:
+                # Fallback: show the protocol finding text (has cipher count)
+                for p in protos:
+                    if "sslv2" in p.get("id", "").lower():
+                        lines.extend(wrap_line(label, host, port, "[*]",
+                            f"SSLv2: {p.get('finding','')}"))
+
+        # For POODLE: show SSLv3 cipher names (first 3) to confirm CBC negotiation.
+        # serverPreferences format differs ssl2 vs ssl3 so just extract cipher name (parts[2]).
+        if rule_id == "tls-poodle-ssl":
+            sc = driver_report.get("server_ciphers") or []
+            ssl3 = [c for c in sc if c.get("id", "").startswith("cipher-ssl3_")][:3]
+            if ssl3:
+                lines.extend(wrap_line(label, host, port, "[*]",
+                    f"SSLv3 accepted ciphers (sample):"))
+                for c in ssl3:
+                    parts = c["finding"].split()
+                    if len(parts) >= 3:
+                        lines.extend(wrap_line(label, host, port, "[*]",
+                            f"  {parts[2]}"))
+
+        # For POODLE / SSLv3-enabled: show SSLv3 protocol entry.
+        if rule_id in ("tls-poodle-ssl", "tls-sslv3-enabled"):
+            for p in protos:
+                if "sslv3" in p.get("id", "").lower():
+                    lines.extend(wrap_line(label, host, port, "[*]",
+                        f"SSLv3: {p.get('finding','')}"))
+
+        # For SSLv2-enabled: show SSLv2 protocol entry + cipher list.
+        if rule_id == "tls-sslv2-enabled":
+            for p in protos:
+                if "sslv2" in p.get("id", "").lower():
+                    lines.extend(wrap_line(label, host, port, "[*]",
+                        f"SSLv2: {p.get('finding','')}"))
+            for cl in clists:
+                if "sslv2" in cl.get("id", "").lower():
+                    ciphers = cl["finding"].split()
+                    for c in ciphers:
+                        lines.extend(wrap_line(label, host, port, "[*]", f"  {c}"))
+
+        # Weak cipher finding: list which cipher families are accepted.
+        if rule_id == "tls-weak-cipher":
+            WEAK_LABELS = {
+                "3des_idea": "3DES / IDEA (sweet32-range)",
+                "obsoleted":  "Obsolete cipher suites",
+                "low":        "LOW-grade (<=64-bit key)",
+                "export":     "EXPORT (US export-grade)",
+                "anon":       "Anonymous (no authentication)",
+                "null":       "NULL ciphers (no encryption)",
+            }
+            for cl in clists:
+                key = cl.get("id", "").replace("cipherlist_", "").lower()
+                lbl = WEAK_LABELS.get(key, cl.get("id", ""))
+                names = cl["finding"].split()[:6]
+                lines.extend(wrap_line(label, host, port, "[*]",
+                    f"{lbl}: {', '.join(names)}"))
+
     # If cred attempts present, show successful ones as [+] lines
     cred_attempts = (driver_report or {}).get("cred_attempts") or []
     for ca in cred_attempts:

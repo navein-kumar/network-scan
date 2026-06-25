@@ -25,8 +25,29 @@ type TLSVulnReport struct {
 	Port            int                   `json:"port"`
 	Vulnerabilities []TLSVulnFinding      `json:"vulnerabilities,omitempty"`
 	Protocols       []TLSProtocolFinding  `json:"protocols,omitempty"`
+	// CipherLists holds named cipher-suite lists from testssl.sh "ciphers"
+	// section, e.g. cipherlist_SSLv2, cipherlist_3DES_IDEA.  The Finding
+	// field is space-separated cipher names accepted by the server.
+	CipherLists     []TLSCipherList       `json:"cipher_lists,omitempty"`
+	// ServerCiphers holds per-cipher rows from testssl.sh serverPreferences
+	// section, giving full suite name, key-exchange, bits, and protocol.
+	ServerCiphers   []TLSServerCipher     `json:"server_ciphers,omitempty"`
 	RawCount        int                   `json:"raw_count,omitempty"`
 	ProbeErrors     []string              `json:"probe_errors,omitempty"`
+}
+
+// TLSCipherList is one row from the testssl.sh "ciphers" section,
+// e.g. id=cipherlist_SSLv2, finding="DES-CBC-MD5 RC4-MD5 RC4-64-MD5 ...".
+type TLSCipherList struct {
+	ID      string `json:"id"`
+	Finding string `json:"finding"`
+}
+
+// TLSServerCipher is one cipher row from testssl.sh serverPreferences,
+// e.g. id=cipher-tls1_xc013, finding="TLSv1 xc013 ECDHE-RSA-AES128-SHA ECDH 256 AES 128 ...".
+type TLSServerCipher struct {
+	ID      string `json:"id"`
+	Finding string `json:"finding"`
 }
 
 // TLSVulnFinding is one row from testssl.sh vulnerabilities section.
@@ -55,6 +76,8 @@ type testsslScanFile struct {
 type testsslHostResult struct {
 	Vulnerabilities []testsslRow `json:"vulnerabilities"`
 	Protocols       []testsslRow `json:"protocols"`
+	Ciphers         []testsslRow `json:"ciphers"`
+	ServerPrefs     []testsslRow `json:"serverPreferences"`
 }
 type testsslRow struct {
 	ID       string `json:"id"`
@@ -163,6 +186,21 @@ func ProbeTLSVulnService(host string, port int, service string, timeout time.Dur
 		}
 		for _, r := range h.Protocols {
 			rep.Protocols = append(rep.Protocols, TLSProtocolFinding(r.toProto()))
+		}
+		// Capture named cipher lists (cipherlist_SSLv2, cipherlist_3DES_IDEA, etc.)
+		// The Finding field contains space-separated cipher suite names accepted by the server.
+		for _, r := range h.Ciphers {
+			if strings.HasPrefix(r.ID, "cipherlist_") && r.Finding != "" &&
+				r.Finding != "not offered" && r.Finding != "-" {
+				rep.CipherLists = append(rep.CipherLists, TLSCipherList{ID: r.ID, Finding: r.Finding})
+			}
+		}
+		// Capture per-cipher rows from serverPreferences for weak cipher evidence.
+		// Each row finding is: "TLSv1 xHHHH CIPHER-NAME   KEXCH bits  ENC bits  RFC-name"
+		for _, r := range h.ServerPrefs {
+			if strings.HasPrefix(r.ID, "cipher-") {
+				rep.ServerCiphers = append(rep.ServerCiphers, TLSServerCipher{ID: r.ID, Finding: r.Finding})
+			}
 		}
 	}
 	rep.RawCount = len(rep.Vulnerabilities) + len(rep.Protocols)
