@@ -4,7 +4,7 @@ severity: high
 source: tlsvuln
 when: |
   protocols != nil and any(protocols, {
-    .id matches "(?i)SSLv2" and .finding matches "(?i)offered"
+    .id matches "(?i)SSLv2" and (.finding matches "(?i)offered" || .finding matches "(?i)vulnerable")
   })
 evidence: '{{ .host }}:{{ .port }} SSLv2 negotiated successfully'
 references:
