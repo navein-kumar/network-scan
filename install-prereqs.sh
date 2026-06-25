@@ -397,6 +397,30 @@ have convert && green "  imagemagick OK" || yellow "  imagemagick optional/missi
 webshot_ok && green "  webshot     OK" || yellow "  webshot     optional/missing"
 echo "----------------------------------------------"
 
+build_frontend() {
+  # Build the React frontend and embed it into the Go UI server static dir.
+  # Must run BEFORE building the Go UI binary — go:embed needs the files present.
+  UI_WEB="$FASTSCAN_DIR/ui/web"
+  UI_STATIC="$FASTSCAN_DIR/ui/server/static"
+  if [ ! -f "$UI_WEB/package.json" ]; then
+    yellow "  ui/web/package.json not found — skipping frontend build"
+    return 0
+  fi
+  if ! have node || ! have npm; then
+    yellow "  node/npm not found — skipping frontend build (UI will show blank page if static/ is empty)"
+    return 0
+  fi
+  log "installing frontend dependencies (npm ci)"
+  ( cd "$UI_WEB" && npm ci --silent ) \
+    && log "building React frontend (npm run build)" \
+    || { red "npm ci failed"; return 1; }
+  ( cd "$UI_WEB" && npm run build --silent ) \
+    || { red "npm run build failed"; return 1; }
+  rm -rf "$UI_STATIC"
+  cp -r "$UI_WEB/dist" "$UI_STATIC"
+  green "frontend built and embedded into $UI_STATIC"
+}
+
 if [ "$DO_BUILD" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
   if go_ok; then
     local_go="${GO_BIN:-$GO_ROOT/bin/go}"
@@ -409,7 +433,8 @@ if [ "$DO_BUILD" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
     UI_SERVER="$FASTSCAN_DIR/ui/server"
     UI_BIN="$FASTSCAN_DIR/ui/fastscan-ui"
     if [ -d "$UI_SERVER" ]; then
-      log "building fastscan UI"
+      build_frontend
+      log "building fastscan UI binary"
       ( cd "$UI_SERVER" && "$local_go" build -buildvcs=false -o "$UI_BIN" . ) \
         && green "built: $UI_BIN" \
         || red "UI build failed (engine still works standalone)"

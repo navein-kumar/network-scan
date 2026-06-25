@@ -31,10 +31,10 @@ echo "  source sync done"
 
 echo "=== [2/5] Building UI on $REMOTE ==="
 ssh "$REMOTE" "cd $REMOTE_DIR/ui/web && npm ci --silent && npm run build --silent && rm -rf $REMOTE_DIR/ui/server/static && cp -r $REMOTE_DIR/ui/web/dist $REMOTE_DIR/ui/server/static && echo '  frontend build OK'"
-ssh "$REMOTE" "cd $REMOTE_DIR/ui/server && go build -buildvcs=false -o $REMOTE_DIR/ui/fastscan-ui . && echo '  ui build OK'"
+ssh "$REMOTE" "PATH=\$PATH:/usr/local/go/bin && cd $REMOTE_DIR/ui/server && go build -buildvcs=false -o $REMOTE_DIR/ui/fastscan-ui . && echo '  ui build OK'"
 
 echo "=== [3/5] Building engine on $REMOTE ==="
-ssh "$REMOTE" "cd $REMOTE_DIR && go build -buildvcs=false -o ./fastscan . && echo '  engine build OK'"
+ssh "$REMOTE" "PATH=\$PATH:/usr/local/go/bin && cd $REMOTE_DIR && go build -buildvcs=false -o ./fastscan . && echo '  engine build OK'"
 
 echo "=== [4/5] Restarting UI ==="
 ssh "$REMOTE" bash <<'ENDSSH'
@@ -66,15 +66,17 @@ ssh "$REMOTE" bash <<'ENDSSH'
   UI_PASS=$(grep '^UI_PASS='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo changeme)
 
   HTTP=$(curl -s -o /dev/null -w '%{http_code}' -u "${UI_USER}:${UI_PASS}" http://localhost:8888/)
-  SIZE=$(curl -s -u "${UI_USER}:${UI_PASS}" http://localhost:8888/ | wc -c)
+  HTML=$(curl -s -u "${UI_USER}:${UI_PASS}" http://localhost:8888/)
   API=$(curl -s -o /dev/null -w '%{http_code}' -u "${UI_USER}:${UI_PASS}" http://localhost:8888/api/meta)
   META=$(curl -s -u "${UI_USER}:${UI_PASS}" http://localhost:8888/api/meta)
+  HAS_ASSETS=$(echo "$HTML" | grep -c '/assets/' || true)
 
-  echo "  HTML  : HTTP $HTTP  (${SIZE} bytes)"
+  echo "  HTML  : HTTP $HTTP"
+  echo "  Assets: $([ "$HAS_ASSETS" -gt 0 ] && echo 'embedded OK' || echo 'MISSING — blank page!')"
   echo "  /api/meta: HTTP $API"
   echo "  $META"
 
-  [ "$HTTP" = "200" ] && [ "$SIZE" -gt 100 ] && [ "$API" = "200" ] && echo "  PASS" || { echo "  FAIL"; exit 1; }
+  [ "$HTTP" = "200" ] && [ "$HAS_ASSETS" -gt 0 ] && [ "$API" = "200" ] && echo "  PASS" || { echo "  FAIL"; exit 1; }
 ENDSSH
 
 IP=$(ssh "$REMOTE" 'curl -s ifconfig.me 2>/dev/null || hostname -I | awk "{print \$1}"')
