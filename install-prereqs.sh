@@ -306,6 +306,18 @@ install_ikescan
 install_screenshot
 install_webshot
 
+# tmux — required for the UI to auto-start in background
+if ! have tmux; then
+  if [ "$CHECK_ONLY" -eq 1 ]; then
+    yellow "MISSING: tmux (UI will not auto-start without it)"
+  else
+    log "apt-get install tmux"
+    apt-get install -y tmux >/dev/null 2>&1 \
+      && green "tmux installed" \
+      || yellow "tmux not installed (UI must be started manually)"
+  fi
+fi
+
 echo "----------------------------------------------"
 log "summary"
 go_ok && green "  go          OK" || red "  go          MISSING"

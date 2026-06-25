@@ -121,16 +121,28 @@ build_ui() {
     return 0
   fi
 
-  # Frontend
+  # Frontend — requires Node.js 18+. Install from NodeSource if the system
+  # node is absent or too old (apt ships Node 12 on Ubuntu 22.04).
   if [ -f "$UI_SRC_DIR/web/package.json" ]; then
-    if ! have npm; then
-      log "installing nodejs + npm"
-      apt-get install -y nodejs npm >/dev/null 2>&1 \
-        || yellow "could not install npm; will reuse existing build if present"
+    NODE_OK=0
+    if have node; then
+      NODE_VER="$(node -e 'console.log(process.versions.node.split(".")[0])' 2>/dev/null || echo 0)"
+      [ "${NODE_VER}" -ge 18 ] 2>/dev/null && NODE_OK=1
+    fi
+    if [ "$NODE_OK" -eq 0 ]; then
+      log "installing Node.js 20 LTS via NodeSource"
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
+      # Remove distro libnode packages that conflict with NodeSource nodejs 20
+      apt-get remove -y libnode-dev libnode72 2>/dev/null || true
+      apt-get install -y nodejs >/dev/null 2>&1 \
+        && green "Node.js $(node --version) installed" \
+        || yellow "Node.js install failed; will reuse existing server/static if present"
+    else
+      green "Node.js $(node --version) already present"
     fi
     if have npm; then
       log "building UI frontend (npm ci + vite build)"
-      if ( cd "$UI_SRC_DIR/web" && npm ci --silent && npm run build --silent ); then
+      if ( cd "$UI_SRC_DIR/web" && npm ci --silent 2>&1 && npm run build --silent 2>&1 ); then
         green "frontend built"
         if [ -d "$UI_SRC_DIR/web/dist" ]; then
           rm -rf "$UI_SRC_DIR/server/static"
@@ -140,6 +152,15 @@ build_ui() {
         yellow "npm build failed — reusing existing server/static if present"
       fi
     fi
+  fi
+
+  # The Go UI server embeds static/ via go:embed. Create an empty placeholder
+  # if the frontend build didn't produce one, so the compile succeeds.
+  if [ ! -f "$UI_SRC_DIR/server/static/index.html" ]; then
+    mkdir -p "$UI_SRC_DIR/server/static"
+    printf '<html><body><h2>Frontend not built</h2><p>Run: ./install.sh to rebuild</p></body></html>' \
+      > "$UI_SRC_DIR/server/static/index.html"
+    yellow "frontend missing — placeholder index.html created; API still works"
   fi
 
   # Go server
