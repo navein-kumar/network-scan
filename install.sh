@@ -145,7 +145,7 @@ build_ui() {
   # Go server
   log "building UI server binary"
   [ -n "$GO_BIN" ] || die "Go toolchain not found — run install-prereqs.sh first"
-  if ( cd "$UI_SRC_DIR/server" && "$GO_BIN" build -o "$UI_BIN" . ); then
+  if ( cd "$UI_SRC_DIR/server" && "$GO_BIN" build -buildvcs=false -o "$UI_BIN" . ); then
     green "UI binary built: $UI_BIN"
   else
     die "UI server build failed"
@@ -204,7 +204,7 @@ fi
 
 log "building engine"
 [ -n "$GO_BIN" ] || die "Go toolchain not found — cannot build engine"
-( cd "$SCRIPT_DIR" && "$GO_BIN" build -o "$ENGINE_BIN" . ) \
+( cd "$SCRIPT_DIR" && "$GO_BIN" build -buildvcs=false -o "$ENGINE_BIN" . ) \
   && green "engine built: $ENGINE_BIN" \
   || die "engine build failed"
 
