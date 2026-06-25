@@ -72,28 +72,30 @@ def render(txt_path, png_path):
     font   = find_font(FONT_SIZE)
     line_h = FONT_SIZE + LINE_PAD
 
-    # How many lines fit inside the canvas (leave space for the footer row).
-    usable_h     = CANVAS_H - MARGIN_Y * 2
-    lines_per_pg = (usable_h - line_h) // line_h   # reserve 1 row for footer
-    max_lines    = max(1, lines_per_pg)
+    # How many lines fit before hitting the max canvas height.
+    usable_h  = CANVAS_H - MARGIN_Y * 2
+    max_lines = max(1, (usable_h - line_h) // line_h)  # reserve 1 row for footer
 
     truncated = len(lines) > max_lines
     visible   = lines[:max_lines]
     overflow  = len(lines) - max_lines
 
-    img  = Image.new("RGB", (CANVAS_W, CANVAS_H), BG)
+    # Height fits content exactly, capped at CANVAS_H.
+    content_h = line_h * len(visible) + MARGIN_Y * 2
+    if truncated:
+        content_h += line_h          # extra row for the footer
+    height = min(content_h, CANVAS_H)
+
+    img  = Image.new("RGB", (CANVAS_W, height), BG)
     draw = ImageDraw.Draw(img)
 
     y = MARGIN_Y
     for ln in visible:
-        # Clip line to canvas width to avoid overflow.
         draw.text((MARGIN_X, y), ln, font=font, fill=line_color(ln))
         y += line_h
 
     if truncated:
-        footer = f"... +{overflow} more lines"
-        draw.text((MARGIN_X, CANVAS_H - MARGIN_Y - line_h),
-                  footer, font=font, fill=GRAY)
+        draw.text((MARGIN_X, y), f"... +{overflow} more lines", font=font, fill=GRAY)
 
     img.save(png_path, optimize=True)
     return [png_path]
