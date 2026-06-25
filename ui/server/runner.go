@@ -14,9 +14,8 @@ import (
 	"time"
 )
 
-// enginePath is the scan engine binary; engineRoot (meta.go) is its cwd so
-// plugins load with relative paths.
-const enginePath = "/root/fastscan/fastscan"
+// enginePath is the scan engine binary. Derived from engineRoot (meta.go).
+var enginePath = filepath.Join(engineRoot, "fastscan")
 
 // phasePercent maps engine phase labels to an overall progress percentage.
 var phasePercent = map[string]int{

@@ -16,8 +16,20 @@ func fileExists(path string) bool {
 }
 
 // engineRoot is the working directory of the scan engine; driver and plugin
-// counts are derived from it.
-const engineRoot = "/root/fastscan"
+// counts are derived from it. Computed at startup from the UI binary's own
+// location: UI binary lives at <repo>/ui/fastscan-ui, engine root is <repo>/.
+var engineRoot = func() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return filepath.Dir(os.Args[0])
+	}
+	// Resolve symlinks in case the binary was invoked through one.
+	if real, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = real
+	}
+	// <repo>/ui/fastscan-ui  →  Dir = <repo>/ui  →  Dir = <repo>
+	return filepath.Dir(filepath.Dir(exe))
+}()
 
 // dep describes an external tool dependency.
 type dep struct {
@@ -50,7 +62,7 @@ var depSpecs = []struct {
 	{name: "httpx", candidates: []string{"httpx-pd", "httpx"}},
 	{name: "nuclei", candidates: []string{"nuclei"}},
 	{name: "testssl.sh", candidates: []string{"testssl.sh"}, fallbacks: []string{"/usr/local/bin/testssl.sh"}},
-	{name: "nxc", candidates: []string{"nxc"}, fallbacks: []string{"/root/.local/bin/nxc"}},
+	{name: "nxc", candidates: []string{"nxc", "netexec"}, fallbacks: []string{"/root/.local/bin/nxc", "/usr/local/bin/nxc"}},
 }
 
 // resolveDeps probes each dependency and reports presence + resolved path.
