@@ -37,21 +37,25 @@ ssh "$REMOTE" "cd $REMOTE_DIR && go build -buildvcs=false -o ./fastscan . && ech
 
 echo "=== [4/5] Restarting UI ==="
 ssh "$REMOTE" bash <<'ENDSSH'
-  ENV=/opt/fastscan/fastscan.env
-  UI_BIN=/opt/fastscan/ui/fastscan-ui
-  DATA=/opt/fastscan/data
-
-  UI_USER=$(grep '^UI_USER=' "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo admin)
-  UI_PASS=$(grep '^UI_PASS='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo changeme)
-  UI_ADDR=$(grep '^UI_ADDR='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo 0.0.0.0:8888)
-
-  pkill -f fastscan-ui 2>/dev/null || true
-  sleep 1
-  tmux kill-session -t fastscan-ui 2>/dev/null || true
-  tmux new-session -d -s fastscan-ui \
-    "$UI_BIN -addr $UI_ADDR -data $DATA -auth ${UI_USER}:${UI_PASS} 2>&1 | tee $DATA/../ui/server.log"
-  sleep 2
-  echo "  UI started: user=$UI_USER addr=$UI_ADDR"
+  if systemctl is-enabled fastscan &>/dev/null; then
+    systemctl restart fastscan
+    sleep 2
+    systemctl is-active --quiet fastscan && echo "  systemd service restarted" || { echo "  service failed"; journalctl -u fastscan -n 10 --no-pager; exit 1; }
+  else
+    ENV=/opt/fastscan/fastscan.env
+    UI_BIN=/opt/fastscan/ui/fastscan-ui
+    DATA=/opt/fastscan/data
+    UI_USER=$(grep '^UI_USER=' "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo admin)
+    UI_PASS=$(grep '^UI_PASS='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo changeme)
+    UI_ADDR=$(grep '^UI_ADDR='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo 0.0.0.0:8888)
+    pkill -f fastscan-ui 2>/dev/null || true
+    sleep 1
+    tmux kill-session -t fastscan-ui 2>/dev/null || true
+    tmux new-session -d -s fastscan-ui \
+      "$UI_BIN -addr $UI_ADDR -data $DATA -auth ${UI_USER}:${UI_PASS} 2>&1 | tee $DATA/../ui/server.log"
+    sleep 2
+    echo "  UI started via tmux (run install-prereqs.sh --start to enable systemd)"
+  fi
 ENDSSH
 
 echo "=== [5/5] Smoke test ==="
