@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -32,7 +33,7 @@ func webShotPath(rawurl string) (string, error) {
 			port = "80"
 		}
 	}
-	dir := "/tmp/fastscan/screenshots"
+	dir := filepath.Join(os.TempDir(), "fastscan", "screenshots")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}

@@ -93,6 +93,18 @@ type Port struct {
 	TLS     bool
 }
 
+// binaryDir returns the directory of the running binary.
+func binaryDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	if real, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = real
+	}
+	return filepath.Dir(exe)
+}
+
 var (
 	flagTarget    = flag.String("target", "", "host or CIDR (required)")
 	flagTargetFile = flag.String("target-file", "", "file with one target (IP/CIDR) per line")
@@ -151,12 +163,12 @@ var (
 	flagTracerouteTest = flag.String("traceroute-test", "", "standalone traceroute probe: host, prints JSON report and exits")
 	flagSkipOS         = flag.Bool("skip-os", false, "skip phase 2.6 OS detection (requires root)")
 	flagSkipTraceroute = flag.Bool("skip-traceroute", false, "skip phase 2.7 traceroute (requires root)")
-	flagPlugins    = flag.String("plugins", "/root/fastscan/plugins", "directory containing YAML plugin rules")
+	flagPlugins    = flag.String("plugins", filepath.Join(binaryDir(), "plugins"), "directory containing YAML plugin rules")
 	flagCheckDeps  = flag.Bool("check-deps", false, "check external CLI dependencies (nmap, rustscan, testssl.sh, nxc) and exit")
 	flagSkipDepsWarning = flag.Bool("skip-deps-warning", false, "silence the startup-time dependency check")
 	flagSkipDrivers = flag.Bool("skip-drivers", false, "skip phase 3 protocol drivers + plugin evaluation")
 	flagMaxHosts   = flag.Int("max-hosts", 0, "max concurrent hosts when -target is a CIDR (0 = use profile default)")
-	flagCredsDir   = flag.String("creds-dir", "/root/fastscan/creds", "directory containing default-credential YAML lists (one per service)")
+	flagCredsDir   = flag.String("creds-dir", filepath.Join(binaryDir(), "creds"), "directory containing default-credential YAML lists (one per service)")
 	flagSkipCreds  = flag.Bool("skip-creds", false, "skip default-credential testing layer")
 	flagTLSFPTest  = flag.String("tlsfp-test", "", "standalone TLS fingerprint probe: host:port, prints JSON report and exits")
 	flagJDWPTest      = flag.String("jdwp-test", "", "standalone JDWP probe: host:port, prints JSON report and exits")

@@ -33,6 +33,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 	"unicode/utf16"
 
@@ -393,7 +394,7 @@ func captureRDPScreenshot(host string, port int, rep *RDPReport, timeout time.Du
 		return
 	}
 
-	dir := "/tmp/fastscan/screenshots"
+	dir := filepath.Join(os.TempDir(), "fastscan", "screenshots")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}

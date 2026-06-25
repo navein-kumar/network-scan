@@ -9,12 +9,13 @@ import (
 	"path/filepath"
 )
 
-// script paths for the export bridges.
-const (
-	scriptXLSX     = "/root/fastscan/scripts/fastscan_to_xlsx.py"
-	scriptEvidence = "/root/fastscan/scripts/fastscan_to_evidence.py"
-	scriptHTML     = "/root/fastscan/scripts/fastscan_to_html.py"
-	scriptTxtToImg = "/root/fastscan/scripts/txt_to_img.py"
+// script paths for the export bridges — derived from engineRoot so they work
+// regardless of where the binary is installed.
+var (
+	scriptXLSX     = filepath.Join(engineRoot, "scripts", "fastscan_to_xlsx.py")
+	scriptEvidence = filepath.Join(engineRoot, "scripts", "fastscan_to_evidence.py")
+	scriptHTML     = filepath.Join(engineRoot, "scripts", "fastscan_to_html.py")
+	scriptTxtToImg = filepath.Join(engineRoot, "scripts", "txt_to_img.py")
 )
 
 // handleExport serves GET /api/scans/{id}/export?format=xlsx|evidence|bundle|html.

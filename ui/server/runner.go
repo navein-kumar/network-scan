@@ -118,7 +118,11 @@ func countTargets(targets string) int {
 
 // engineArgs builds the engine command line from a config.
 func engineArgs(cfg Config, dir string) []string {
-	args := []string{"-target-file", filepath.Join(dir, "targets.txt"), "-out", dir}
+	args := []string{
+		"-target-file", filepath.Join(dir, "targets.txt"),
+		"-out", dir,
+		"-plugins", filepath.Join(engineRoot, "plugins"),
+	}
 	switch cfg.Template {
 	case "fast":
 		args = append(args, "-profile", "fast")

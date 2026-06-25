@@ -71,6 +71,10 @@ func LoadCreds(dir string) (*CredStore, error) {
 	if !info.IsDir() {
 		return nil, fmt.Errorf("creds dir %q is not a directory", dir)
 	}
+	// Resolve top-level symlink so filepath.Walk descends into the real directory.
+	if real, err2 := filepath.EvalSymlinks(dir); err2 == nil {
+		dir = real
+	}
 	err = filepath.Walk(dir, func(path string, fi os.FileInfo, werr error) error {
 		if werr != nil {
 			return werr

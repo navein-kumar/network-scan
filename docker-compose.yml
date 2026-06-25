@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  fastscan:
+    build: .
+    image: fastscan:latest
+    # host network: engine can reach scan targets directly (no NAT/bridge overhead)
+    # and VPN interfaces on the host are visible. Use bridge mode only when host
+    # network is unavailable (e.g. macOS Docker Desktop) — see docker-compose.bridge.yml
+    network_mode: host
+    volumes:
+      # Scan results persist across container restarts
+      - ./data:/data
+      # Uncomment to mount your own credential wordlists
+      # - ./creds:/opt/fastscan/creds:ro
+    environment:
+      UI_USER: ${UI_USER:-admin}
+      UI_PASS: ${UI_PASS:-changeme}
+      UI_ADDR: 0.0.0.0:8888
+    restart: unless-stopped

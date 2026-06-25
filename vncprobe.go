@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -169,7 +170,7 @@ func captureVNCScreenshot(host string, port int, rep *VNCReport, timeout time.Du
 		return
 	}
 
-	dir := "/tmp/fastscan/screenshots"
+	dir := filepath.Join(os.TempDir(), "fastscan", "screenshots")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}

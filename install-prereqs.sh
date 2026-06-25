@@ -110,6 +110,63 @@ install_go() {
 }
 
 # ---------------------------------------------------------------------------
+# Python 3 + pip (required for export scripts: xlsx, evidence, html)
+# ---------------------------------------------------------------------------
+install_python() {
+  local py3=""
+  have python3 && py3="python3"
+  [ -z "$py3" ] && have python && py3="python"
+  if [ -n "$py3" ]; then
+    green "Python present: $($py3 --version 2>&1)"
+    if ! "$py3" -m pip --version >/dev/null 2>&1; then
+      [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: pip (Python package manager)"; return 0; }
+      need_root; apt_update_once
+      apt-get install -y python3-pip >/dev/null 2>&1
+    fi
+    green "pip present: $($py3 -m pip --version 2>&1 | head -1)"
+    return 0
+  fi
+  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: python3"; return 0; }
+  need_root; apt_update_once
+  log "apt-get install python3 python3-pip"
+  apt-get install -y python3 python3-pip >/dev/null 2>&1
+  have python3 && green "python3 installed: $(python3 --version)" || red "python3 install failed"
+}
+
+install_python_deps() {
+  local py3="python3"
+  have python3 || py3="python"
+  have "$py3" || return 0
+  local reqs="$FASTSCAN_DIR/scripts/requirements.txt"
+  if [ -f "$reqs" ]; then
+    log "installing Python packages from scripts/requirements.txt"
+    "$py3" -m pip install -q -r "$reqs" 2>/dev/null \
+      && green "Python packages installed" \
+      || yellow "Some Python packages failed (exports may not work)"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Node.js + npm (required for the React UI build step)
+# ---------------------------------------------------------------------------
+install_node() {
+  if have node && have npm; then
+    green "Node.js present: $(node --version), npm: $(npm --version)"
+    return 0
+  fi
+  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: node/npm (required for UI build)"; return 0; }
+  need_root; apt_update_once
+  # Try NodeSource LTS first, fall back to distro package
+  if curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - >/dev/null 2>&1; then
+    apt-get install -y nodejs >/dev/null 2>&1
+  else
+    apt-get install -y nodejs npm >/dev/null 2>&1
+  fi
+  have node && green "Node.js installed: $(node --version), npm: $(npm --version)" \
+    || yellow "Node.js not installed (optional; only needed to rebuild UI from source)"
+}
+
+# ---------------------------------------------------------------------------
 # nmap (NSE scripts used by the engine for deep host scanning)
 # ---------------------------------------------------------------------------
 install_nmap() {
@@ -298,6 +355,9 @@ echo " fastscan prerequisite installer"
 echo "=============================================="
 
 install_go
+install_python
+install_python_deps
+install_node
 install_nmap
 install_rustscan
 install_testssl
@@ -321,6 +381,8 @@ fi
 echo "----------------------------------------------"
 log "summary"
 go_ok && green "  go          OK" || red "  go          MISSING"
+{ have python3 || have python; } && green "  python3     OK" || yellow "  python3     MISSING (exports broken)"
+have node && green "  node/npm    OK" || yellow "  node/npm    optional/missing"
 have nmap && green "  nmap        OK" || red "  nmap        MISSING"
 have rustscan && green "  rustscan    OK" || yellow "  rustscan    optional/missing"
 { have testssl.sh || [ -x "$TESTSSL_DIR/testssl.sh" ]; } && green "  testssl.sh  OK" || yellow "  testssl.sh  optional/missing"
@@ -335,8 +397,8 @@ echo "----------------------------------------------"
 if [ "$DO_BUILD" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
   if go_ok; then
     log "building fastscan engine with ${GO_BIN:-$GO_ROOT/bin/go}"
-    ( cd "$FASTSCAN_DIR" && "${GO_BIN:-$GO_ROOT/bin/go}" build -o /tmp/fastscan/fastscan . ) \
-      && green "built: /tmp/fastscan/fastscan" \
+    ( cd "$FASTSCAN_DIR" && "${GO_BIN:-$GO_ROOT/bin/go}" build -buildvcs=false -o "$FASTSCAN_DIR/fastscan" . ) \
+      && green "built: $FASTSCAN_DIR/fastscan" \
       || red "build failed"
   else
     red "cannot build: Go toolchain missing"

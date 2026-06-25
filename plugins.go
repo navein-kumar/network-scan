@@ -159,6 +159,11 @@ func LoadPlugins(dir string) (*PluginEngine, error) {
 	if dir == "" {
 		return eng, nil
 	}
+	// Resolve top-level symlink: filepath.Walk uses Lstat on the root and won't
+	// descend into a directory that is itself a symlink.
+	if real, err := filepath.EvalSymlinks(dir); err == nil {
+		dir = real
+	}
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, werr error) error {
 		if werr != nil {
 			return werr
@@ -166,7 +171,7 @@ func LoadPlugins(dir string) (*PluginEngine, error) {
 		if info.IsDir() {
 			return nil
 		}
-		if filepath.Base(path) == "versions.yaml" {
+		if b := filepath.Base(path); b == "versions.yaml" || b == "cve-matrix.yaml" {
 			return nil
 		}
 		if !strings.HasSuffix(strings.ToLower(path), ".yaml") &&

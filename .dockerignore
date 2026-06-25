@@ -1,0 +1,17 @@
+.git
+.gitignore
+*.md
+fastscan
+fastscan.env
+ui/fastscan-ui
+ui/web/node_modules/
+ui/web/dist/
+ui/server/static/
+data/
+fastscan_out/
+report.html
+report.xlsx
+fastscan_tracking.xlsx
+scripts/*.ndjson
+__pycache__/
+*.pyc

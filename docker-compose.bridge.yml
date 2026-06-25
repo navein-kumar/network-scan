@@ -1,0 +1,17 @@
+version: "3.8"
+
+# Bridge-network override — use on macOS / Windows Docker Desktop where
+# host network mode is not supported.
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.bridge.yml up -d
+#
+# Note: with bridge mode the scanner cannot reach hosts over a VPN tunnel
+# running on the host. Use the default docker-compose.yml (host mode) for
+# any engagement where a VPN is required.
+
+services:
+  fastscan:
+    network_mode: bridge
+    ports:
+      - "8888:8888"
