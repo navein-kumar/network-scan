@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 #
-# txt_to_img.py: render a nuclei-style evidence .txt as a dark terminal-style
-# PNG so the evidence can be pasted straight into a report.
+# txt_to_img.py: render an evidence .txt as a fixed-size dark terminal PNG.
+#
+# Canvas is always 1600x830 (standard terminal window screenshot size).
+# If the content is taller than the canvas, the visible lines are shown
+# and a "... +N more lines" footer is added at the bottom.  The source
+# .txt file always contains the full untruncated evidence.
 #
 # Usage:
 #   txt_to_img.py <file.txt> [out.png]   render one file
@@ -10,30 +14,25 @@
 #
 import os
 import sys
-import textwrap
 
 from PIL import Image, ImageDraw, ImageFont
 
-# Canvas dimensions — fixed width so output always looks like a terminal window.
-CANVAS_WIDTH = 960
-MAX_HEIGHT   = 3500   # lines per page; content exceeding this splits into _part1/_part2
+# Fixed canvas — matches a 1600x830 terminal window screenshot.
+CANVAS_W = 1600
+CANVAS_H = 830
 
-# Background and per-line colours (GitHub-dark palette).
 BG     = (13, 17, 23)
 FG     = (201, 209, 217)
 GREEN  = (63, 185, 80)
 BLUE   = (121, 192, 255)
 RED    = (248, 81, 73)
-GRAY   = (139, 148, 158)
+GRAY   = (110, 118, 129)
 ORANGE = (219, 109, 40)
-DIM    = (48, 54, 61)   # divider line colour
 
-FONT_SIZE = 17
-LINE_PAD  = 5
-MARGIN    = 20
-
-# Characters per line at FONT_SIZE 17 on a 960px canvas (approx 0.58 ratio).
-_CHARS_PER_LINE = int((CANVAS_WIDTH - MARGIN * 2) / (FONT_SIZE * 0.58))
+FONT_SIZE = 14
+LINE_PAD  = 4
+MARGIN_X  = 18
+MARGIN_Y  = 14
 
 
 def find_font(size):
@@ -53,109 +52,51 @@ def find_font(size):
 
 def line_color(line):
     upper = line.upper()
-    stripped = line.lstrip()
     if "CRITICAL" in upper or "VULNERABLE" in upper or "[!]" in line:
         return RED
     if "[+]" in line:
         return GREEN
     if "[*]" in line:
         return BLUE
-    if stripped.startswith("#") or "nuclei report" in line.lower() \
-            or "starting nuclei" in line.lower() or line.strip() == "DONE":
+    if line.strip().startswith("#") or line.strip() == "DONE":
         return GRAY
     if "HIGH" in upper or "MEDIUM" in upper:
         return ORANGE
     return FG
 
 
-def _measure_width(draw, text, font):
-    try:
-        return draw.textlength(text, font=font)
-    except Exception:
-        return len(text) * (FONT_SIZE * 0.58)
-
-
-def _expand_lines(raw_lines, font, draw):
-    """Wrap any line that exceeds the canvas width."""
-    out = []
-    char_limit = _CHARS_PER_LINE
-    for ln in raw_lines:
-        if not ln.strip():
-            out.append(("", FG))
-            continue
-        w = _measure_width(draw, ln, font)
-        if w <= CANVAS_WIDTH - MARGIN * 2:
-            out.append((ln, line_color(ln)))
-        else:
-            # Indent continuation lines by 4 spaces.
-            wrapped = textwrap.wrap(ln, width=char_limit, subsequent_indent="    ")
-            for i, piece in enumerate(wrapped):
-                out.append((piece, line_color(ln)))
-    return out
-
-
-def _draw_divider(draw, y, width):
-    draw.line([(MARGIN, y + 3), (width - MARGIN, y + 3)], fill=DIM, width=1)
-
-
-def _render_page(lines_slice, font, line_h, width):
-    """Render one page worth of (text, color) pairs to an Image."""
-    height = line_h * len(lines_slice) + MARGIN * 2
-    img  = Image.new("RGB", (width, height), BG)
-    draw = ImageDraw.Draw(img)
-    y = MARGIN
-    prev_blank = False
-    for text, color in lines_slice:
-        if text.strip() and prev_blank:
-            _draw_divider(draw, y, width)
-            y += 8
-        if not text.strip():
-            prev_blank = True
-        else:
-            prev_blank = False
-            draw.text((MARGIN, y), text, font=font, fill=color)
-        y += line_h
-    return img
-
-
 def render(txt_path, png_path):
-    """Render txt_path to one or more PNG files.
-
-    If the content exceeds MAX_HEIGHT pixels, the output is split into
-    <basename>_part1.png, <basename>_part2.png, … and the returned list
-    contains all paths written.  For single-page output the list has one
-    element equal to png_path.
-    """
     with open(txt_path, encoding="utf-8", errors="replace") as f:
-        raw = f.read().rstrip("\n").split("\n")
+        lines = f.read().rstrip("\n").split("\n")
 
     font   = find_font(FONT_SIZE)
     line_h = FONT_SIZE + LINE_PAD
 
-    dummy = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-    lines = _expand_lines(raw, font, dummy)
+    # How many lines fit inside the canvas (leave space for the footer row).
+    usable_h     = CANVAS_H - MARGIN_Y * 2
+    lines_per_pg = (usable_h - line_h) // line_h   # reserve 1 row for footer
+    max_lines    = max(1, lines_per_pg)
 
-    width        = CANVAS_WIDTH
-    lines_per_pg = (MAX_HEIGHT - MARGIN * 2) // line_h
+    truncated = len(lines) > max_lines
+    visible   = lines[:max_lines]
+    overflow  = len(lines) - max_lines
 
-    # Partition into pages.
-    pages = [lines[i:i + lines_per_pg]
-             for i in range(0, len(lines), lines_per_pg)]
+    img  = Image.new("RGB", (CANVAS_W, CANVAS_H), BG)
+    draw = ImageDraw.Draw(img)
 
-    if len(pages) == 1:
-        img = _render_page(pages[0], font, line_h, width)
-        img.save(png_path, optimize=True)
-        return [png_path]
+    y = MARGIN_Y
+    for ln in visible:
+        # Clip line to canvas width to avoid overflow.
+        draw.text((MARGIN_X, y), ln, font=font, fill=line_color(ln))
+        y += line_h
 
-    # Multi-page: write <stem>_part1.png, _part2.png …
-    stem, ext = os.path.splitext(png_path)
-    out_paths = []
-    for i, page in enumerate(pages, 1):
-        p = f"{stem}_part{i}{ext}"
-        img = _render_page(page, font, line_h, width)
-        img.save(p, optimize=True)
-        out_paths.append(p)
-    return out_paths
+    if truncated:
+        footer = f"... +{overflow} more lines"
+        draw.text((MARGIN_X, CANVAS_H - MARGIN_Y - line_h),
+                  footer, font=font, fill=GRAY)
+
+    img.save(png_path, optimize=True)
+    return [png_path]
 
 
 def main():
