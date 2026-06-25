@@ -1,0 +1,5 @@
+fastscan-ui
+web/node_modules/
+web/dist/
+server/static/
+*.log
