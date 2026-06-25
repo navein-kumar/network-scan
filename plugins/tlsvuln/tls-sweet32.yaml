@@ -4,7 +4,7 @@ severity: medium
 source: tlsvuln
 when: |
   vulnerabilities != nil and any(vulnerabilities, {
-    .id matches "(?i)SWEET32" and .finding matches "(?i)VULNERABLE"
+    .id matches "(?i)SWEET32" && !(.finding matches "(?i)not vulnerable")
   })
 evidence: '{{ .host }}:{{ .port }} SWEET32 (3DES or other 64-bit block cipher offered)'
 references:

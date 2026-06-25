@@ -1,0 +1,13 @@
+id: tls-cert-expiring-soon
+title: TLS certificate expiring within 30 days
+severity: medium
+source: tlsfp
+when: cert_not_after != nil && cert_not_after != "" && cert_days_remaining >= 0 && cert_days_remaining < 30
+evidence: '{{ .host }}:{{ .port }} certificate expires in {{ .cert_days_remaining }} days on {{ .cert_not_after }} (CN={{ .peer_cn }})'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc5280
+remediation: |
+  Renew the certificate before it expires. Most CAs allow renewal
+  30 days before expiry without losing validity time. Enable auto-renewal
+  via certbot/ACME to avoid manual tracking.
+tags: [tls, certificate, expiry]

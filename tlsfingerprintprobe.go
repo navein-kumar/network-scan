@@ -22,20 +22,25 @@ import (
 
 // TLSFingerprintReport is one TLS handshake summary per host:port.
 type TLSFingerprintReport struct {
-	Host         string   `json:"host"`
-	Port         int      `json:"port"`
-	TLSVersion   string   `json:"tls_version,omitempty"`
-	CipherSuite  string   `json:"cipher_suite,omitempty"`
-	ALPN         string   `json:"alpn,omitempty"`
-	SNI          string   `json:"sni,omitempty"`
-	JA3          string   `json:"ja3,omitempty"`
-	JA3S         string   `json:"ja3s,omitempty"`
-	JA4          string   `json:"ja4,omitempty"`
-	JA4S         string   `json:"ja4s,omitempty"`
-	PeerSubject  string   `json:"peer_subject,omitempty"`
-	PeerIssuer   string   `json:"peer_issuer,omitempty"`
-	PeerCN       string   `json:"peer_cn,omitempty"`
-	ProbeErrors  []string `json:"probe_errors,omitempty"`
+	Host              string   `json:"host"`
+	Port              int      `json:"port"`
+	TLSVersion        string   `json:"tls_version,omitempty"`
+	CipherSuite       string   `json:"cipher_suite,omitempty"`
+	ALPN              string   `json:"alpn,omitempty"`
+	SNI               string   `json:"sni,omitempty"`
+	JA3               string   `json:"ja3,omitempty"`
+	JA3S              string   `json:"ja3s,omitempty"`
+	JA4               string   `json:"ja4,omitempty"`
+	JA4S              string   `json:"ja4s,omitempty"`
+	PeerSubject       string   `json:"peer_subject,omitempty"`
+	PeerIssuer        string   `json:"peer_issuer,omitempty"`
+	PeerCN            string   `json:"peer_cn,omitempty"`
+	CertNotBefore     string   `json:"cert_not_before,omitempty"`
+	CertNotAfter      string   `json:"cert_not_after,omitempty"`
+	CertDaysRemaining int      `json:"cert_days_remaining"`
+	CertSANs          []string `json:"cert_sans,omitempty"`
+	CertSerial        string   `json:"cert_serial,omitempty"`
+	ProbeErrors       []string `json:"probe_errors,omitempty"`
 }
 
 // ProbeTLSFingerprint performs a TLS handshake against host:port using
@@ -74,6 +79,16 @@ func ProbeTLSFingerprint(host string, port int, timeout time.Duration) (*TLSFing
 		rep.PeerSubject = c.Subject.String()
 		rep.PeerIssuer = c.Issuer.String()
 		rep.PeerCN = c.Subject.CommonName
+		rep.CertNotBefore = c.NotBefore.UTC().Format("2006-01-02")
+		rep.CertNotAfter = c.NotAfter.UTC().Format("2006-01-02")
+		rep.CertDaysRemaining = int(time.Until(c.NotAfter).Hours() / 24)
+		rep.CertSerial = c.SerialNumber.Text(16)
+		for _, san := range c.DNSNames {
+			rep.CertSANs = append(rep.CertSANs, san)
+		}
+		for _, ip := range c.IPAddresses {
+			rep.CertSANs = append(rep.CertSANs, ip.String())
+		}
 	}
 	// JA4 / JA4S abbreviated tags. Real JA4 needs the actual TLS
 	// extension list which crypto/tls hides. We use a "JA4-style"

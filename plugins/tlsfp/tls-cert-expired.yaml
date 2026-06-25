@@ -1,0 +1,14 @@
+id: tls-cert-expired
+title: TLS certificate has expired
+severity: high
+source: tlsfp
+when: cert_not_after != nil && cert_not_after != "" && cert_days_remaining < 0
+evidence: '{{ .host }}:{{ .port }} certificate EXPIRED on {{ .cert_not_after }} (CN={{ .peer_cn }})'
+references:
+  - https://datatracker.ietf.org/doc/html/rfc5280
+remediation: |
+  Renew the TLS certificate immediately. Expired certificates cause
+  browser warnings and failed mTLS handshakes. Use Let's Encrypt
+  (certbot) for free auto-renewal or request a new certificate from
+  your CA before expiry.
+tags: [tls, certificate, expired]

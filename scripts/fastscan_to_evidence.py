@@ -507,6 +507,29 @@ def build_txt(finding, driver_report, httpx_rec=None):
                 if len(parts) >= 3:
                     lines.extend(wrap_line(label, host, port, "[*]", "  " + parts[2]))
 
+    # tlsfp cert expiry: show cert details for expired/expiring-soon findings.
+    if source == "tlsfp" and driver_report and rule_id in ("tls-cert-expired", "tls-cert-expiring-soon"):
+        cn       = driver_report.get("peer_cn") or ""
+        issuer   = driver_report.get("peer_issuer") or ""
+        not_bef  = driver_report.get("cert_not_before") or ""
+        not_aft  = driver_report.get("cert_not_after") or ""
+        days     = driver_report.get("cert_days_remaining", 0)
+        serial   = driver_report.get("cert_serial") or ""
+        sans     = driver_report.get("cert_sans") or []
+        if cn:
+            lines.extend(wrap_line(label, host, port, "[*]", "CN: " + cn))
+        if not_bef and not_aft:
+            status = "EXPIRED" if days < 0 else ("%d days remaining" % days)
+            lines.extend(wrap_line(label, host, port, "[*]",
+                "Validity: %s to %s (%s)" % (not_bef, not_aft, status)))
+        if serial:
+            lines.extend(wrap_line(label, host, port, "[*]", "Serial: " + serial))
+        if sans:
+            lines.extend(wrap_line(label, host, port, "[*]",
+                "SANs: " + ", ".join(sans[:6])))
+        if issuer:
+            lines.extend(wrap_line(label, host, port, "[*]", "Issuer: " + issuer[:100]))
+
     # If cred attempts present, show successful ones as [+] lines
     cred_attempts = (driver_report or {}).get("cred_attempts") or []
     for ca in cred_attempts:
