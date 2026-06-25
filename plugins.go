@@ -318,6 +318,9 @@ var sourceVersionCtx = map[string][2]string{
 	"imap": {"product", "product_version"},
 	"pop3": {"product", "product_version"},
 
+	// DNS — BIND version from version_bind field (DNS driver).
+	"dns": {"", "version_bind"},
+
 	// Relational databases — version from handshake.
 	"mysql":      {"", "server_version"},
 	"postgresql": {"", "server_version"},

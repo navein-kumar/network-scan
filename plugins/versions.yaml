@@ -181,3 +181,8 @@ neo4j:
 # Detected via: GET /api/jolokia/version JSON (value.info.version field)
 activemq:
   activemq: "6.1.3"
+
+# ── DNS ───────────────────────────────────────────────────────────────────────
+# Detected via: BIND version query (version_bind field from dns driver)
+dns:
+  bind: "9.20.9"
