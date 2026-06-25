@@ -174,7 +174,7 @@ func captureVNCScreenshot(host string, port int, rep *VNCReport, timeout time.Du
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}
-	base := fmt.Sprintf("vnc_%s_%d", sanitizeForFilename(host), port)
+	base := fmt.Sprintf("vnc-desktop_%s_%d", sanitizeForFilename(host), port)
 	pngPath := dir + "/" + base + ".png"
 	jpgPath := dir + "/" + base + ".jpg"
 

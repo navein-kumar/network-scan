@@ -2,11 +2,13 @@ package main
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // script paths for the export bridges — derived from engineRoot so they work
@@ -96,19 +98,17 @@ func buildEvidenceDir(sc *Scan) (string, error) {
 		copyFile(src, filepath.Join(evDir, "ports_report.txt"))
 	}
 
-	// Copy any screenshot PNGs referenced in findings.
-	shotDir := filepath.Join(evDir, "screenshots")
-	_ = os.MkdirAll(shotDir, 0o755)
-	for _, p := range screenshotPaths(findings) {
-		if fileExists(p) {
-			copyFile(p, filepath.Join(shotDir, filepath.Base(p)))
-		}
-	}
-
 	// Render the evidence .txt files into images/.
 	cmd := exec.Command(pythonBin(), scriptTxtToImg, evDir)
 	cmd.Dir = engineRoot
 	_ = cmd.Run()
+
+	// Match each finding to its screenshot and copy into images/ as
+	// <rule_id>_<host>_<port>.png so evidence and screenshot share the same
+	// name prefix and can be automatically paired.
+	imgDir := filepath.Join(evDir, "images")
+	_ = os.MkdirAll(imgDir, 0o755)
+	matchScreenshotsToFindings(findings, imgDir)
 
 	return evDir, nil
 }
@@ -236,6 +236,77 @@ func addDirToZip(zw *zip.Writer, dir, prefix string) error {
 		name := prefix + "/" + filepath.ToSlash(rel)
 		return addFileToZip(zw, path, name)
 	})
+}
+
+// matchScreenshotsToFindings copies each screenshot that matches a finding
+// into imgDir, renamed as <rule_id>_<host>_<port>.png.
+//
+// Matching strategy (first hit wins per finding):
+//  1. Use meta.screenshot_path if the finding carries an explicit path.
+//  2. Fall back to scanning /tmp/fastscan/screenshots/ for any file whose
+//     name ends with _<host>_<port>.png (protocol-agnostic match).
+func matchScreenshotsToFindings(findingsPath, imgDir string) {
+	shotBase := filepath.Join(os.TempDir(), "fastscan", "screenshots")
+
+	// Build host:port → screenshot path lookup from the screenshots dir.
+	type hpKey struct{ host, port string }
+	shotMap := map[hpKey]string{}
+	if entries, err := os.ReadDir(shotBase); err == nil {
+		for _, e := range entries {
+			n := e.Name()
+			if !strings.HasSuffix(n, ".png") {
+				continue
+			}
+			stem := strings.TrimSuffix(n, ".png") // e.g. http_1.2.3.4_80
+			parts := strings.Split(stem, "_")
+			if len(parts) >= 3 {
+				port := parts[len(parts)-1]
+				host := parts[len(parts)-2]
+				shotMap[hpKey{host, port}] = filepath.Join(shotBase, n)
+			}
+		}
+	}
+
+	copied := map[string]bool{}
+	for _, ev := range readEventsRaw(findingsPath) {
+		ruleID, _ := ev["rule_id"].(string)
+		host, _ := ev["host"].(string)
+		if ruleID == "" || host == "" {
+			continue
+		}
+		port := ""
+		switch v := ev["port"].(type) {
+		case float64:
+			port = fmt.Sprintf("%d", int(v))
+		case string:
+			port = v
+		}
+		if port == "" || port == "0" {
+			continue
+		}
+
+		// 1. Explicit screenshot_path in finding meta.
+		var shotPath string
+		if meta, ok := ev["meta"].(map[string]any); ok {
+			if sp, ok := meta["screenshot_path"].(string); ok && sp != "" && fileExists(sp) {
+				shotPath = sp
+			}
+		}
+		// 2. Look up by host:port.
+		if shotPath == "" {
+			shotPath = shotMap[hpKey{host, port}]
+		}
+		if shotPath == "" || !fileExists(shotPath) {
+			continue
+		}
+
+		dest := filepath.Join(imgDir, ruleID+"_"+host+"_"+port+".png")
+		if copied[dest] {
+			continue
+		}
+		copied[dest] = true
+		copyFile(shotPath, dest)
+	}
 }
 
 // screenshotPaths extracts screenshot_path values referenced by findings.

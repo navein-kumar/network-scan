@@ -398,7 +398,7 @@ func captureRDPScreenshot(host string, port int, rep *RDPReport, timeout time.Du
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}
-	base := fmt.Sprintf("rdp_%s_%d", sanitizeForFilename(host), port)
+	base := fmt.Sprintf("rdp-login_%s_%d", sanitizeForFilename(host), port)
 	pngPath := dir + "/" + base + ".png"
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout+10*time.Second)

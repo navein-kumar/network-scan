@@ -37,7 +37,11 @@ func webShotPath(rawurl string) (string, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
-	base := fmt.Sprintf("web_%s_%s", sanitizeForFilename(host), sanitizeForFilename(port))
+	scheme := strings.ToLower(u.Scheme) // "http" or "https"
+	if scheme != "http" && scheme != "https" {
+		scheme = "http"
+	}
+	base := fmt.Sprintf("%s_%s_%s", scheme, sanitizeForFilename(host), sanitizeForFilename(port))
 	return dir + "/" + base + ".png", nil
 }
 
@@ -90,6 +94,37 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 		Timeout:   playwright.Float(gotoMS),
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
+
+	// Inject a Chrome-style address bar so the URL is visible in the screenshot.
+	js := `(url) => {
+		const bar = document.createElement('div');
+		bar.id = '__fastscan_urlbar__';
+		bar.style.cssText = [
+			'position:fixed','top:0','left:0','right:0','height:38px',
+			'background:#202124','display:flex','align-items:center',
+			'padding:0 12px','z-index:2147483647','box-sizing:border-box',
+			'box-shadow:0 1px 4px rgba(0,0,0,.5)',
+		].join(';');
+		const pill = document.createElement('div');
+		pill.style.cssText = [
+			'flex:1','background:#303134','border-radius:20px',
+			'padding:5px 14px','display:flex','align-items:center','gap:7px',
+			'overflow:hidden','white-space:nowrap','text-overflow:ellipsis',
+		].join(';');
+		pill.innerHTML = '<span style="font:13px/1 Arial,sans-serif;color:#bdc1c6;">&#128274;</span>' +
+			'<span style="font:13px/1 Arial,sans-serif;color:#e8eaed;overflow:hidden;text-overflow:ellipsis;">' +
+			url.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
+		bar.appendChild(pill);
+		// Remove any previous injection (re-used page safety).
+		const old = document.getElementById('__fastscan_urlbar__');
+		if (old) old.remove();
+		document.documentElement.prepend(bar);
+		// Shift page body down so bar does not overlap real content.
+		const spacer = document.createElement('div');
+		spacer.style.cssText = 'height:38px;display:block;';
+		if (document.body) document.body.insertAdjacentElement('afterbegin', spacer);
+	}`
+	_, _ = page.Evaluate(js, rawurl)
 
 	if _, err := page.Screenshot(playwright.PageScreenshotOptions{
 		Path: playwright.String(outPath),
