@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# deploy.sh — push source to uiprod, rebuild, restart.
+#
+# Run from the fastscan repo root on your LOCAL machine:
+#   bash deploy.sh
+#
+# Requires: ssh access to uiprod (key-based, no password prompt)
+#
+# fastscan.env on uiprod controls the UI password. Edit it before
+# running deploy.sh to change credentials. The file is never overwritten.
+
+set -euo pipefail
+
+REMOTE=uiprod
+REMOTE_DIR=/opt/fastscan
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "=== [1/5] Pushing source to $REMOTE ==="
+tar -czf - -C "$SCRIPT_DIR" \
+  --exclude='.git' \
+  --exclude='data' \
+  --exclude='fastscan' \
+  --exclude='fastscan.bak' \
+  --exclude='*.env' \
+  --exclude='__pycache__' \
+  --exclude='*.pyc' \
+  --exclude='report.html' \
+  --exclude='report.xlsx' \
+  . | ssh "$REMOTE" "tar xzf - -C $REMOTE_DIR"
+echo "  source sync done"
+
+echo "=== [2/5] Building UI on $REMOTE ==="
+ssh "$REMOTE" "cd $REMOTE_DIR/ui/server && go build -buildvcs=false -o $REMOTE_DIR/ui/fastscan-ui . && echo '  ui build OK'"
+
+echo "=== [3/5] Building engine on $REMOTE ==="
+ssh "$REMOTE" "cd $REMOTE_DIR && go build -buildvcs=false -o ./fastscan . && echo '  engine build OK'"
+
+echo "=== [4/5] Restarting UI ==="
+ssh "$REMOTE" bash <<'ENDSSH'
+  ENV=/opt/fastscan/fastscan.env
+  UI_BIN=/opt/fastscan/ui/fastscan-ui
+  DATA=/opt/fastscan/data
+
+  UI_USER=$(grep '^UI_USER=' "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo admin)
+  UI_PASS=$(grep '^UI_PASS='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo changeme)
+  UI_ADDR=$(grep '^UI_ADDR='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo 0.0.0.0:8888)
+
+  pkill -f fastscan-ui 2>/dev/null || true
+  sleep 1
+  tmux kill-session -t fastscan-ui 2>/dev/null || true
+  tmux new-session -d -s fastscan-ui \
+    "$UI_BIN -addr $UI_ADDR -data $DATA -auth ${UI_USER}:${UI_PASS} 2>&1 | tee $DATA/../ui/server.log"
+  sleep 2
+  echo "  UI started: user=$UI_USER addr=$UI_ADDR"
+ENDSSH
+
+echo "=== [5/5] Smoke test ==="
+ssh "$REMOTE" bash <<'ENDSSH'
+  ENV=/opt/fastscan/fastscan.env
+  UI_USER=$(grep '^UI_USER=' "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo admin)
+  UI_PASS=$(grep '^UI_PASS='  "$ENV" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo changeme)
+
+  HTTP=$(curl -s -o /dev/null -w '%{http_code}' -u "${UI_USER}:${UI_PASS}" http://localhost:8888/)
+  SIZE=$(curl -s -u "${UI_USER}:${UI_PASS}" http://localhost:8888/ | wc -c)
+  API=$(curl -s -o /dev/null -w '%{http_code}' -u "${UI_USER}:${UI_PASS}" http://localhost:8888/api/meta)
+  META=$(curl -s -u "${UI_USER}:${UI_PASS}" http://localhost:8888/api/meta)
+
+  echo "  HTML  : HTTP $HTTP  (${SIZE} bytes)"
+  echo "  /api/meta: HTTP $API"
+  echo "  $META"
+
+  [ "$HTTP" = "200" ] && [ "$SIZE" -gt 100 ] && [ "$API" = "200" ] && echo "  PASS" || { echo "  FAIL"; exit 1; }
+ENDSSH
+
+IP=$(ssh "$REMOTE" 'curl -s ifconfig.me 2>/dev/null || hostname -I | awk "{print \$1}"')
+echo ""
+echo "Deploy complete. UI: http://${IP}:8888"
+echo "Password is in $REMOTE:/opt/fastscan/fastscan.env"

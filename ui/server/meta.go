@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -91,8 +92,9 @@ func resolveDeps() []dep {
 	return out
 }
 
-// countDrivers counts the engine's protocol probe drivers (*probe.go files,
-// excluding *_test.go files).
+// countDrivers counts the engine's protocol probe drivers. In source
+// deployments it counts *probe.go files; in binary-only deployments (Docker)
+// it falls back to a drivers.count marker file written at build time.
 func countDrivers() int {
 	matches, _ := filepath.Glob(filepath.Join(engineRoot, "*probe.go"))
 	n := 0
@@ -102,7 +104,17 @@ func countDrivers() int {
 		}
 		n++
 	}
-	return n
+	if n > 0 {
+		return n
+	}
+	// Binary-only deployment: read pre-computed count from marker file.
+	if data, err := os.ReadFile(filepath.Join(engineRoot, "drivers.count")); err == nil {
+		var count int
+		if _, err := fmt.Sscanf(strings.TrimSpace(string(data)), "%d", &count); err == nil && count > 0 {
+			return count
+		}
+	}
+	return 0
 }
 
 // countPlugins counts the YAML plugin rule files anywhere under the engine's

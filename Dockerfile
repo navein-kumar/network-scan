@@ -22,12 +22,21 @@ COPY . .
 # Build the engine binary
 RUN go build -buildvcs=false -o /out/fastscan .
 
+# Write driver count so the UI can report it without source files present
+RUN ls *probe.go | grep -v _test | wc -l > /out/drivers.count
+
 # Build the frontend, embed into the Go UI server, build UI binary
 RUN cd ui/web && npm run build --silent \
  && rm -rf /src/ui/server/static \
  && cp -r /src/ui/web/dist /src/ui/server/static \
  && cd /src/ui/server \
  && go build -buildvcs=false -o /out/fastscan-ui .
+
+# Install Go-based scanning tools into /out so we can copy them to runtime
+RUN go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
+ && go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
+ && cp /go/bin/httpx /out/httpx \
+ && cp /go/bin/nuclei /out/nuclei
 
 # ── Stage 2: runtime ────────────────────────────────────────────────────────
 FROM ubuntu:22.04
@@ -42,8 +51,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
       python3 \
       python3-pip \
+      pipx \
+      libpcap-dev \
       imagemagick \
     && pip3 install --no-cache-dir openpyxl Pillow xlsxwriter \
+    && ( apt-get install -y netexec 2>/dev/null \
+         || PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install netexec --system-site-packages 2>/dev/null \
+         || PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install git+https://github.com/Pennyw0rth/NetExec 2>/dev/null \
+         || true ) \
     && rm -rf /var/lib/apt/lists/*
 
 # testssl.sh — needed for TLS vulnerability scans
@@ -51,15 +66,24 @@ RUN git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.
  && ln -s /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh
 
 # rustscan — fast port scanner (engine falls back to nmap if absent)
-RUN ARCH="$(dpkg --print-architecture)" \
- && curl -sfL "https://github.com/RustScan/RustScan/releases/download/2.4.1/rustscan_2.4.1_${ARCH}.deb" \
-      -o /tmp/rustscan.deb \
- && dpkg -i /tmp/rustscan.deb 2>/dev/null || true \
- && rm -f /tmp/rustscan.deb
+# Try apt first, then GitHub release, then skip (nmap fallback covers it)
+RUN apt-get update && \
+    ( apt-get install -y --no-install-recommends rustscan 2>/dev/null || \
+      ( ARCH="$(dpkg --print-architecture)" && \
+        for VER in 2.4.1 2.3.0 2.2.3 2.1.1; do \
+          URL="https://github.com/RustScan/RustScan/releases/download/${VER}/rustscan_${VER}_${ARCH}.deb" && \
+          curl -sfL --max-time 30 "$URL" -o /tmp/rustscan.deb 2>/dev/null && \
+          dpkg -i /tmp/rustscan.deb 2>/dev/null && \
+          rm -f /tmp/rustscan.deb && break || rm -f /tmp/rustscan.deb; \
+        done ) || true ) && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy binaries from builder
-COPY --from=builder /out/fastscan     /opt/fastscan/fastscan
-COPY --from=builder /out/fastscan-ui  /opt/fastscan/ui/fastscan-ui
+COPY --from=builder /out/fastscan        /opt/fastscan/fastscan
+COPY --from=builder /out/fastscan-ui     /opt/fastscan/ui/fastscan-ui
+COPY --from=builder /out/httpx           /usr/local/bin/httpx
+COPY --from=builder /out/nuclei          /usr/local/bin/nuclei
+COPY --from=builder /out/drivers.count   /opt/fastscan/drivers.count
 
 # Copy support files baked into the image
 COPY scripts/  /opt/fastscan/scripts/
