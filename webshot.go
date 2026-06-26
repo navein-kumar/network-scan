@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -45,6 +47,62 @@ func webShotPath(rawurl string) (string, error) {
 	}
 	base := fmt.Sprintf("%s_%s_%s", scheme, sanitizeForFilename(host), sanitizeForFilename(port))
 	return dir + "/" + base + ".png", nil
+}
+
+// addWebURLBar composites a URL bar (badge + URL text) onto an existing web
+// screenshot PNG using Pillow. The bar is prepended above the page content so
+// it is always visible regardless of the page's CSS or DOM structure.
+func addWebURLBar(pngPath, rawurl, badgeText, badgeBg, badgeFg string) {
+	py, err := exec.LookPath("python3")
+	if err != nil {
+		if py, err = exec.LookPath("python"); err != nil {
+			return
+		}
+	}
+	script := `
+import sys
+try:
+    from PIL import Image, ImageDraw, ImageFont
+
+    png, url, btxt, bbg, bfg = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
+
+    def hex2rgb(h):
+        h = h.lstrip('#')
+        return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+    img = Image.open(png).convert("RGB")
+    bar_h = 40
+    new = Image.new("RGB", (img.width, img.height + bar_h), (32, 33, 36))
+    new.paste(img, (0, bar_h))
+    d = ImageDraw.Draw(new)
+    d.rectangle([0, 0, img.width, bar_h - 1], fill=(32, 33, 36))
+
+    try:
+        font_b = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 11)
+        font   = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+    except Exception:
+        font_b = font = ImageFont.load_default()
+
+    # Draw badge
+    pad_x, pad_y = 8, 4
+    bbox = d.textbbox((0, 0), btxt, font=font_b)
+    bw = bbox[2] - bbox[0] + pad_x * 2
+    bh = bbox[3] - bbox[1] + pad_y * 2
+    bx, by = 12, (bar_h - bh) // 2
+    d.rounded_rectangle([bx, by, bx + bw, by + bh], radius=4, fill=hex2rgb(bbg))
+    d.text((bx + pad_x, by + pad_y), btxt, fill=hex2rgb(bfg), font=font_b)
+
+    # Draw URL
+    url_x = bx + bw + 10
+    d.text((url_x, (bar_h - 13) // 2), url, fill=(232, 234, 237), font=font)
+
+    new.save(png)
+except Exception:
+    sys.exit(0)
+`
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = exec.CommandContext(ctx, py, "-c", script, pngPath, rawurl, badgeText, badgeBg, badgeFg).Run()
 }
 
 // tlsCertError returns true when the HTTPS endpoint's certificate fails
@@ -121,65 +179,29 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
 
-	// Determine URL bar icon + label based on scheme and cert validity.
-	isHTTPS := strings.HasPrefix(strings.ToLower(rawurl), "https://")
-	certErr := isHTTPS && tlsCertError(rawurl)
-
-	var iconHTML, labelHTML string
-	switch {
-	case !isHTTPS:
-		// Plain HTTP — open padlock + "Not Secure" in red
-		iconHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f28b82" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`
-		labelHTML = `<span style="font:12px/1 Arial,sans-serif;color:#f28b82;margin-right:4px;">Not Secure</span>`
-	case certErr:
-		// HTTPS with self-signed / invalid cert — warning triangle
-		iconHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fdd663" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-		labelHTML = `<span style="font:12px/1 Arial,sans-serif;color:#fdd663;margin-right:4px;">Certificate Warning</span>`
-	default:
-		// HTTPS with valid cert — closed green padlock
-		iconHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
-		labelHTML = ``
-	}
-
-	js := `([url, icon, label]) => {
-		const old = document.getElementById('__fastscan_urlbar__');
-		if (old) old.remove();
-		const bar = document.createElement('div');
-		bar.id = '__fastscan_urlbar__';
-		bar.style.cssText = [
-			'position:fixed','top:0','left:0','right:0','height:38px',
-			'background:#202124','display:flex','align-items:center',
-			'padding:0 12px','z-index:2147483647','box-sizing:border-box',
-			'box-shadow:0 2px 6px rgba(0,0,0,.6)',
-			'font-family:Arial,sans-serif',
-		].join(';');
-		const pill = document.createElement('div');
-		pill.style.cssText = [
-			'flex:1','background:#303134','border-radius:20px',
-			'padding:5px 14px','display:flex','align-items:center','gap:6px',
-			'overflow:hidden','white-space:nowrap',
-		].join(';');
-		pill.innerHTML = icon + label +
-			'<span style="font-size:13px;color:#e8eaed;overflow:hidden;text-overflow:ellipsis;">' +
-			url.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
-		bar.appendChild(pill);
-		if (document.body) {
-			document.body.appendChild(bar);
-		} else {
-			document.documentElement.appendChild(bar);
-		}
-	}`
-	_, _ = page.Evaluate(js, []string{rawurl, iconHTML, labelHTML})
-	// Wait one rAF + a paint cycle so Chromium flushes the injected bar to the
-	// compositing layer before we capture. Without this the screenshot fires
-	// before the DOM mutation is rendered.
-	_, _ = page.Evaluate(`() => new Promise(r => requestAnimationFrame(() => setTimeout(r, 100)))`, nil)
-
+	// Capture the page as-is — no JS injection (fragile on pages that use
+	// CSS transforms, full-viewport overlays, or post-DOMContentLoaded redirects).
 	if _, err := page.Screenshot(playwright.PageScreenshotOptions{
 		Path:     playwright.String(outPath),
 		FullPage: playwright.Bool(false),
 	}); err != nil {
 		return fmt.Errorf("webshot capture: %w", err)
 	}
+
+	// Burn URL bar onto the PNG with Pillow after capture — always visible
+	// regardless of the page's DOM/CSS, same approach as RDP/VNC labels.
+	isHTTPS := strings.HasPrefix(strings.ToLower(rawurl), "https://")
+	certErr := isHTTPS && tlsCertError(rawurl)
+
+	var badgeText, badgeBg, badgeFg string
+	switch {
+	case !isHTTPS:
+		badgeText, badgeBg, badgeFg = "NOT SECURE", "#c62828", "#ffffff"
+	case certErr:
+		badgeText, badgeBg, badgeFg = "CERT WARNING", "#f57f17", "#ffffff"
+	default:
+		badgeText, badgeBg, badgeFg = "HTTPS", "#1b5e20", "#ffffff"
+	}
+	addWebURLBar(outPath, rawurl, badgeText, badgeBg, badgeFg)
 	return nil
 }
