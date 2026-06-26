@@ -181,10 +181,48 @@ func captureVNCScreenshot(host string, port int, rep *VNCReport, timeout time.Du
 	}
 
 	if fi, err := os.Stat(pngPath); err == nil && fi.Size() > 0 {
+		// Overlay a label bar (IP:port) on the raw PNG using Pillow so the
+		// screenshot is self-identifying in reports.
+		addScreenshotLabel(pngPath, fmt.Sprintf("vnc://%s:%d", host, port))
 		rep.ScreenshotPath = pngPath
 	} else {
 		os.Remove(pngPath)
 	}
+}
+
+// addScreenshotLabel burns a dark header bar with the target address into an
+// existing PNG using Python + Pillow (already a required dep). Failure is
+// silent — the unlabelled screenshot is kept as-is.
+func addScreenshotLabel(pngPath, label string) {
+	py, err := exec.LookPath("python3")
+	if err != nil {
+		if py, err = exec.LookPath("python"); err != nil {
+			return
+		}
+	}
+	script := `
+import sys, textwrap
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    img = Image.open(sys.argv[1]).convert("RGB")
+    bar_h = 38
+    new = Image.new("RGB", (img.width, img.height + bar_h), (32, 33, 36))
+    new.paste(img, (0, bar_h))
+    d = ImageDraw.Draw(new)
+    d.rectangle([0, 0, img.width, bar_h - 1], fill=(32, 33, 36))
+    label = sys.argv[2]
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+    except Exception:
+        font = ImageFont.load_default()
+    d.text((14, 12), label, fill=(232, 234, 237), font=font)
+    new.save(sys.argv[1])
+except Exception as e:
+    sys.exit(0)
+`
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = exec.CommandContext(ctx, py, "-c", script, pngPath, label).Run()
 }
 
 // vncDisplayForPort maps a TCP port to a VNC display number. Ports in the

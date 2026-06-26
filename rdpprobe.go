@@ -413,6 +413,7 @@ func captureRDPScreenshot(host string, port int, rep *RDPReport, timeout time.Du
 	}
 
 	if fi, err := os.Stat(pngPath); err == nil && fi.Size() > 0 {
+		addScreenshotLabel(pngPath, fmt.Sprintf("rdp://%s:%d", host, port))
 		rep.ScreenshotPath = pngPath
 	} else {
 		os.Remove(pngPath)

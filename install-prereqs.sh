@@ -322,6 +322,17 @@ install_screenshot() {
     aarch64|arm64) arch="arm64" ;;
     *) arch="" ;;
   esac
+  # scrying v0.9.2 is compiled against libssl1.1; Ubuntu 22.04+ ships libssl3.
+  # Install the compat package first if needed.
+  if ! ldconfig -p 2>/dev/null | grep -q 'libssl.so.1.1'; then
+    log "installing libssl1.1 compat for scrying"
+    local ssl_deb="libssl1.1_1.1.1f-1ubuntu2_${arch}.deb"
+    curl -fsSL "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/${ssl_deb}" \
+      -o "/tmp/${ssl_deb}" 2>/dev/null \
+      && dpkg -i "/tmp/${ssl_deb}" >/dev/null 2>&1 || true
+    rm -f "/tmp/${ssl_deb}"
+  fi
+
   if [ -n "$arch" ]; then
     deb="scrying_0.9.2_${arch}.deb"
     url="https://github.com/nccgroup/scrying/releases/download/v0.9.2/${deb}"

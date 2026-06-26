@@ -84,7 +84,10 @@ RUN apt-get update && \
         done ) || true ) && \
     rm -rf /var/lib/apt/lists/*
 
-# scrying — RDP login screen screenshots (optional; best-effort install)
+# scrying — RDP/VNC screenshots. v0.9.2 needs libssl1.1 (Ubuntu 22.04 ships libssl3).
+RUN ARCH="$(dpkg --print-architecture)" && \
+    curl -fsSL "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_${ARCH}.deb" \
+      -o /tmp/libssl1.1.deb && dpkg -i /tmp/libssl1.1.deb && rm -f /tmp/libssl1.1.deb || true
 RUN ARCH="$(dpkg --print-architecture)" && \
     URL="https://github.com/nccgroup/scrying/releases/download/v0.9.2/scrying_0.9.2_${ARCH}.deb" && \
     curl -fsSL --max-time 60 "$URL" -o /tmp/scrying.deb && \
