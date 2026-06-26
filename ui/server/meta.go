@@ -68,7 +68,6 @@ var depSpecs = []struct {
 	{name: "nuclei", candidates: []string{"nuclei"}, required: true, description: "Template-based vuln detection (accounts for ~40% of findings)"},
 	{name: "testssl.sh", candidates: []string{"testssl.sh"}, fallbacks: []string{"/usr/local/bin/testssl.sh"}, description: "TLS/SSL vulnerability scanning"},
 	{name: "nxc", candidates: []string{"nxc", "netexec"}, fallbacks: []string{"/root/.local/bin/nxc", "/usr/local/bin/nxc"}, description: "SMB/AD enumeration and relay testing"},
-	{name: "cvemap", candidates: []string{"cvemap"}, description: "CVE enrichment with CVSS scores and KEV data"},
 	{name: "ike-scan", candidates: []string{"ike-scan"}, description: "IKE/IPsec VPN protocol fingerprinting"},
 	{name: "vncsnapshot", candidates: []string{"vncsnapshot"}, description: "VNC desktop screenshots"},
 	{name: "convert", candidates: []string{"convert"}, description: "Image processing for screenshots (ImageMagick)"},

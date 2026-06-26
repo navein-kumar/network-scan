@@ -61,12 +61,6 @@ var deps = []Dep{
 		InstallHint: "pipx install netexec",
 	},
 	{
-		Name: "cvemap", Binary: []string{"cvemap"},
-		UsedBy:      "Phase 2.6b CPE → CVE lookup (uses CPEs from nmap fingerprint)",
-		Required:    false,
-		InstallHint: "go install github.com/projectdiscovery/cvemap/cmd/cvemap@latest",
-	},
-	{
 		Name: "gosec", Binary: []string{"gosec"},
 		UsedBy:      "scripts/audit.sh -- SAST scan of fastscan Go source",
 		Required:    false,

@@ -35,10 +35,8 @@ RUN cd ui/web && npm run build --silent \
 # Install Go-based scanning tools into /out so we can copy them to runtime
 RUN go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
  && go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
- && go install github.com/projectdiscovery/cvemap/cmd/cvemap@latest \
  && cp /go/bin/httpx  /out/httpx \
- && cp /go/bin/nuclei /out/nuclei \
- && cp /go/bin/cvemap /out/cvemap
+ && cp /go/bin/nuclei /out/nuclei
 
 # Install playwright chromium driver into /out (used by webshot.go)
 RUN cd /src && go run github.com/playwright-community/playwright-go/cmd/playwright install chromium \
@@ -101,7 +99,7 @@ COPY --from=builder /out/fastscan        /opt/fastscan/fastscan
 COPY --from=builder /out/fastscan-ui     /opt/fastscan/ui/fastscan-ui
 COPY --from=builder /out/httpx           /usr/local/bin/httpx
 COPY --from=builder /out/nuclei          /usr/local/bin/nuclei
-COPY --from=builder /out/cvemap          /usr/local/bin/cvemap
+
 COPY --from=builder /out/drivers.count              /opt/fastscan/drivers.count
 COPY --from=builder /out/playwright-cache/ms-playwright /root/.cache/ms-playwright
 

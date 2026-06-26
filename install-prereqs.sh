@@ -291,23 +291,6 @@ install_nuclei() {
 }
 
 # ---------------------------------------------------------------------------
-# cvemap (optional; the CVE probe uses it to enrich findings with CVSS/EPSS
-# scores and KEV status. Without it the cve phase is skipped silently).
-# ---------------------------------------------------------------------------
-install_cvemap() {
-  if have cvemap; then green "cvemap present: $(cvemap --version 2>/dev/null | head -1)"; return 0; fi
-  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: cvemap (CVE enrichment skipped without it)"; return 0; }
-  log "installing cvemap via go install"
-  local gobin
-  gobin="${GO_ROOT:-/usr/local/go}/bin/go"
-  "$gobin" install -v github.com/projectdiscovery/cvemap/cmd/cvemap@latest >/dev/null 2>&1
-  local src
-  src="$(go env GOPATH 2>/dev/null || echo "$HOME/go")/bin/cvemap"
-  [ -f "$src" ] && ln -sf "$src" /usr/local/bin/cvemap 2>/dev/null || true
-  have cvemap && green "cvemap installed" || yellow "cvemap not installed (optional; CVE enrichment skipped)"
-}
-
-# ---------------------------------------------------------------------------
 # ike-scan (optional; the IKE/IPsec driver shells out to it to dump the
 # IKEv1 Aggressive Mode PSK hash for offline cracking). The native driver
 # already detects ike_version, main/aggressive mode and vendor IDs over UDP
@@ -426,7 +409,6 @@ install_testssl
 install_nxc
 install_httpx
 install_nuclei
-install_cvemap
 install_ikescan
 install_screenshot
 install_webshot
@@ -454,7 +436,6 @@ have rustscan && green "  rustscan    OK" || yellow "  rustscan    optional/miss
 { have nxc || have netexec; } && green "  nxc         OK" || yellow "  nxc         optional/missing"
 have httpx   && green "  httpx       OK" || yellow "  httpx       MISSING (web detection degraded)"
 have nuclei  && green "  nuclei      OK" || yellow "  nuclei      MISSING (~40% finding loss)"
-have cvemap  && green "  cvemap      OK" || yellow "  cvemap      optional/missing"
 have ike-scan && green "  ike-scan    OK" || yellow "  ike-scan    optional/missing"
 have vncsnapshot && green "  vncsnapshot OK" || yellow "  vncsnapshot optional/missing"
 have convert && green "  imagemagick OK" || yellow "  imagemagick optional/missing"
