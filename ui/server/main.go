@@ -16,11 +16,14 @@ import (
 var staticFS embed.FS
 
 // Server wires the store and HTTP routing.
+const uiVersion = "1.1.1"
+
 type Server struct {
 	store    *Store
 	settings *SettingsStore
 	spa      fs.FS
 	spaIndex []byte
+	authUser string
 }
 
 func main() {
@@ -43,11 +46,17 @@ func main() {
 	}
 	index, _ := fs.ReadFile(sub, "index.html")
 
+	authUser := ""
+	if *authCreds != "" {
+		authUser, _, _ = strings.Cut(*authCreds, ":")
+	}
+
 	srv := &Server{
 		store:    store,
 		settings: NewSettingsStore(*dataDir),
 		spa:      sub,
 		spaIndex: index,
+		authUser: authUser,
 	}
 
 	mux := http.NewServeMux()

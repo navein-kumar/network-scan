@@ -8,9 +8,12 @@ import {
   ListChecks,
   Settings as SettingsIcon,
   ShieldCheck,
+  User,
   type LucideIcon,
 } from 'lucide-react'
 import { classNames } from './lib'
+import { usePolling } from './hooks'
+import { api } from './api'
 
 interface NavItem {
   to: string
@@ -27,6 +30,8 @@ const NAV: NavItem[] = [
 ]
 
 function Sidebar() {
+  const meta = usePolling(() => api.getMeta(), 300_000, [])
+
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-surface-border bg-surface-panel">
       <div className="flex h-16 items-center gap-2.5 border-b border-surface-border px-5">
@@ -60,10 +65,16 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="border-t border-surface-border px-5 py-4">
-        <p className="text-[11px] leading-relaxed text-slate-500">
-          Protected by HTTP Basic Auth. For authorized security testing only.
-        </p>
+      <div className="border-t border-surface-border px-5 py-4 space-y-1.5">
+        {meta.data?.version && (
+          <p className="text-[11px] font-mono text-slate-500">v{meta.data.version}</p>
+        )}
+        {meta.data?.user && (
+          <div className="flex items-center gap-1.5">
+            <User size={11} className="text-slate-500 shrink-0" />
+            <p className="text-[11px] text-slate-400 truncate">{meta.data.user}</p>
+          </div>
+        )}
       </div>
     </aside>
   )

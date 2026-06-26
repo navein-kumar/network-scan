@@ -110,6 +110,8 @@ export interface DepInfo {
 }
 
 export interface Meta {
+  version: string
+  user?: string
   profiles: string[]
   driver_count: number
   plugin_count: number

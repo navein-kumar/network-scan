@@ -43,6 +43,8 @@ type dep struct {
 
 // metaResponse is the GET /api/meta body.
 type metaResponse struct {
+	Version     string   `json:"version"`
+	User        string   `json:"user,omitempty"`
 	Profiles    []string `json:"profiles"`
 	DriverCount int      `json:"driver_count"`
 	PluginCount int      `json:"plugin_count"`
@@ -145,6 +147,8 @@ func countPlugins() int {
 // handleMeta serves GET /api/meta.
 func (srv *Server) handleMeta(w http.ResponseWriter, r *http.Request) {
 	resp := metaResponse{
+		Version:     uiVersion,
+		User:        srv.authUser,
 		Profiles:    fixedProfiles,
 		DriverCount: countDrivers(),
 		PluginCount: countPlugins(),
