@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -43,6 +45,29 @@ func webShotPath(rawurl string) (string, error) {
 	}
 	base := fmt.Sprintf("%s_%s_%s", scheme, sanitizeForFilename(host), sanitizeForFilename(port))
 	return dir + "/" + base + ".png", nil
+}
+
+// tlsCertError returns true when the HTTPS endpoint's certificate fails
+// standard validation (self-signed, expired, hostname mismatch, etc.).
+func tlsCertError(rawurl string) bool {
+	u, err := url.Parse(rawurl)
+	if err != nil || !strings.EqualFold(u.Scheme, "https") {
+		return false
+	}
+	port := u.Port()
+	if port == "" {
+		port = "443"
+	}
+	conn, err := tls.DialWithDialer(
+		&net.Dialer{Timeout: 4 * time.Second},
+		"tcp", u.Hostname()+":"+port,
+		&tls.Config{InsecureSkipVerify: false},
+	)
+	if err != nil {
+		return true // cert error (self-signed, expired, etc.)
+	}
+	conn.Close()
+	return false
 }
 
 // webScreenshot is a best-effort grab of a web page into a PNG via playwright-go
@@ -95,8 +120,27 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
 
-	// Inject a Chrome-style address bar so the URL is visible in the screenshot.
-	js := `(url) => {
+	// Determine URL bar icon + label based on scheme and cert validity.
+	isHTTPS := strings.HasPrefix(strings.ToLower(rawurl), "https://")
+	certErr := isHTTPS && tlsCertError(rawurl)
+
+	var iconHTML, labelHTML string
+	switch {
+	case !isHTTPS:
+		// Plain HTTP — open padlock + "Not Secure" in red
+		iconHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f28b82" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`
+		labelHTML = `<span style="font:12px/1 Arial,sans-serif;color:#f28b82;margin-right:4px;">Not Secure</span>`
+	case certErr:
+		// HTTPS with self-signed / invalid cert — warning triangle
+		iconHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fdd663" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+		labelHTML = `<span style="font:12px/1 Arial,sans-serif;color:#fdd663;margin-right:4px;">Certificate Warning</span>`
+	default:
+		// HTTPS with valid cert — closed green padlock
+		iconHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+		labelHTML = ``
+	}
+
+	js := `([url, icon, label]) => {
 		const bar = document.createElement('div');
 		bar.id = '__fastscan_urlbar__';
 		bar.style.cssText = [
@@ -108,23 +152,21 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 		const pill = document.createElement('div');
 		pill.style.cssText = [
 			'flex:1','background:#303134','border-radius:20px',
-			'padding:5px 14px','display:flex','align-items:center','gap:7px',
-			'overflow:hidden','white-space:nowrap','text-overflow:ellipsis',
+			'padding:5px 14px','display:flex','align-items:center','gap:6px',
+			'overflow:hidden','white-space:nowrap',
 		].join(';');
-		pill.innerHTML = '<span style="font:13px/1 Arial,sans-serif;color:#bdc1c6;">&#128274;</span>' +
+		pill.innerHTML = icon + label +
 			'<span style="font:13px/1 Arial,sans-serif;color:#e8eaed;overflow:hidden;text-overflow:ellipsis;">' +
 			url.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
 		bar.appendChild(pill);
-		// Remove any previous injection (re-used page safety).
 		const old = document.getElementById('__fastscan_urlbar__');
 		if (old) old.remove();
 		document.documentElement.prepend(bar);
-		// Shift page body down so bar does not overlap real content.
 		const spacer = document.createElement('div');
 		spacer.style.cssText = 'height:38px;display:block;';
 		if (document.body) document.body.insertAdjacentElement('afterbegin', spacer);
 	}`
-	_, _ = page.Evaluate(js, rawurl)
+	_, _ = page.Evaluate(js, []string{rawurl, iconHTML, labelHTML})
 
 	if _, err := page.Screenshot(playwright.PageScreenshotOptions{
 		Path: playwright.String(outPath),
