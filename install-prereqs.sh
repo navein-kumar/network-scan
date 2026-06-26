@@ -249,6 +249,48 @@ install_nxc() {
 }
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# httpx (required: HTTP probing and tech fingerprinting used by the engine's
+# http phase — without it web findings are incomplete).
+# ---------------------------------------------------------------------------
+install_httpx() {
+  if have httpx; then green "httpx present: $(httpx --version 2>/dev/null | head -1)"; return 0; fi
+  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: httpx (HTTP probing — web findings will be limited)"; return 0; }
+  log "installing httpx via go install"
+  local gobin
+  gobin="${GO_ROOT:-/usr/local/go}/bin/go"
+  "$gobin" install -v github.com/projectdiscovery/httpx/cmd/httpx@latest >/dev/null 2>&1
+  # go install puts binary in $GOPATH/bin or $HOME/go/bin — symlink into /usr/local/bin
+  local src
+  src="$(go env GOPATH 2>/dev/null || echo "$HOME/go")/bin/httpx"
+  [ -f "$src" ] && ln -sf "$src" /usr/local/bin/httpx 2>/dev/null || true
+  have httpx && green "httpx installed" || yellow "httpx not installed (optional; web detection degraded)"
+}
+
+# ---------------------------------------------------------------------------
+# nuclei (required: CVE/misconfiguration templates used in the engine's
+# nuclei phase — without it ~40% of findings are missed).
+# ---------------------------------------------------------------------------
+install_nuclei() {
+  if have nuclei; then green "nuclei present: $(nuclei --version 2>/dev/null | head -1)"; return 0; fi
+  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: nuclei (CVE templates — significant finding loss without it)"; return 0; }
+  log "installing nuclei via go install"
+  local gobin
+  gobin="${GO_ROOT:-/usr/local/go}/bin/go"
+  "$gobin" install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest >/dev/null 2>&1
+  local src
+  src="$(go env GOPATH 2>/dev/null || echo "$HOME/go")/bin/nuclei"
+  [ -f "$src" ] && ln -sf "$src" /usr/local/bin/nuclei 2>/dev/null || true
+  if have nuclei; then
+    green "nuclei installed"
+    log "pulling nuclei templates (first run)"
+    nuclei -update-templates >/dev/null 2>&1 || true
+  else
+    yellow "nuclei not installed (optional; CVE detection reduced)"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # ike-scan (optional; the IKE/IPsec driver shells out to it to dump the
 # IKEv1 Aggressive Mode PSK hash for offline cracking). The native driver
 # already detects ike_version, main/aggressive mode and vendor IDs over UDP
@@ -365,6 +407,8 @@ install_nmap
 install_rustscan
 install_testssl
 install_nxc
+install_httpx
+install_nuclei
 install_ikescan
 install_screenshot
 install_webshot
@@ -390,6 +434,8 @@ have nmap && green "  nmap        OK" || red "  nmap        MISSING"
 have rustscan && green "  rustscan    OK" || yellow "  rustscan    optional/missing"
 { have testssl.sh || [ -x "$TESTSSL_DIR/testssl.sh" ]; } && green "  testssl.sh  OK" || yellow "  testssl.sh  optional/missing"
 { have nxc || have netexec; } && green "  nxc         OK" || yellow "  nxc         optional/missing"
+have httpx   && green "  httpx       OK" || yellow "  httpx       MISSING (web detection degraded)"
+have nuclei  && green "  nuclei      OK" || yellow "  nuclei      MISSING (~40% finding loss)"
 have ike-scan && green "  ike-scan    OK" || yellow "  ike-scan    optional/missing"
 have vncsnapshot && green "  vncsnapshot OK" || yellow "  vncsnapshot optional/missing"
 have convert && green "  imagemagick OK" || yellow "  imagemagick optional/missing"
