@@ -59,9 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-pip \
       pipx \
       libpcap-dev \
-      imagemagick \
       ike-scan \
-      vncsnapshot \
     && pip3 install --no-cache-dir openpyxl Pillow \
     && ( apt-get install -y netexec 2>/dev/null \
          || PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install netexec --system-site-packages 2>/dev/null \

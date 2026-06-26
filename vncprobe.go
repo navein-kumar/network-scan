@@ -156,16 +156,11 @@ func rfbSecurityName(t uint8) string {
 }
 
 // captureVNCScreenshot is a best-effort grab of the remote VNC desktop into a
-// PNG. It shells out to vncsnapshot (TightVNC), which writes a JPEG, then
-// converts that to PNG via ImageMagick (convert). If either tool is missing or
-// the capture fails, rep.ScreenshotPath is left empty and the probe is never
-// failed by this step.
-//
-// No-auth servers capture with no password. For password-protected servers an
-// operator may export FASTSCAN_VNC_PASSWD pointing at a vncpasswd file, which
-// is passed through to vncsnapshot -passwd.
+// PNG via scrying (vnc://host:port). Scrying writes PNG directly — no JPEG
+// intermediate or ImageMagick needed. If scrying is absent or the capture
+// fails, rep.ScreenshotPath is left empty and the probe continues normally.
 func captureVNCScreenshot(host string, port int, rep *VNCReport, timeout time.Duration) {
-	snap, err := exec.LookPath("vncsnapshot")
+	scry, err := exec.LookPath("scrying")
 	if err != nil {
 		return
 	}
@@ -174,35 +169,13 @@ func captureVNCScreenshot(host string, port int, rep *VNCReport, timeout time.Du
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}
-	base := fmt.Sprintf("vnc-desktop_%s_%d", sanitizeForFilename(host), port)
-	pngPath := dir + "/" + base + ".png"
-	jpgPath := dir + "/" + base + ".jpg"
-
-	// vncsnapshot addresses servers as host:DISPLAY (display N = port 5900+N).
-	target := fmt.Sprintf("%s:%d", host, vncDisplayForPort(port))
+	pngPath := fmt.Sprintf("%s/vnc-desktop_%s_%d.png", dir, sanitizeForFilename(host), port)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout+5*time.Second)
 	defer cancel()
 
-	args := []string{"-quiet"}
-	if pw := os.Getenv("FASTSCAN_VNC_PASSWD"); pw != "" {
-		args = append(args, "-passwd", pw)
-	}
-	args = append(args, target, jpgPath)
-
-	if err := exec.CommandContext(ctx, snap, args...).Run(); err != nil {
-		os.Remove(jpgPath)
-		return
-	}
-	defer os.Remove(jpgPath)
-
-	// vncsnapshot emits JPEG; convert to the requested PNG if ImageMagick is
-	// available. If convert is missing we have nothing in PNG form to record.
-	conv, err := exec.LookPath("convert")
-	if err != nil {
-		return
-	}
-	if err := exec.CommandContext(ctx, conv, jpgPath, pngPath).Run(); err != nil {
+	target := fmt.Sprintf("vnc://%s:%d", host, port)
+	if err := exec.CommandContext(ctx, scry, "--target", target, "--file", pngPath).Run(); err != nil {
 		os.Remove(pngPath)
 		return
 	}

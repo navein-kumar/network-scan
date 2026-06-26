@@ -307,63 +307,34 @@ install_ikescan() {
 }
 
 # ---------------------------------------------------------------------------
-# screenshot tools (optional; RDP/VNC drivers grab a PNG of the login screen)
-#   - vncsnapshot + imagemagick: VNC desktop capture, then JPEG->PNG convert
-#   - scrying: purpose-built RDP/VNC/HTTP headless screenshotter (RDP capture)
+# scrying — handles RDP and VNC screenshots (replaces vncsnapshot + imagemagick)
 # ---------------------------------------------------------------------------
 install_screenshot() {
-  local have_vnc=0 have_conv=0 have_scry=0
-  have vncsnapshot && have_vnc=1
-  have convert && have_conv=1
-  { have scrying || [ -x /usr/local/bin/scrying ]; } && have_scry=1
-
-  if [ "$have_vnc" -eq 1 ] && [ "$have_conv" -eq 1 ] && [ "$have_scry" -eq 1 ]; then
-    green "screenshot tools present: vncsnapshot, imagemagick, scrying"
-    return 0
-  fi
-  [ "$CHECK_ONLY" -eq 1 ] && {
-    [ "$have_vnc" -eq 1 ]  || yellow "MISSING: vncsnapshot (VNC screenshot)"
-    [ "$have_conv" -eq 1 ] || yellow "MISSING: imagemagick (JPEG->PNG convert)"
-    [ "$have_scry" -eq 1 ] || yellow "MISSING: scrying (RDP screenshot)"
+  { have scrying || [ -x /usr/local/bin/scrying ]; } && {
+    green "scrying present (RDP + VNC screenshots)"
     return 0
   }
-  need_root; apt_update_once
+  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: scrying (RDP/VNC screenshots skipped)"; return 0; }
 
-  if [ "$have_vnc" -eq 0 ]; then
-    log "apt-get install vncsnapshot"
-    apt-get install -y vncsnapshot >/dev/null 2>&1
-    have vncsnapshot && green "vncsnapshot installed" \
-      || yellow "vncsnapshot not installed (optional; VNC screenshots skipped)"
-  fi
-  if [ "$have_conv" -eq 0 ]; then
-    log "apt-get install imagemagick"
-    apt-get install -y imagemagick >/dev/null 2>&1
-    have convert && green "imagemagick installed" \
-      || yellow "imagemagick not installed (optional; VNC screenshots skipped)"
-  fi
-
-  # scrying ships as a static release binary; no apt package. Best-effort fetch.
-  if [ "$have_scry" -eq 0 ]; then
-    local arch deb url
-    case "$(uname -m)" in
-      x86_64) arch="amd64" ;;
-      aarch64|arm64) arch="arm64" ;;
-      *) arch="" ;;
-    esac
-    if [ -n "$arch" ]; then
-      deb="scrying_0.9.2_${arch}.deb"
-      url="https://github.com/nccgroup/scrying/releases/download/v0.9.2/${deb}"
-      log "downloading scrying $url"
-      if curl -fsSL "$url" -o "/tmp/$deb"; then
-        dpkg -i "/tmp/$deb" >/dev/null 2>&1 || { apt-get -f install -y >/dev/null 2>&1; }
-        rm -f "/tmp/$deb"
-      else
-        yellow "scrying download failed (optional; RDP screenshots skipped)"
-      fi
+  local arch deb url
+  case "$(uname -m)" in
+    x86_64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *) arch="" ;;
+  esac
+  if [ -n "$arch" ]; then
+    deb="scrying_0.9.2_${arch}.deb"
+    url="https://github.com/nccgroup/scrying/releases/download/v0.9.2/${deb}"
+    log "downloading scrying from $url"
+    if curl -fsSL "$url" -o "/tmp/$deb"; then
+      dpkg -i "/tmp/$deb" >/dev/null 2>&1 || { apt-get -f install -y >/dev/null 2>&1; }
+      rm -f "/tmp/$deb"
+    else
+      yellow "scrying download failed (optional; RDP/VNC screenshots skipped)"
     fi
-    { have scrying || [ -x /usr/local/bin/scrying ]; } && green "scrying installed" \
-      || yellow "scrying not installed (optional; RDP screenshots skipped)"
   fi
+  { have scrying || [ -x /usr/local/bin/scrying ]; } && green "scrying installed" \
+    || yellow "scrying not installed (optional; RDP/VNC screenshots skipped)"
 }
 
 # ---------------------------------------------------------------------------
@@ -439,8 +410,7 @@ have rustscan && green "  rustscan    OK" || yellow "  rustscan    optional/miss
 have httpx   && green "  httpx       OK" || yellow "  httpx       MISSING (web detection degraded)"
 have nuclei  && green "  nuclei      OK" || yellow "  nuclei      MISSING (~40% finding loss)"
 have ike-scan && green "  ike-scan    OK" || yellow "  ike-scan    optional/missing"
-have vncsnapshot && green "  vncsnapshot OK" || yellow "  vncsnapshot optional/missing"
-have convert && green "  imagemagick OK" || yellow "  imagemagick optional/missing"
+{ have scrying || [ -x /usr/local/bin/scrying ]; } && green "  scrying      OK (RDP+VNC)" || yellow "  scrying      optional/missing"
 { have scrying || [ -x /usr/local/bin/scrying ]; } && green "  scrying     OK" || yellow "  scrying     optional/missing"
 webshot_ok && green "  webshot     OK" || yellow "  webshot     optional/missing"
 echo "----------------------------------------------"
