@@ -351,12 +351,14 @@ install_screenshot() {
       *) arch="" ;;
     esac
     if [ -n "$arch" ]; then
-      deb="scrying_0.9.1-1_${arch}.deb"
-      url="https://github.com/nccgroup/scrying/releases/download/v0.9.1/${deb}"
-      log "downloading $url"
+      deb="scrying_0.9.2_${arch}.deb"
+      url="https://github.com/nccgroup/scrying/releases/download/v0.9.2/${deb}"
+      log "downloading scrying $url"
       if curl -fsSL "$url" -o "/tmp/$deb"; then
         dpkg -i "/tmp/$deb" >/dev/null 2>&1 || { apt-get -f install -y >/dev/null 2>&1; }
         rm -f "/tmp/$deb"
+      else
+        yellow "scrying download failed (optional; RDP screenshots skipped)"
       fi
     fi
     { have scrying || [ -x /usr/local/bin/scrying ]; } && green "scrying installed" \

@@ -88,11 +88,9 @@ RUN apt-get update && \
 
 # scrying — RDP login screen screenshots (optional; best-effort install)
 RUN ARCH="$(dpkg --print-architecture)" && \
-    for VER in 0.9.1 0.9.0 0.8.0; do \
-      URL="https://github.com/nccgroup/scrying/releases/download/v${VER}/scrying_${VER}-1_${ARCH}.deb" && \
-      curl -sfL --max-time 30 "$URL" -o /tmp/scrying.deb 2>/dev/null && \
-      dpkg -i /tmp/scrying.deb 2>/dev/null && rm -f /tmp/scrying.deb && break || rm -f /tmp/scrying.deb; \
-    done; true
+    URL="https://github.com/nccgroup/scrying/releases/download/v0.9.2/scrying_0.9.2_${ARCH}.deb" && \
+    curl -fsSL --max-time 60 "$URL" -o /tmp/scrying.deb && \
+    dpkg -i /tmp/scrying.deb && rm -f /tmp/scrying.deb || true
 
 # Copy binaries from builder
 COPY --from=builder /out/fastscan        /opt/fastscan/fastscan
