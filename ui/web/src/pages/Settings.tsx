@@ -9,6 +9,7 @@ import {
   Save,
   Loader2,
   TriangleAlert,
+  Wrench,
 } from 'lucide-react'
 import { api, ApiError } from '../api'
 import type { DepInfo, Settings as SettingsType, Template } from '../types'
@@ -356,6 +357,11 @@ export default function Settings() {
   const metaData = meta.data
   const deps = depsQuery.data ?? metaData?.deps ?? []
 
+  const totalTools = deps.length
+  const missingTools = deps.filter((d) => !d.present).length
+  const missingRequired = deps.filter((d) => !d.present && d.required).length
+  const toolsAccent = missingRequired > 0 ? '#ef4444' : missingTools > 0 ? '#f59e0b' : '#10b981'
+
   return (
     <>
       <TopBar title="Settings" subtitle="Engine capabilities and dependencies" />
@@ -363,8 +369,8 @@ export default function Settings() {
         <section>
           <h2 className="mb-3 text-sm font-semibold text-slate-200">Engine</h2>
           {meta.loading && !metaData ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-20" />
               ))}
             </div>
@@ -378,7 +384,7 @@ export default function Settings() {
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <StatCard
                   icon={<Cpu size={20} />}
                   label="Drivers"
@@ -396,6 +402,12 @@ export default function Settings() {
                   label="Profiles"
                   value={metaData?.profiles?.length ?? 0}
                   accent="#8b5cf6"
+                />
+                <StatCard
+                  icon={<Wrench size={20} />}
+                  label={missingTools > 0 ? `Tools (${missingTools} missing)` : 'Tools'}
+                  value={totalTools > 0 ? `${totalTools - missingTools} / ${totalTools}` : '—'}
+                  accent={toolsAccent}
                 />
               </div>
               {metaData?.profiles && metaData.profiles.length > 0 && (
@@ -418,17 +430,22 @@ export default function Settings() {
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
             Dependencies
-            {deps.filter((d) => !d.present && d.required).length > 0 && (
+            {missingRequired > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-300">
                 <TriangleAlert size={11} />
-                {deps.filter((d) => !d.present && d.required).length} required missing
+                {missingRequired} / {totalTools} required missing
               </span>
             )}
-            {deps.filter((d) => !d.present && d.required).length === 0 &&
-              deps.filter((d) => !d.present && !d.required).length > 0 && (
+            {missingRequired === 0 && missingTools > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-400">
                 <TriangleAlert size={11} />
-                {deps.filter((d) => !d.present && !d.required).length} optional missing
+                {missingTools} / {totalTools} not installed
+              </span>
+            )}
+            {missingTools === 0 && totalTools > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                <CircleCheck size={11} />
+                {totalTools} / {totalTools} present
               </span>
             )}
           </h2>
