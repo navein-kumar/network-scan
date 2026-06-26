@@ -102,6 +102,7 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 
 	page, err := browser.NewPage(playwright.BrowserNewPageOptions{
 		IgnoreHttpsErrors: playwright.Bool(true),
+		Viewport: &playwright.Size{Width: 1280, Height: 720},
 	})
 	if err != nil {
 		return fmt.Errorf("webshot newpage: %w", err)
@@ -141,13 +142,16 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 	}
 
 	js := `([url, icon, label]) => {
+		const old = document.getElementById('__fastscan_urlbar__');
+		if (old) old.remove();
 		const bar = document.createElement('div');
 		bar.id = '__fastscan_urlbar__';
 		bar.style.cssText = [
 			'position:fixed','top:0','left:0','right:0','height:38px',
 			'background:#202124','display:flex','align-items:center',
 			'padding:0 12px','z-index:2147483647','box-sizing:border-box',
-			'box-shadow:0 1px 4px rgba(0,0,0,.5)',
+			'box-shadow:0 2px 6px rgba(0,0,0,.6)',
+			'font-family:Arial,sans-serif',
 		].join(';');
 		const pill = document.createElement('div');
 		pill.style.cssText = [
@@ -156,20 +160,24 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
 			'overflow:hidden','white-space:nowrap',
 		].join(';');
 		pill.innerHTML = icon + label +
-			'<span style="font:13px/1 Arial,sans-serif;color:#e8eaed;overflow:hidden;text-overflow:ellipsis;">' +
+			'<span style="font-size:13px;color:#e8eaed;overflow:hidden;text-overflow:ellipsis;">' +
 			url.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
 		bar.appendChild(pill);
-		const old = document.getElementById('__fastscan_urlbar__');
-		if (old) old.remove();
-		document.documentElement.prepend(bar);
-		const spacer = document.createElement('div');
-		spacer.style.cssText = 'height:38px;display:block;';
-		if (document.body) document.body.insertAdjacentElement('afterbegin', spacer);
+		if (document.body) {
+			document.body.appendChild(bar);
+		} else {
+			document.documentElement.appendChild(bar);
+		}
 	}`
 	_, _ = page.Evaluate(js, []string{rawurl, iconHTML, labelHTML})
+	// Wait one rAF + a paint cycle so Chromium flushes the injected bar to the
+	// compositing layer before we capture. Without this the screenshot fires
+	// before the DOM mutation is rendered.
+	_, _ = page.Evaluate(`() => new Promise(r => requestAnimationFrame(() => setTimeout(r, 100)))`, nil)
 
 	if _, err := page.Screenshot(playwright.PageScreenshotOptions{
-		Path: playwright.String(outPath),
+		Path:     playwright.String(outPath),
+		FullPage: playwright.Bool(false),
 	}); err != nil {
 		return fmt.Errorf("webshot capture: %w", err)
 	}
