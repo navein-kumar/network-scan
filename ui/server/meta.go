@@ -34,9 +34,11 @@ var engineRoot = func() string {
 
 // dep describes an external tool dependency.
 type dep struct {
-	Name    string `json:"name"`
-	Present bool   `json:"present"`
-	Path    string `json:"path,omitempty"`
+	Name        string `json:"name"`
+	Present     bool   `json:"present"`
+	Path        string `json:"path,omitempty"`
+	Required    bool   `json:"required"`
+	Description string `json:"description,omitempty"`
 }
 
 // metaResponse is the GET /api/meta body.
@@ -54,23 +56,31 @@ var fixedProfiles = []string{"fast", "medium", "slow", "crawl"}
 // entry may carry candidate binary names (httpx ships as httpx-pd) and explicit
 // fallback paths for tools not on PATH.
 var depSpecs = []struct {
-	name       string
-	candidates []string
-	fallbacks  []string
+	name        string
+	candidates  []string
+	fallbacks   []string
+	required    bool
+	description string
 }{
-	{name: "nmap", candidates: []string{"nmap"}},
-	{name: "rustscan", candidates: []string{"rustscan"}},
-	{name: "httpx", candidates: []string{"httpx-pd", "httpx"}},
-	{name: "nuclei", candidates: []string{"nuclei"}},
-	{name: "testssl.sh", candidates: []string{"testssl.sh"}, fallbacks: []string{"/usr/local/bin/testssl.sh"}},
-	{name: "nxc", candidates: []string{"nxc", "netexec"}, fallbacks: []string{"/root/.local/bin/nxc", "/usr/local/bin/nxc"}},
+	{name: "nmap", candidates: []string{"nmap"}, required: true, description: "Port scanning — core engine requirement"},
+	{name: "rustscan", candidates: []string{"rustscan"}, required: true, description: "Fast port discovery (nmap fallback if absent)"},
+	{name: "httpx", candidates: []string{"httpx-pd", "httpx"}, required: true, description: "HTTP probing and web fingerprinting"},
+	{name: "nuclei", candidates: []string{"nuclei"}, required: true, description: "Template-based vuln detection (accounts for ~40% of findings)"},
+	{name: "testssl.sh", candidates: []string{"testssl.sh"}, fallbacks: []string{"/usr/local/bin/testssl.sh"}, description: "TLS/SSL vulnerability scanning"},
+	{name: "nxc", candidates: []string{"nxc", "netexec"}, fallbacks: []string{"/root/.local/bin/nxc", "/usr/local/bin/nxc"}, description: "SMB/AD enumeration and relay testing"},
+	{name: "cvemap", candidates: []string{"cvemap"}, description: "CVE enrichment with CVSS scores and KEV data"},
+	{name: "ike-scan", candidates: []string{"ike-scan"}, description: "IKE/IPsec VPN protocol fingerprinting"},
+	{name: "vncsnapshot", candidates: []string{"vncsnapshot"}, description: "VNC desktop screenshots"},
+	{name: "convert", candidates: []string{"convert"}, description: "Image processing for screenshots (ImageMagick)"},
+	{name: "scrying", candidates: []string{"scrying"}, description: "RDP login screen screenshots"},
+	{name: "python3", candidates: []string{"python3", "python"}, required: true, description: "Evidence and Excel export scripts"},
 }
 
 // resolveDeps probes each dependency and reports presence + resolved path.
 func resolveDeps() []dep {
 	out := make([]dep, 0, len(depSpecs))
 	for _, spec := range depSpecs {
-		d := dep{Name: spec.name}
+		d := dep{Name: spec.name, Required: spec.required, Description: spec.description}
 		for _, c := range spec.candidates {
 			if p, err := exec.LookPath(c); err == nil {
 				d.Present = true
@@ -146,12 +156,11 @@ func (srv *Server) handleMeta(w http.ResponseWriter, r *http.Request) {
 	writeJSONResp(w, http.StatusOK, resp)
 }
 
-// metaDeps strips the path field for the /api/meta deps view (oracle omits path
-// there).
+// metaDeps strips the path field for the /api/meta deps view.
 func metaDeps(deps []dep) []dep {
 	out := make([]dep, len(deps))
 	for i, d := range deps {
-		out[i] = dep{Name: d.Name, Present: d.Present}
+		out[i] = dep{Name: d.Name, Present: d.Present, Required: d.Required, Description: d.Description}
 	}
 	return out
 }

@@ -105,6 +105,8 @@ export interface DepInfo {
   name: string
   present: boolean
   path?: string
+  required?: boolean
+  description?: string
 }
 
 export interface Meta {

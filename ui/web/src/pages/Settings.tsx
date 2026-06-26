@@ -8,6 +8,7 @@ import {
   CircleX,
   Save,
   Loader2,
+  TriangleAlert,
 } from 'lucide-react'
 import { api, ApiError } from '../api'
 import type { DepInfo, Settings as SettingsType, Template } from '../types'
@@ -59,41 +60,89 @@ function DepsTable({ deps }: { deps: DepInfo[] }) {
   if (deps.length === 0) {
     return <EmptyState title="No dependencies reported" />
   }
+
+  const missingRequired = deps.filter((d) => !d.present && d.required)
+  const missingOptional = deps.filter((d) => !d.present && !d.required)
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500">
-            <th className="px-5 py-3 font-medium">Dependency</th>
-            <th className="px-5 py-3 font-medium">Status</th>
-            <th className="px-5 py-3 font-medium">Path</th>
-          </tr>
-        </thead>
-        <tbody>
-          {deps.map((d) => (
-            <tr
-              key={d.name}
-              className="border-b border-surface-border/60 last:border-0 hover:bg-surface-hover/40"
-            >
-              <td className="px-5 py-3 font-medium text-slate-100">{d.name}</td>
-              <td className="px-5 py-3">
-                {d.present ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
-                    <CircleCheck size={13} />
-                    Present
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-300">
-                    <CircleX size={13} />
-                    Missing
-                  </span>
-                )}
-              </td>
-              <td className="px-5 py-3 font-mono text-xs text-slate-400">{d.path || '-'}</td>
+    <div>
+      {missingRequired.length > 0 && (
+        <div className="flex items-start gap-3 border-b border-red-500/20 bg-red-500/10 px-5 py-3.5">
+          <TriangleAlert size={16} className="mt-0.5 shrink-0 text-red-400" />
+          <div>
+            <p className="text-sm font-semibold text-red-300">
+              {missingRequired.length} required tool{missingRequired.length > 1 ? 's' : ''} missing
+            </p>
+            <p className="mt-0.5 text-xs text-red-400/80">
+              {missingRequired.map((d) => d.name).join(', ')} — run{' '}
+              <code className="font-mono">install-prereqs.sh</code> to install automatically
+            </p>
+          </div>
+        </div>
+      )}
+      {missingOptional.length > 0 && missingRequired.length === 0 && (
+        <div className="flex items-start gap-3 border-b border-amber-500/20 bg-amber-500/10 px-5 py-3.5">
+          <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-400" />
+          <p className="text-xs text-amber-300">
+            <span className="font-semibold">{missingOptional.length} optional tool{missingOptional.length > 1 ? 's' : ''} not installed</span>
+            {' '}— {missingOptional.map((d) => d.name).join(', ')}. Some scan features will be skipped.
+          </p>
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500">
+              <th className="px-5 py-3 font-medium">Tool</th>
+              <th className="px-5 py-3 font-medium">Role</th>
+              <th className="px-5 py-3 font-medium">Status</th>
+              <th className="px-5 py-3 font-medium">Path</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {deps.map((d) => (
+              <tr
+                key={d.name}
+                className={classNames(
+                  'border-b border-surface-border/60 last:border-0 hover:bg-surface-hover/40',
+                  !d.present && d.required ? 'bg-red-500/5' : '',
+                )}
+              >
+                <td className="px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-semibold text-slate-100">{d.name}</span>
+                    {d.required && (
+                      <span className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide bg-blue-500/15 text-blue-400 border border-blue-500/20">
+                        required
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-5 py-3 text-xs text-slate-400 max-w-xs">{d.description || '-'}</td>
+                <td className="px-5 py-3">
+                  {d.present ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                      <CircleCheck size={13} />
+                      Present
+                    </span>
+                  ) : d.required ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-0.5 text-xs font-semibold text-red-300">
+                      <TriangleAlert size={13} />
+                      Missing
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
+                      <CircleX size={13} />
+                      Not installed
+                    </span>
+                  )}
+                </td>
+                <td className="px-5 py-3 font-mono text-xs text-slate-400">{d.path || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -367,7 +416,22 @@ export default function Settings() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-slate-200">Dependencies</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
+            Dependencies
+            {deps.filter((d) => !d.present && d.required).length > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-300">
+                <TriangleAlert size={11} />
+                {deps.filter((d) => !d.present && d.required).length} required missing
+              </span>
+            )}
+            {deps.filter((d) => !d.present && d.required).length === 0 &&
+              deps.filter((d) => !d.present && !d.required).length > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-400">
+                <TriangleAlert size={11} />
+                {deps.filter((d) => !d.present && !d.required).length} optional missing
+              </span>
+            )}
+          </h2>
           <Card>
             {depsQuery.loading && !depsQuery.data && !metaData ? (
               <div className="space-y-2 p-5">
