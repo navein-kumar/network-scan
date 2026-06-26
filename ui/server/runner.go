@@ -317,7 +317,7 @@ func (srv *Server) scanProgress(sc *Scan, logPath string, offset *int64, current
 // state.
 func (srv *Server) finishScan(sc *Scan, state string) {
 	findingsPath := filepath.Join(sc.dir, "findings.ndjson")
-	hostCount, findingCount, sev := computeCounts(findingsPath)
+	hostCount, findingCount, rulesFired, sev := computeCounts(findingsPath)
 
 	sc.mu.Lock()
 	if sc.Status.State != "running" && sc.Status.State != "paused" {
@@ -331,6 +331,7 @@ func (srv *Server) finishScan(sc *Scan, state string) {
 	sc.Status.Finished = nowRFC3339()
 	sc.Status.HostCount = hostCount
 	sc.Status.FindingCount = findingCount
+	sc.Status.RulesFired = rulesFired
 	sc.Status.Severity = sev
 	if hostCount > 0 {
 		sc.Status.HostsTotal = hostCount

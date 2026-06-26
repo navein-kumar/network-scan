@@ -245,19 +245,19 @@ func addSeverity(s *Severity, sev string) {
 
 // computeCounts recomputes host count, finding count and severity totals from a
 // findings.ndjson file.
-func computeCounts(path string) (hostCount, findingCount int, sev Severity) {
+func computeCounts(path string) (hostCount, findingCount, rulesFired int, sev Severity) {
 	findings := readFindings(path)
 	hostSet := map[string]bool{}
+	ruleSet := map[string]bool{}
 	for _, f := range findings {
 		findingCount++
+		ruleSet[f.RuleID] = true
 		addSeverity(&sev, f.Severity)
 	}
-	// Host count is the number of distinct hosts that have open ports
-	// (fingerprint events), matching the engine's per-host view.
 	for _, e := range readEvents(path) {
 		if e.Phase == "fingerprint" && e.Host != "" {
 			hostSet[e.Host] = true
 		}
 	}
-	return len(hostSet), findingCount, sev
+	return len(hostSet), findingCount, len(ruleSet), sev
 }

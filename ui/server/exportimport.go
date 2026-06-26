@@ -77,9 +77,10 @@ func loadImportedStatus(sc *Scan) {
 	sc.Status.Name = name + " (imported)"
 	sc.Status.Config.Name = sc.Status.Name
 
-	hostCount, findingCount, sev := computeCounts(filepath.Join(sc.dir, "findings.ndjson"))
+	hostCount, findingCount, rulesFired, sev := computeCounts(filepath.Join(sc.dir, "findings.ndjson"))
 	sc.Status.HostCount = hostCount
 	sc.Status.FindingCount = findingCount
+	sc.Status.RulesFired = rulesFired
 	sc.Status.Severity = sev
 	sc.Status.HostsTotal = hostCount
 	sc.Status.HostsDone = hostCount

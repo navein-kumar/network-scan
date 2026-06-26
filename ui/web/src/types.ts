@@ -44,6 +44,7 @@ export interface ScanSummary {
   finished: string | null
   host_count: number
   finding_count: number
+  rules_fired: number
   severity: SeverityCounts
 }
 

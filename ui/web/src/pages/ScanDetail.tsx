@@ -1151,6 +1151,7 @@ function DoneView({ scan }: { scan: ScanDetailType }) {
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <SummaryRow label="Status" value={<StatusBadge status={scan.status} />} />
             <SummaryRow label="Template" value={scan.config?.template ?? '-'} />
+            <SummaryRow label="Rules Fired" value={scan.rules_fired ? String(scan.rules_fired) : '-'} />
             <SummaryRow label="Hosts" value={String(scan.host_count)} />
             <SummaryRow label="Findings" value={String(scan.finding_count)} />
             <SummaryRow label="Started" value={formatDate(scan.started)} />

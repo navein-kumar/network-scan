@@ -44,6 +44,7 @@ type Status struct {
 	Finished     string     `json:"finished,omitempty"`
 	HostCount    int        `json:"host_count"`
 	FindingCount int        `json:"finding_count"`
+	RulesFired   int        `json:"rules_fired"`
 	Severity     Severity   `json:"severity"`
 	HostsDone    int        `json:"hosts_done"`
 	HostsTotal   int        `json:"hosts_total"`
