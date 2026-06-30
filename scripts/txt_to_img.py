@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 #
-# txt_to_img.py: render an evidence .txt as a fixed-size dark terminal PNG.
+# txt_to_img.py: render an evidence .txt as a dark terminal PNG.
 #
-# Canvas is always 1600x830 (standard terminal window screenshot size).
-# If the content is taller than the canvas, the visible lines are shown
-# and a "... +N more lines" footer is added at the bottom.  The source
-# .txt file always contains the full untruncated evidence.
+# Canvas auto-sizes to content:
+#   Width  — widest rendered line + margins, minimum 600, maximum 1600 px.
+#   Height — lines * line-height + margins, maximum 830 px.
+# Short files produce compact images; long files are capped and show a
+# "... +N more lines" footer. The source .txt always holds the full text.
 #
 # Usage:
 #   txt_to_img.py <file.txt> [out.png]   render one file
@@ -17,9 +18,9 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-# Fixed canvas — matches a 1600x830 terminal window screenshot.
-CANVAS_W = 1600
-CANVAS_H = 830
+MAX_W  = 1600
+MIN_W  = 600
+MAX_H  = 830
 
 BG     = (13, 17, 23)
 FG     = (201, 209, 217)
@@ -72,21 +73,30 @@ def render(txt_path, png_path):
     font   = find_font(FONT_SIZE)
     line_h = FONT_SIZE + LINE_PAD
 
-    # How many lines fit before hitting the max canvas height.
-    usable_h  = CANVAS_H - MARGIN_Y * 2
+    # How many lines fit before hitting the max height.
+    usable_h  = MAX_H - MARGIN_Y * 2
     max_lines = max(1, (usable_h - line_h) // line_h)  # reserve 1 row for footer
 
     truncated = len(lines) > max_lines
     visible   = lines[:max_lines]
     overflow  = len(lines) - max_lines
 
-    # Height fits content exactly, capped at CANVAS_H.
+    # Height: fits content exactly, capped at MAX_H.
     content_h = line_h * len(visible) + MARGIN_Y * 2
     if truncated:
-        content_h += line_h          # extra row for the footer
-    height = min(content_h, CANVAS_H)
+        content_h += line_h
+    height = min(content_h, MAX_H)
 
-    img  = Image.new("RGB", (CANVAS_W, height), BG)
+    # Width: measure the widest rendered line, add margins, clamp to [MIN_W, MAX_W].
+    probe = Image.new("RGB", (1, 1))
+    probe_draw = ImageDraw.Draw(probe)
+    max_text_w = max(
+        (probe_draw.textlength(ln, font=font) for ln in visible if ln),
+        default=0,
+    )
+    width = int(max(MIN_W, min(MAX_W, max_text_w + MARGIN_X * 2)))
+
+    img  = Image.new("RGB", (width, height), BG)
     draw = ImageDraw.Draw(img)
 
     y = MARGIN_Y
