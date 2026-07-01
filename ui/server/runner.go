@@ -179,7 +179,7 @@ func (srv *Server) runEngine(sc *Scan, cfg Config) {
 	// wiped on reboot; catch it early with a clear message in stderr.log).
 	if _, statErr := os.Stat(enginePath); statErr != nil {
 		fmt.Fprintf(logFile, "ERROR: engine binary not found at %s: %v\n", enginePath, statErr)
-		fmt.Fprintf(logFile, "Run: mkdir -p /tmp/fastscan && cd /root/fastscan && /usr/local/go/bin/go build -buildvcs=false -o /tmp/fastscan/fastscan .\n")
+		fmt.Fprintf(logFile, "Run: mkdir -p /tmp/fastscan && cd /root/fastscan/engine && /usr/local/go/bin/go build -buildvcs=false -o /tmp/fastscan/fastscan .\n")
 		logFile.Close()
 		srv.finishScan(sc, "error")
 		return
