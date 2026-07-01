@@ -91,7 +91,7 @@ func (srv *Server) startScan(cfg Config) (*Scan, error) {
 	if b, err := json.MarshalIndent(cfg, "", "  "); err == nil {
 		_ = os.WriteFile(filepath.Join(dir, "config.json"), b, 0o644)
 	}
-	_ = os.WriteFile(filepath.Join(dir, "targets.txt"), []byte(strings.ReplaceAll(cfg.Targets, ",", "\n")+"\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, "targets.txt"), []byte(normalizeTargets(cfg.Targets)), 0o644)
 
 	srv.store.add(sc)
 	sc.save()
@@ -100,16 +100,24 @@ func (srv *Server) startScan(cfg Config) (*Scan, error) {
 	return sc, nil
 }
 
-// countTargets returns the number of non-empty, non-comment lines in a
-// comma-or-newline-separated target string.
-func countTargets(targets string) int {
-	n := 0
+// normalizeTargets splits a comma-or-newline separated target string, trims
+// whitespace from each entry, drops blanks and comments, and returns one host
+// per line ready to write to targets.txt.
+func normalizeTargets(targets string) string {
+	var lines []string
 	for _, t := range strings.Split(strings.ReplaceAll(targets, ",", "\n"), "\n") {
 		t = strings.TrimSpace(t)
 		if t != "" && !strings.HasPrefix(t, "#") {
-			n++
+			lines = append(lines, t)
 		}
 	}
+	return strings.Join(lines, "\n") + "\n"
+}
+
+// countTargets returns the number of non-empty, non-comment lines in a
+// comma-or-newline-separated target string.
+func countTargets(targets string) int {
+	n := strings.Count(normalizeTargets(targets), "\n")
 	if n == 0 {
 		return 1
 	}
@@ -163,6 +171,16 @@ func (srv *Server) runEngine(sc *Scan, cfg Config) {
 		return
 	}
 
+	// Pre-flight: verify the engine binary is reachable (symlink to /tmp is
+	// wiped on reboot; catch it early with a clear message in stderr.log).
+	if _, statErr := os.Stat(enginePath); statErr != nil {
+		fmt.Fprintf(logFile, "ERROR: engine binary not found at %s: %v\n", enginePath, statErr)
+		fmt.Fprintf(logFile, "Run: mkdir -p /tmp/fastscan && cd /root/fastscan && /usr/local/go/bin/go build -buildvcs=false -o /tmp/fastscan/fastscan .\n")
+		logFile.Close()
+		srv.finishScan(sc, "error")
+		return
+	}
+
 	cmd := exec.Command(enginePath, engineArgs(cfg, dir)...)
 	cmd.Dir = engineRoot
 	cmd.Stdout = logFile
@@ -170,6 +188,7 @@ func (srv *Server) runEngine(sc *Scan, cfg Config) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	if err := cmd.Start(); err != nil {
+		fmt.Fprintf(logFile, "ERROR: failed to start engine: %v\n", err)
 		logFile.Close()
 		srv.finishScan(sc, "error")
 		return
