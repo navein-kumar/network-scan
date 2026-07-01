@@ -370,7 +370,7 @@ install_webshot() {
   need_root
   log "installing playwright Chromium browser + driver"
   # Run from the fastscan source dir so the CLI version matches go.mod.
-  ( cd "$FASTSCAN_DIR" && "$GO_BIN" run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps chromium ) >/dev/null 2>&1
+  ( cd "$FASTSCAN_DIR/engine" && "$GO_BIN" run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps chromium ) >/dev/null 2>&1
   webshot_ok && green "playwright Chromium installed" \
     || yellow "playwright Chromium not installed (optional; web screenshots skipped)"
 }
@@ -455,7 +455,7 @@ if [ "$DO_BUILD" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
     local_go="${GO_BIN:-$GO_ROOT/bin/go}"
 
     log "building fastscan engine"
-    ( cd "$FASTSCAN_DIR" && "$local_go" build -buildvcs=false -o "$FASTSCAN_DIR/fastscan" . ) \
+    ( cd "$FASTSCAN_DIR/engine" && "$local_go" build -buildvcs=false -o "$FASTSCAN_DIR/fastscan" . ) \
       && green "built: $FASTSCAN_DIR/fastscan" \
       || { red "engine build failed"; exit 1; }
 

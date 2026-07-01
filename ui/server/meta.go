@@ -105,7 +105,7 @@ func resolveDeps() []dep {
 // deployments it counts *probe.go files; in binary-only deployments (Docker)
 // it falls back to a drivers.count marker file written at build time.
 func countDrivers() int {
-	matches, _ := filepath.Glob(filepath.Join(engineRoot, "*probe.go"))
+	matches, _ := filepath.Glob(filepath.Join(engineRoot, "engine", "*probe.go"))
 	n := 0
 	for _, m := range matches {
 		if strings.HasSuffix(m, "_test.go") {
@@ -129,7 +129,7 @@ func countDrivers() int {
 // countPlugins counts the YAML plugin rule files anywhere under the engine's
 // plugins tree.
 func countPlugins() int {
-	root := filepath.Join(engineRoot, "plugins")
+	root := filepath.Join(engineRoot, "engine", "plugins")
 	n := 0
 	_ = filepath.WalkDir(root, func(_ string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {

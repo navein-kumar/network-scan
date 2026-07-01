@@ -129,7 +129,8 @@ func engineArgs(cfg Config, dir string) []string {
 	args := []string{
 		"-target-file", filepath.Join(dir, "targets.txt"),
 		"-out", dir,
-		"-plugins", filepath.Join(engineRoot, "plugins"),
+		"-plugins", filepath.Join(engineRoot, "engine", "plugins"),
+		"-creds-dir", filepath.Join(engineRoot, "engine", "creds"),
 	}
 	switch cfg.Template {
 	case "fast":

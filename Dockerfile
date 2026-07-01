@@ -9,8 +9,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 WORKDIR /src
 
 # Download Go modules first (cache layer — only re-runs when go.mod/go.sum change)
-COPY go.mod go.sum ./
-RUN go mod download
+COPY engine/go.mod engine/go.sum engine/
+RUN cd engine && go mod download
 
 # Install frontend deps (cache layer — only re-runs when package-lock.json changes)
 COPY ui/web/package*.json ui/web/
@@ -20,10 +20,10 @@ RUN cd ui/web && npm ci --silent
 COPY . .
 
 # Build the engine binary
-RUN go build -buildvcs=false -o /out/fastscan .
+RUN cd engine && go build -buildvcs=false -o /out/fastscan .
 
 # Write driver count so the UI can report it without source files present
-RUN ls *probe.go | grep -v _test | wc -l > /out/drivers.count
+RUN ls engine/*probe.go | grep -v _test | wc -l > /out/drivers.count
 
 # Build the frontend, embed into the Go UI server, build UI binary
 RUN cd ui/web && npm run build --silent \
@@ -33,13 +33,13 @@ RUN cd ui/web && npm run build --silent \
  && go build -buildvcs=false -o /out/fastscan-ui .
 
 # Install Go-based scanning tools into /out so we can copy them to runtime
-RUN go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
+RUN cd engine && go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
  && go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
  && cp /go/bin/httpx  /out/httpx \
  && cp /go/bin/nuclei /out/nuclei
 
 # Install playwright chromium driver into /out (used by webshot.go)
-RUN cd /src && go run github.com/playwright-community/playwright-go/cmd/playwright install chromium \
+RUN cd /src/engine && go run github.com/playwright-community/playwright-go/cmd/playwright install chromium \
  && mkdir -p /out/playwright-cache \
  && cp -r /root/.cache/ms-playwright /out/playwright-cache/
 
@@ -103,9 +103,9 @@ COPY --from=builder /out/drivers.count              /opt/fastscan/drivers.count
 COPY --from=builder /out/playwright-cache/ms-playwright /root/.cache/ms-playwright
 
 # Copy support files baked into the image
-COPY scripts/  /opt/fastscan/scripts/
-COPY plugins/  /opt/fastscan/plugins/
-COPY creds/    /opt/fastscan/creds/
+COPY scripts/          /opt/fastscan/scripts/
+COPY engine/plugins/   /opt/fastscan/engine/plugins/
+COPY engine/creds/     /opt/fastscan/engine/creds/
 
 RUN chmod +x /opt/fastscan/scripts/*.py
 

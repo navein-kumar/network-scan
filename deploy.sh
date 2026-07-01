@@ -34,7 +34,7 @@ ssh "$REMOTE" "cd $REMOTE_DIR/ui/web && npm ci --silent && npm run build --silen
 ssh "$REMOTE" "PATH=\$PATH:/usr/local/go/bin && cd $REMOTE_DIR/ui/server && go build -buildvcs=false -o $REMOTE_DIR/ui/fastscan-ui . && echo '  ui build OK'"
 
 echo "=== [3/5] Building engine on $REMOTE ==="
-ssh "$REMOTE" "PATH=\$PATH:/usr/local/go/bin && cd $REMOTE_DIR && go build -buildvcs=false -o ./fastscan . && echo '  engine build OK'"
+ssh "$REMOTE" "PATH=\$PATH:/usr/local/go/bin && cd $REMOTE_DIR/engine && go build -buildvcs=false -o $REMOTE_DIR/fastscan . && echo '  engine build OK'"
 
 echo "=== [4/5] Restarting UI ==="
 ssh "$REMOTE" bash <<'ENDSSH'
