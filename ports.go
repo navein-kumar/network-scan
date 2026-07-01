@@ -60,6 +60,9 @@ const udpDeepPorts = udpFastPorts +
 //   deep == true   -> tcpDeepPorts
 //   otherwise      -> tcpFastPorts
 func ResolveTCPPorts(override string, deep bool) string {
+	if override == "all" {
+		return tcpDeepPorts // "all" keyword → 1-65535
+	}
 	if override != "" {
 		return override
 	}
