@@ -149,6 +149,9 @@ func engineArgs(cfg Config, dir string) []string {
 	if cfg.SkipNuclei {
 		args = append(args, "-skip-nuclei")
 	}
+	if !cfg.DeepTLS {
+		args = append(args, "-skip-tlsvuln")
+	}
 	if cfg.MaxHosts > 0 {
 		args = append(args, "-max-hosts", fmt.Sprintf("%d", cfg.MaxHosts))
 	}
