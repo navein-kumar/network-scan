@@ -15,17 +15,50 @@ docker pull navinkr431/network-scan:latest
 ### Run
 
 ```bash
-# Linux (host network required for VPN/internal subnet scanning)
-docker run -d --network host navinkr431/network-scan
+# Recommended — with volume (scan data survives image updates)
+docker run -d \
+  --name fastscan \
+  --network host \
+  --restart unless-stopped \
+  -v /opt/fastscan/data:/data \
+  navinkr431/network-scan
 
-# Persist scan results across restarts
-docker run -d --network host \
-  -v /opt/scan-data:/data \
+# Without volume — scan data persists across restarts/reboots but is lost
+# when you update the image (docker rm + docker run)
+docker run -d \
+  --name fastscan \
+  --network host \
+  --restart unless-stopped \
   navinkr431/network-scan
 ```
 
 Open `http://<server-ip>:8888`
 Default login: `admin` / `NetworkScan@2026`
+
+### Data persistence explained
+
+| Scenario | With `-v` | Without `-v` |
+|---|---|---|
+| `docker restart fastscan` | Persists | Persists |
+| Server reboot | Persists | Persists |
+| Image update (`docker rm` + `docker run`) | Persists | **Lost** |
+
+Without `-v`, scan data lives inside the container's writable layer and
+survives normal restarts. It is only lost when the container is removed
+(i.e., when pulling and applying a new image version).
+
+### Update image
+
+```bash
+docker pull navinkr431/network-scan:latest
+docker rm -f fastscan
+docker run -d \
+  --name fastscan \
+  --network host \
+  --restart unless-stopped \
+  -v /opt/fastscan/data:/data \
+  navinkr431/network-scan
+```
 
 ### Change password
 
