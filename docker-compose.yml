@@ -15,6 +15,6 @@ services:
       # - ./creds:/opt/fastscan/creds:ro
     environment:
       UI_USER: ${UI_USER:-admin}
-      UI_PASS: ${UI_PASS:-changeme}
+      UI_PASS: ${UI_PASS:-NetworkScan@2026}
       UI_ADDR: 0.0.0.0:8888
     restart: unless-stopped

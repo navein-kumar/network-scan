@@ -93,6 +93,12 @@ RUN ARCH="$(dpkg --print-architecture)" && \
     curl -fsSL --max-time 60 "$URL" -o /tmp/scrying.deb && \
     dpkg -i /tmp/scrying.deb && rm -f /tmp/scrying.deb || true
 
+# Default runtime credentials — override with -e UI_PASS=... at docker run time
+ENV UI_USER=admin \
+    UI_PASS=NetworkScan@2026 \
+    UI_ADDR=0.0.0.0:8888 \
+    UI_DATA_DIR=/data
+
 # Copy binaries from builder
 COPY --from=builder /out/fastscan        /opt/fastscan/fastscan
 COPY --from=builder /out/fastscan-ui     /opt/fastscan/ui/fastscan-ui
