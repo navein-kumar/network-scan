@@ -44,7 +44,29 @@ RUN cd /src/engine && go run github.com/playwright-community/playwright-go/cmd/p
  && cp -r /root/.cache/ms-playwright /out/playwright-cache/ \
  || mkdir -p /out/playwright-cache/ms-playwright
 
-# ── Stage 2: runtime ────────────────────────────────────────────────────────
+# ── Stage 2: nxc builder (Ubuntu 22.04 = same Python 3.10 as runtime) ───────
+# NetExec (nxc) requires Rust (aardwolf dep) and poetry build system.
+# We build it here in an isolated venv then copy only /opt/nxc-env to runtime.
+FROM ubuntu:22.04 AS nxc-builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-pip python3-venv git \
+      rustc cargo libssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/nxc-env \
+ && /opt/nxc-env/bin/pip install --quiet --upgrade pip wheel \
+ && git clone --depth 1 https://github.com/Pennyw0rth/NfsClient /tmp/nfsclient \
+ && /opt/nxc-env/bin/pip install --quiet /tmp/nfsclient \
+ && git clone --depth 1 https://github.com/Pennyw0rth/NetExec /tmp/netexec \
+ && cd /tmp/netexec \
+ && /opt/nxc-env/bin/pip install --quiet . \
+ && test -f /opt/nxc-env/bin/nxc \
+ && rm -rf /tmp/nfsclient /tmp/netexec
+
+# ── Stage 3: runtime ────────────────────────────────────────────────────────
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -58,16 +80,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       tmux \
       python3 \
       python3-pip \
-      pipx \
       libpcap-dev \
       ike-scan \
       bsdmainutils \
     && pip3 install --no-cache-dir openpyxl Pillow \
-    && ( apt-get install -y netexec 2>/dev/null \
-         || PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install netexec --system-site-packages 2>/dev/null \
-         || PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install git+https://github.com/Pennyw0rth/NetExec 2>/dev/null \
-         || true ) \
     && rm -rf /var/lib/apt/lists/*
+
+# nxc/netexec — copied from nxc-builder stage (avoids Rust toolchain in runtime)
+COPY --from=nxc-builder /opt/nxc-env /opt/nxc-env
+RUN ln -sf /opt/nxc-env/bin/nxc /usr/local/bin/nxc \
+ && ln -sf /opt/nxc-env/bin/nxc /usr/local/bin/netexec
 
 # testssl.sh — needed for TLS vulnerability scans
 RUN git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
