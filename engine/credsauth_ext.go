@@ -21,6 +21,7 @@ import (
 	gosnmp "github.com/gosnmp/gosnmp"
 	"github.com/jfjallid/go-smb/smb"
 	"github.com/jfjallid/go-smb/spnego"
+	"github.com/jfjallid/golog"
 	mgodriver "go.mongodb.org/mongo-driver/mongo"
 	mgopts "go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -40,6 +41,7 @@ func tryCredsSMB(host string, port int, user, pass string, timeout time.Duration
 			Domain:   "",
 		},
 	}
+	golog.SetLogLevel(golog.LevelNone)
 	conn, err := smb.NewConnection(opts)
 	if err != nil {
 		return err
