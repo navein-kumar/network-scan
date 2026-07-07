@@ -8,19 +8,20 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 WORKDIR /src
 
-# Download Go modules first (cache layer — only re-runs when go.mod/go.sum change)
+# Go module cache (only re-runs when go.mod/go.sum change)
 COPY engine/go.mod engine/go.sum engine/
 RUN cd engine && go mod download
 
-# Install frontend deps (cache layer — only re-runs when package-lock.json changes)
+# Engine source only — cached independently from UI/scripts/README changes
+COPY engine/ engine/
+RUN cd engine && go build -buildvcs=false -o /out/fastscan .
+
+# Frontend dep cache (only re-runs when package-lock.json changes)
 COPY ui/web/package*.json ui/web/
 RUN cd ui/web && npm ci --silent
 
-# Copy all source
+# UI source + remaining files
 COPY . .
-
-# Build the engine binary
-RUN cd engine && go build -buildvcs=false -o /out/fastscan .
 
 # Write driver count so the UI can report it without source files present
 RUN ls engine/*probe.go | grep -v _test | wc -l > /out/drivers.count
