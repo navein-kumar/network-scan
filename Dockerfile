@@ -142,7 +142,9 @@ COPY scripts/          /opt/fastscan/scripts/
 COPY engine/plugins/   /opt/fastscan/plugins/
 COPY engine/creds/     /opt/fastscan/creds/
 
-RUN chmod +x /opt/fastscan/scripts/*.py \
+RUN ln -sf /opt/fastscan/plugins /opt/fastscan/ui/plugins \
+ && ln -sf /opt/fastscan/creds   /opt/fastscan/ui/creds \
+ && chmod +x /opt/fastscan/scripts/*.py \
  && pip3 install --no-cache-dir PyYAML \
  && rm -f /opt/fastscan/scripts/nasl_to_rules.py \
            /opt/fastscan/scripts/audit.sh \
