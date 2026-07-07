@@ -128,7 +128,7 @@ ENV UI_USER=admin \
 
 # Copy binaries from builder
 COPY --from=builder /out/fastscan        /opt/fastscan/fastscan
-COPY --from=builder /out/fastscan-ui     /opt/fastscan/ui/fastscan-ui
+COPY --from=builder /out/fastscan-ui     /opt/fastscan/fastscan-ui
 COPY --from=builder /out/httpx           /usr/local/bin/httpx
 COPY --from=builder /out/nuclei          /usr/local/bin/nuclei
 COPY --from=builder /out/cvemap          /usr/local/bin/cvemap
@@ -142,9 +142,7 @@ COPY scripts/          /opt/fastscan/scripts/
 COPY engine/plugins/   /opt/fastscan/plugins/
 COPY engine/creds/     /opt/fastscan/creds/
 
-RUN ln -sf /opt/fastscan/plugins /opt/fastscan/ui/plugins \
- && ln -sf /opt/fastscan/creds   /opt/fastscan/ui/creds \
- && chmod +x /opt/fastscan/scripts/*.py \
+RUN chmod +x /opt/fastscan/scripts/*.py \
  && pip3 install --no-cache-dir PyYAML \
  && rm -f /opt/fastscan/scripts/nasl_to_rules.py \
            /opt/fastscan/scripts/audit.sh \
