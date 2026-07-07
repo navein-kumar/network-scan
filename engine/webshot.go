@@ -11,15 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/playwright-community/playwright-go"
 )
 
-// webShotPath derives a safe screenshot output path for a web URL. It parses the
-// host and port and returns /tmp/fastscan/screenshots/web_<host>_<port>.png,
-// inferring port 80 for http and 443 for https when none is given. The directory
-// is created (mkdir -p) and the host is sanitized so it carries no path
-// separators.
+// webShotPath derives a safe screenshot output path for a web URL.
 func webShotPath(rawurl string) (string, error) {
 	u, err := url.Parse(rawurl)
 	if err != nil {
@@ -41,7 +35,7 @@ func webShotPath(rawurl string) (string, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
-	scheme := strings.ToLower(u.Scheme) // "http" or "https"
+	scheme := strings.ToLower(u.Scheme)
 	if scheme != "http" && scheme != "https" {
 		scheme = "http"
 	}
@@ -49,9 +43,7 @@ func webShotPath(rawurl string) (string, error) {
 	return dir + "/" + base + ".png", nil
 }
 
-// addWebURLBar composites a URL bar (badge + URL text) onto an existing web
-// screenshot PNG using Pillow. The bar is prepended above the page content so
-// it is always visible regardless of the page's CSS or DOM structure.
+// addWebURLBar composites a URL bar onto an existing web screenshot PNG using Pillow.
 func addWebURLBar(pngPath, rawurl, badgeText, badgeBg, badgeFg string) {
 	py, err := exec.LookPath("python3")
 	if err != nil {
@@ -83,7 +75,6 @@ try:
     except Exception:
         font_b = font = ImageFont.load_default()
 
-    # Draw badge
     pad_x, pad_y = 8, 4
     bbox = d.textbbox((0, 0), btxt, font=font_b)
     bw = bbox[2] - bbox[0] + pad_x * 2
@@ -92,7 +83,6 @@ try:
     d.rounded_rectangle([bx, by, bx + bw, by + bh], radius=4, fill=hex2rgb(bbg))
     d.text((bx + pad_x, by + pad_y), btxt, fill=hex2rgb(bfg), font=font_b)
 
-    # Draw URL
     url_x = bx + bw + 10
     d.text((url_x, (bar_h - 13) // 2), url, fill=(232, 234, 237), font=font)
 
@@ -105,8 +95,7 @@ except Exception:
 	_ = exec.CommandContext(ctx, py, "-c", script, pngPath, rawurl, badgeText, badgeBg, badgeFg).Run()
 }
 
-// tlsCertError returns true when the HTTPS endpoint's certificate fails
-// standard validation (self-signed, expired, hostname mismatch, etc.).
+// tlsCertError returns true when the HTTPS endpoint's certificate fails validation.
 func tlsCertError(rawurl string) bool {
 	u, err := url.Parse(rawurl)
 	if err != nil || !strings.EqualFold(u.Scheme, "https") {
@@ -122,74 +111,72 @@ func tlsCertError(rawurl string) bool {
 		&tls.Config{InsecureSkipVerify: false},
 	)
 	if err != nil {
-		return true // cert error (self-signed, expired, etc.)
+		return true
 	}
 	conn.Close()
 	return false
 }
 
-// webScreenshot is a best-effort grab of a web page into a PNG via playwright-go
-// (headless Chromium). It launches and closes the browser per call so no node or
-// browser process is left orphaned. Insecure HTTP and bad-cert HTTPS are handled
-// (IgnoreHttpsErrors). Navigation errors and timeouts are tolerated: the page is
-// still screenshotted on a best-effort basis. If the playwright driver or
-// browser is not installed, the launch error is returned and nothing is captured
-// (the caller ignores it). The whole capture is bounded by the Goto timeout plus
-// the per-call browser close.
-func webScreenshot(rawurl, outPath string, timeout time.Duration) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("webshot panic: %v", r)
+// chromiumBin finds the system chromium binary.
+func chromiumBin() string {
+	for _, name := range []string{"chromium", "chromium-browser", "google-chrome", "google-chrome-stable"} {
+		if p, err := exec.LookPath(name); err == nil {
+			return p
 		}
-	}()
+	}
+	return ""
+}
 
-	pw, err := playwright.Run()
+// webScreenshot captures a web page as PNG using headless Chromium via exec.
+// No playwright/CDN dependency — uses the system chromium package.
+func webScreenshot(rawurl, outPath string, timeout time.Duration) error {
+	bin := chromiumBin()
+	if bin == "" {
+		return fmt.Errorf("webshot: chromium not found in PATH")
+	}
+
+	if timeout <= 0 {
+		timeout = 15 * time.Second
+	}
+
+	// chromium --headless writes screenshot.png to the working directory.
+	// We use a temp dir so the output path is predictable.
+	tmpDir, err := os.MkdirTemp("", "fastscan-webshot-*")
 	if err != nil {
-		return fmt.Errorf("webshot run: %w", err)
+		return fmt.Errorf("webshot tmpdir: %w", err)
 	}
-	defer pw.Stop()
+	defer os.RemoveAll(tmpDir)
 
-	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(true),
-		Args:     []string{"--no-sandbox", "--disable-dev-shm-usage"},
-	})
-	if err != nil {
-		return fmt.Errorf("webshot launch: %w", err)
-	}
-	defer browser.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout+5*time.Second)
+	defer cancel()
 
-	page, err := browser.NewPage(playwright.BrowserNewPageOptions{
-		IgnoreHttpsErrors: playwright.Bool(true),
-		Viewport: &playwright.Size{Width: 1280, Height: 720},
-	})
-	if err != nil {
-		return fmt.Errorf("webshot newpage: %w", err)
-	}
-	defer page.Close()
-
-	// Cap navigation so a hung page cannot block past ~timeout. Goto errors
-	// (timeout, TLS, connection reset) are intentionally ignored: we still try
-	// to screenshot whatever rendered.
-	gotoMS := float64(timeout.Milliseconds())
-	if gotoMS <= 0 {
-		gotoMS = 15000
-	}
-	_, _ = page.Goto(rawurl, playwright.PageGotoOptions{
-		Timeout:   playwright.Float(gotoMS),
-		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
-	})
-
-	// Capture the page as-is — no JS injection (fragile on pages that use
-	// CSS transforms, full-viewport overlays, or post-DOMContentLoaded redirects).
-	if _, err := page.Screenshot(playwright.PageScreenshotOptions{
-		Path:     playwright.String(outPath),
-		FullPage: playwright.Bool(false),
-	}); err != nil {
-		return fmt.Errorf("webshot capture: %w", err)
+	args := []string{
+		"--headless=new",
+		"--no-sandbox",
+		"--disable-gpu",
+		"--disable-dev-shm-usage",
+		"--disable-software-rasterizer",
+		"--ignore-certificate-errors",
+		"--window-size=1280,720",
+		fmt.Sprintf("--screenshot=%s", outPath),
+		fmt.Sprintf("--virtual-time-budget=%d", timeout.Milliseconds()),
+		rawurl,
 	}
 
-	// Burn URL bar onto the PNG with Pillow after capture — always visible
-	// regardless of the page's DOM/CSS, same approach as RDP/VNC labels.
+	cmd := exec.CommandContext(ctx, bin, args...)
+	cmd.Dir = tmpDir
+	if err := cmd.Run(); err != nil {
+		// Check if the screenshot was still written despite an error exit
+		if _, statErr := os.Stat(outPath); statErr != nil {
+			return fmt.Errorf("webshot exec: %w", err)
+		}
+	}
+
+	if _, err := os.Stat(outPath); err != nil {
+		return fmt.Errorf("webshot: screenshot not created at %s", outPath)
+	}
+
+	// Burn URL bar onto the PNG with Pillow
 	isHTTPS := strings.HasPrefix(strings.ToLower(rawurl), "https://")
 	certErr := isHTTPS && tlsCertError(rawurl)
 

@@ -41,16 +41,7 @@ RUN cd engine && go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
  && cp /go/bin/nuclei  /out/nuclei \
  && cp /go/bin/cvemap  /out/cvemap
 
-# Install playwright chromium driver into /out (used by webshot.go)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
-      libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
-      libxrandr2 libgbm1 libasound2 libpango-1.0-0 libpangocairo-1.0-0 \
-    && rm -rf /var/lib/apt/lists/* \
-    && cd /src/engine \
-    && go run github.com/playwright-community/playwright-go/cmd/playwright install chromium \
-    && cp -r /root/.cache/ms-playwright /out/playwright-cache/ \
-    || mkdir -p /out/playwright-cache/ms-playwright
+
 
 # ── Stage 2: nxc builder (Ubuntu 22.04 = same Python 3.10 as runtime) ───────
 # NetExec (nxc) requires Rust (aardwolf dep) and poetry build system.
@@ -95,6 +86,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
       libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
       libxrandr2 libgbm1 libasound2 libpango-1.0-0 libpangocairo-1.0-0 \
+      chromium \
     && pip3 install --no-cache-dir openpyxl Pillow \
     && rm -rf /var/lib/apt/lists/*
 
@@ -143,7 +135,6 @@ COPY --from=builder /out/nuclei          /usr/local/bin/nuclei
 COPY --from=builder /out/cvemap          /usr/local/bin/cvemap
 
 COPY --from=builder /out/drivers.count              /opt/fastscan/drivers.count
-COPY --from=builder /out/playwright-cache/ /root/.cache/ms-playwright/
 
 # Copy support files baked into the image (dev-only scripts excluded via .dockerignore)
 ARG CACHEBUST=1
