@@ -28,8 +28,8 @@ var engineRoot = func() string {
 	if real, err := filepath.EvalSymlinks(exe); err == nil {
 		exe = real
 	}
-	// <repo>/ui/fastscan-ui  →  Dir = <repo>/ui  →  Dir = <repo>
-	return filepath.Dir(filepath.Dir(exe))
+	// /opt/fastscan/fastscan-ui  →  Dir = /opt/fastscan  (binary and data co-located)
+	return filepath.Dir(exe)
 }()
 
 // dep describes an external tool dependency.
@@ -129,7 +129,7 @@ func countDrivers() int {
 // countPlugins counts the YAML plugin rule files anywhere under the engine's
 // plugins tree.
 func countPlugins() int {
-	root := filepath.Join(engineRoot, "engine", "plugins")
+	root := filepath.Join(engineRoot, "plugins")
 	n := 0
 	_ = filepath.WalkDir(root, func(_ string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
