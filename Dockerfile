@@ -90,7 +90,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Google Chrome for headless web screenshots
-RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gnupg curl ca-certificates \
+ && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
       | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
       > /etc/apt/sources.list.d/google-chrome.list \
