@@ -59,7 +59,9 @@ func serveFileDownload(w http.ResponseWriter, path, filename, ctype string) {
 }
 
 // exportXLSX runs the xlsx bridge and streams the workbook.
-// --include-info ensures info-level findings are included.
+// --include-info ensures info-level findings are included (they are valid
+// scan output; the script default of excluding them breaks scans where all
+// findings happen to be info-level).
 func exportXLSX(w http.ResponseWriter, sc *Scan) {
 	findings := filepath.Join(sc.dir, "findings.ndjson")
 	out := filepath.Join(sc.dir, sc.Status.ID+".xlsx")
@@ -96,9 +98,15 @@ func buildEvidenceDir(sc *Scan) (string, error) {
 		return "", err
 	}
 
-	// Copy ports_report.txt if present.
-	if src := filepath.Join(sc.dir, "ports_report.txt"); fileExists(src) {
-		copyFile(src, filepath.Join(evDir, "ports_report.txt"))
+	// Copy ports_report.txt into evidence. The engine writes the port table
+	// to stderr.log, not a separate file, so fall back to stderr.log when
+	// ports_report.txt doesn't exist.
+	portsReport := filepath.Join(sc.dir, "ports_report.txt")
+	if !fileExists(portsReport) {
+		portsReport = filepath.Join(sc.dir, "stderr.log")
+	}
+	if fileExists(portsReport) {
+		copyFile(portsReport, filepath.Join(evDir, "ports_report.txt"))
 	}
 
 	// Render the evidence .txt files into images/.

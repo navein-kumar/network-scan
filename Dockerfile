@@ -83,6 +83,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libpcap-dev \
       ike-scan \
       bsdmainutils \
+      fonts-dejavu-core \
     && pip3 install --no-cache-dir openpyxl Pillow \
     && rm -rf /var/lib/apt/lists/*
 
