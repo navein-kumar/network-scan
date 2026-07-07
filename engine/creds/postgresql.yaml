@@ -4,6 +4,17 @@ attempts:
   - { user: postgres, pass: "" }
   - { user: postgres, pass: password }
   - { user: postgres, pass: admin }
+  - { user: postgres, pass: "123456" }
+  - { user: postgres, pass: pgadmin }
   - { user: admin,    pass: admin }
+  - { user: admin,    pass: password }
+  - { user: admin,    pass: "" }
   - { user: root,     pass: root }
+  - { user: root,     pass: "" }
   - { user: user,     pass: user }
+  - { user: user,     pass: "" }
+  - { user: pgsql,    pass: pgsql }
+  - { user: pgsql,    pass: "" }
+  - { user: test,     pass: test }
+  - { user: test,     pass: "" }
+  - { user: SYSDBA,   pass: masterkey }

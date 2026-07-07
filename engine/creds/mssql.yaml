@@ -1,9 +1,25 @@
 service: mssql
+# Nessus mysql_default_accounts + common MSSQL combos
 attempts:
   - { user: sa,            pass: "" }
   - { user: sa,            pass: sa }
   - { user: sa,            pass: password }
   - { user: sa,            pass: Password1 }
+  - { user: sa,            pass: "P@ssw0rd" }
   - { user: sa,            pass: sql }
+  - { user: sa,            pass: "Sa@12345" }
+  - { user: sa,            pass: "Sql@2019" }
+  - { user: sa,            pass: "Sql2019!" }
+  - { user: sa,            pass: "sqlserver" }
   - { user: administrator, pass: administrator }
+  - { user: administrator, pass: password }
+  - { user: administrator, pass: "" }
   - { user: admin,         pass: admin }
+  - { user: admin,         pass: password }
+  - { user: mssql,         pass: mssql }
+  - { user: sqlsvc,        pass: sqlsvc }
+  - { user: sqlsvc,        pass: password }
+  - { user: guest,         pass: "" }
+  - { user: dbo,           pass: dbo }
+  - { user: test,          pass: test }
+  - { user: SYSDBA,        pass: masterkey }

@@ -1,9 +1,22 @@
 service: redis
+# user field ignored by Redis < 6; pass is the AUTH password.
+# user + pass used for Redis 6+ ACL AUTH.
 attempts:
-  - { user: "", pass: "" }
-  - { user: "", pass: redis }
-  - { user: "", pass: password }
-  - { user: "", pass: admin }
-  - { user: "", pass: root }
-  - { user: "", pass: foobared }
-  - { user: "", pass: "123456" }
+  - { user: "",      pass: "" }
+  - { user: "",      pass: redis }
+  - { user: "",      pass: password }
+  - { user: "",      pass: admin }
+  - { user: "",      pass: root }
+  - { user: "",      pass: foobared }
+  - { user: "",      pass: "123456" }
+  - { user: "",      pass: "1234" }
+  - { user: "",      pass: default }
+  - { user: "",      pass: secret }
+  - { user: "",      pass: test }
+  - { user: "",      pass: "Redis2024!" }
+  - { user: default, pass: "" }
+  - { user: default, pass: password }
+  - { user: default, pass: redis }
+  - { user: admin,   pass: admin }
+  - { user: admin,   pass: password }
+  - { user: root,    pass: root }

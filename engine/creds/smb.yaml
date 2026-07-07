@@ -1,0 +1,36 @@
+service: smb
+# Merged: Nessus SMB/Windows default accounts + common pentest combos
+attempts:
+  - { user: guest,          pass: "" }
+  - { user: Guest,          pass: "" }
+  - { user: administrator,  pass: "" }
+  - { user: administrator,  pass: administrator }
+  - { user: administrator,  pass: password }
+  - { user: administrator,  pass: Password1 }
+  - { user: administrator,  pass: "P@ssw0rd" }
+  - { user: administrator,  pass: Welcome1 }
+  - { user: administrator,  pass: "Admin@123" }
+  - { user: administrator,  pass: changeme }
+  - { user: administrator,  pass: "Summer2024!" }
+  - { user: administrator,  pass: smcadmin }
+  - { user: Administrator,  pass: ganteng }
+  - { user: Administrator,  pass: "p@ssw0rd" }
+  - { user: admin,          pass: "" }
+  - { user: admin,          pass: admin }
+  - { user: admin,          pass: admin123 }
+  - { user: admin,          pass: password }
+  - { user: admin,          pass: Password1 }
+  - { user: user,           pass: user }
+  - { user: user,           pass: password }
+  - { user: test,           pass: test }
+  - { user: test,           pass: password }
+  - { user: backup,         pass: backup }
+  - { user: backup,         pass: password }
+  - { user: service,        pass: service }
+  - { user: helpdesk,       pass: helpdesk }
+  - { user: operator,       pass: operator }
+  - { user: support,        pass: support }
+  - { user: sa,             pass: "" }
+  - { user: sa,             pass: sa }
+  - { user: netman,         pass: netman }
+  - { user: ADMN,           pass: admn }

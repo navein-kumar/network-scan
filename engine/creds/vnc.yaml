@@ -1,0 +1,21 @@
+service: vnc
+# VNC auth has no username — user field is ignored; pass is the VNC password.
+attempts:
+  - { user: "", pass: password }
+  - { user: "", pass: "" }
+  - { user: "", pass: "1234" }
+  - { user: "", pass: "12345" }
+  - { user: "", pass: "123456" }
+  - { user: "", pass: admin }
+  - { user: "", pass: vnc }
+  - { user: "", pass: raspberry }
+  - { user: "", pass: root }
+  - { user: "", pass: secret }
+  - { user: "", pass: changeme }
+  - { user: "", pass: letmein }
+  - { user: "", pass: "pass" }
+  - { user: "", pass: "qwerty" }
+  - { user: "", pass: "vncpassword" }
+  - { user: "", pass: desktop }
+  - { user: "", pass: ubuntu }
+  - { user: "", pass: alpine }

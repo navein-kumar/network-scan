@@ -5,6 +5,16 @@ attempts:
   - { user: root,  pass: password }
   - { user: root,  pass: toor }
   - { user: root,  pass: mysql }
+  - { user: root,  pass: "123456" }
+  - { user: root,  pass: admin }
+  - { user: root,  pass: "root@123" }
   - { user: admin, pass: admin }
+  - { user: admin, pass: password }
+  - { user: admin, pass: "" }
   - { user: mysql, pass: mysql }
+  - { user: mysql, pass: "" }
   - { user: user,  pass: user }
+  - { user: user,  pass: "" }
+  - { user: test,  pass: test }
+  - { user: test,  pass: "" }
+  - { user: debian-sys-maint, pass: "" }

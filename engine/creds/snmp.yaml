@@ -1,0 +1,69 @@
+service: snmp
+# Merged: Nessus snmp_default_communities (plugin 10264) + SecLists SNMP wordlist
+# user field is ignored; pass is the community string.
+attempts:
+  # ── Nessus default list (always tested) ───────────────────────────
+  - { user: "", pass: public }
+  - { user: "", pass: private }
+  - { user: "", pass: privat }
+  - { user: "", pass: cisco }
+  # ── Nessus extended list (thorough_tests) ─────────────────────────
+  - { user: "", pass: "0392a0" }
+  - { user: "", pass: ANYCOM }
+  - { user: "", pass: ILMI }
+  - { user: "", pass: "NoGaH$@!" }
+  - { user: "", pass: OrigEquipMfr }
+  - { user: "", pass: "Secret C0de" }
+  - { user: "", pass: TENmanUFactOryPOWER }
+  - { user: "", pass: admin }
+  - { user: "", pass: agent }
+  - { user: "", pass: agent_steal }
+  - { user: "", pass: all }
+  - { user: "", pass: "all private" }
+  - { user: "", pass: apc }
+  - { user: "", pass: blue }
+  - { user: "", pass: c }
+  - { user: "", pass: cable-docsis }
+  - { user: "", pass: cascade }
+  - { user: "", pass: cc }
+  - { user: "", pass: comcomcom }
+  - { user: "", pass: community }
+  - { user: "", pass: core }
+  - { user: "", pass: default }
+  - { user: "", pass: diag }
+  - { user: "", pass: freekevin }
+  - { user: "", pass: fubar }
+  - { user: "", pass: guest }
+  - { user: "", pass: hp_admin }
+  - { user: "", pass: ilmi }
+  - { user: "", pass: internal }
+  - { user: "", pass: localhost }
+  - { user: "", pass: manager }
+  - { user: "", pass: manuf }
+  - { user: "", pass: monitor }
+  - { user: "", pass: openview }
+  - { user: "", pass: password }
+  - { user: "", pass: proxy }
+  - { user: "", pass: regional }
+  - { user: "", pass: riverhead }
+  - { user: "", pass: rmon }
+  - { user: "", pass: rmon_admin }
+  - { user: "", pass: secret }
+  - { user: "", pass: security }
+  - { user: "", pass: snmp }
+  - { user: "", pass: snmpd }
+  - { user: "", pass: system }
+  - { user: "", pass: test }
+  - { user: "", pass: tivoli }
+  - { user: "", pass: write }
+  - { user: "", pass: xyzzy }
+  - { user: "", pass: yellow }
+  # ── Additional common strings ─────────────────────────────────────
+  - { user: "", pass: network }
+  - { user: "", pass: readonly }
+  - { user: "", pass: root }
+  - { user: "", pass: "1234" }
+  - { user: "", pass: "12345" }
+  - { user: "", pass: mngt }
+  - { user: "", pass: trap }
+  - { user: "", pass: netman }

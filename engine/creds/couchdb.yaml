@@ -1,0 +1,12 @@
+service: couchdb
+attempts:
+  - { user: admin,   pass: "" }
+  - { user: admin,   pass: admin }
+  - { user: admin,   pass: password }
+  - { user: admin,   pass: couchdb }
+  - { user: admin,   pass: "123456" }
+  - { user: couchdb, pass: couchdb }
+  - { user: root,    pass: root }
+  - { user: root,    pass: "" }
+  - { user: user,    pass: user }
+  - { user: test,    pass: test }

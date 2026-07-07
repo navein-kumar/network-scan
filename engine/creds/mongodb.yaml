@@ -1,0 +1,18 @@
+service: mongodb
+attempts:
+  - { user: admin,   pass: "" }
+  - { user: admin,   pass: admin }
+  - { user: admin,   pass: password }
+  - { user: admin,   pass: admin123 }
+  - { user: admin,   pass: "123456" }
+  - { user: root,    pass: root }
+  - { user: root,    pass: "" }
+  - { user: root,    pass: password }
+  - { user: mongodb, pass: mongodb }
+  - { user: user,    pass: user }
+  - { user: test,    pass: test }
+  - { user: dbadmin, pass: dbadmin }
+  - { user: dba,     pass: dba }
+  - { user: mongo,   pass: mongo }
+  - { user: sa,      pass: "" }
+  - { user: sa,      pass: sa }

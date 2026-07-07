@@ -154,6 +154,20 @@ func (s *CredStore) TryCreds(service, host string, port int) []CredAttempt {
 			err = tryCredsRedis(host, port, a.User, a.Pass, perTry)
 		case "winrm":
 			err = tryCredsWinRM(host, port, a.User, a.Pass, perTry)
+		case "smb":
+			err = tryCredsSMB(host, port, a.User, a.Pass, perTry)
+		case "telnet":
+			err = tryCredsTelnet(host, port, a.User, a.Pass, perTry)
+		case "mongodb":
+			err = tryCredsMongoDB(host, port, a.User, a.Pass, perTry)
+		case "ldap":
+			err = tryCredsLDAP(host, port, a.User, a.Pass, perTry)
+		case "vnc":
+			err = tryCredsVNC(host, port, a.User, a.Pass, perTry)
+		case "snmp":
+			err = tryCredsSNMP(host, port, a.User, a.Pass, perTry)
+		case "couchdb":
+			err = tryCredsCouchDB(host, port, a.User, a.Pass, perTry)
 		default:
 			// Unsupported service - skip silently.
 			return out

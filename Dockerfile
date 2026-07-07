@@ -36,8 +36,10 @@ RUN cd ui/web && npm run build --silent \
 # Install Go-based scanning tools into /out so we can copy them to runtime
 RUN cd engine && go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
  && go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
- && cp /go/bin/httpx  /out/httpx \
- && cp /go/bin/nuclei /out/nuclei
+ && go install github.com/projectdiscovery/cvemap/cmd/cvemap@latest \
+ && cp /go/bin/httpx   /out/httpx \
+ && cp /go/bin/nuclei  /out/nuclei \
+ && cp /go/bin/cvemap  /out/cvemap
 
 # Install playwright chromium driver into /out (used by webshot.go) — optional
 RUN cd /src/engine && go run github.com/playwright-community/playwright-go/cmd/playwright install chromium \
@@ -129,16 +131,23 @@ COPY --from=builder /out/fastscan        /opt/fastscan/fastscan
 COPY --from=builder /out/fastscan-ui     /opt/fastscan/ui/fastscan-ui
 COPY --from=builder /out/httpx           /usr/local/bin/httpx
 COPY --from=builder /out/nuclei          /usr/local/bin/nuclei
+COPY --from=builder /out/cvemap          /usr/local/bin/cvemap
 
 COPY --from=builder /out/drivers.count              /opt/fastscan/drivers.count
 COPY --from=builder /out/playwright-cache/ /root/.cache/ms-playwright/
 
-# Copy support files baked into the image
+# Copy support files baked into the image (dev-only scripts excluded via .dockerignore)
 COPY scripts/          /opt/fastscan/scripts/
 COPY engine/plugins/   /opt/fastscan/engine/plugins/
 COPY engine/creds/     /opt/fastscan/engine/creds/
 
-RUN chmod +x /opt/fastscan/scripts/*.py
+RUN chmod +x /opt/fastscan/scripts/*.py \
+ && pip3 install --no-cache-dir PyYAML \
+ && rm -f /opt/fastscan/scripts/nasl_to_rules.py \
+           /opt/fastscan/scripts/audit.sh \
+           /opt/fastscan/scripts/install_deps.sh \
+           /opt/fastscan/scripts/smoke_tls_test.sh \
+           /opt/fastscan/scripts/requirements.txt
 
 # Pull nuclei templates to /tmp/all-tpl/ — the engine's default templates path
 RUN nuclei -update-templates 2>/dev/null; \

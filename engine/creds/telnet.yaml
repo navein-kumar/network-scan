@@ -1,0 +1,96 @@
+service: telnet
+# Merged: Nessus ssh_default_credentials_list + SecLists telnet + device-specific plugins
+attempts:
+  # ── Common Linux/Unix ──────────────────────────────────────────────
+  - { user: admin,       pass: admin }
+  - { user: admin,       pass: password }
+  - { user: admin,       pass: admin123 }
+  - { user: admin,       pass: "1234" }
+  - { user: admin,       pass: "" }
+  - { user: admin,       pass: system }
+  - { user: admin,       pass: setup }
+  - { user: root,        pass: root }
+  - { user: root,        pass: toor }
+  - { user: root,        pass: password }
+  - { user: root,        pass: "" }
+  - { user: root,        pass: alpine }
+  - { user: root,        pass: admin }
+  - { user: root,        pass: default }
+  - { user: root,        pass: "123456" }
+  - { user: user,        pass: user }
+  - { user: user,        pass: password }
+  - { user: guest,       pass: guest }
+  - { user: guest,       pass: "" }
+  - { user: test,        pass: test }
+  # ── Network devices (Cisco, etc.) ─────────────────────────────────
+  - { user: cisco,       pass: cisco }
+  - { user: cisco,       pass: Cisco }
+  - { user: cisco,       pass: "Cisco123" }
+  - { user: admin,       pass: cisco }
+  - { user: enable,      pass: enable }
+  - { user: router,      pass: router }
+  - { user: netscreen,   pass: netscreen }
+  - { user: admin,       pass: switch }
+  - { user: admin,       pass: "private" }
+  # ── IoT / embedded devices ────────────────────────────────────────
+  - { user: ubnt,        pass: ubnt }
+  - { user: pi,          pass: raspberry }
+  - { user: ubuntu,      pass: ubuntu }
+  - { user: ec2-user,    pass: ec2-user }
+  - { user: vyos,        pass: vyos }
+  - { user: default,     pass: default }
+  - { user: default,     pass: "" }
+  - { user: operator,    pass: operator }
+  - { user: operator,    pass: "1234" }
+  - { user: support,     pass: support }
+  - { user: service,     pass: service }
+  - { user: maint,       pass: maint }
+  - { user: maint,       pass: password }
+  - { user: manager,     pass: manager }
+  - { user: monitor,     pass: monitor }
+  - { user: apc,         pass: apc }
+  - { user: device,      pass: apc }
+  - { user: setup,       pass: setup }
+  - { user: netman,      pass: netman }
+  - { user: diag,        pass: danger }
+  - { user: craft,       pass: craft }
+  - { user: davox,       pass: davox }
+  - { user: IntraStack,  pass: Asante }
+  - { user: radware,     pass: radware }
+  - { user: stratacom,   pass: stratauser }
+  - { user: tiger,       pass: tiger123 }
+  - { user: ZXDSL,       pass: ZXDSL }
+  # ── Vendor-specific (OpenVAS-equivalent coverage) ─────────────────
+  # Huawei
+  - { user: admin,       pass: "Admin@123" }
+  - { user: admin,       pass: "Huawei@123" }
+  - { user: root,        pass: "Admin@123" }
+  - { user: huawei,      pass: huawei }
+  # H3C / HP Comware
+  - { user: admin,       pass: h3c }
+  - { user: h3c,         pass: h3c }
+  # ZTE
+  - { user: zte,         pass: zte }
+  - { user: admin,       pass: "ZTE@321" }
+  - { user: root,        pass: zte521 }
+  # Mikrotik RouterOS
+  - { user: admin,       pass: mikrotik }
+  # Extreme Networks
+  - { user: admin,       pass: extreme }
+  # Alcatel-Lucent
+  - { user: admin,       pass: alcatel }
+  # Nortel
+  - { user: nortel,      pass: nortel }
+  # Siemens
+  - { user: siemens,     pass: siemens }
+  - { user: admin,       pass: siemens }
+  # Hikvision (sometimes telnet-enabled)
+  - { user: admin,       pass: "12345" }
+  - { user: admin,       pass: hikadmin }
+  # D-Link
+  - { user: admin,       pass: "Admin1234" }
+  - { user: "1234",      pass: "1234" }
+  # TP-Link
+  - { user: admin,       pass: tplink }
+  # Aruba
+  - { user: admin,       pass: aruba }

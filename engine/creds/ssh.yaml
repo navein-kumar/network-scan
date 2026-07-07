@@ -1,12 +1,351 @@
 service: ssh
+# Merged: Nessus ssh_default_credentials_list (plugin 106462) + SecLists ssh-betterdefaultpasslist
 attempts:
-  - { user: root,     pass: root }
-  - { user: root,     pass: toor }
-  - { user: root,     pass: "" }
-  - { user: root,     pass: password }
-  - { user: admin,    pass: admin }
-  - { user: admin,    pass: password }
-  - { user: user,     pass: user }
-  - { user: pi,       pass: raspberry }
-  - { user: ubuntu,   pass: ubuntu }
-  - { user: msfadmin, pass: msfadmin }
+  # ── Common Linux/Unix ──────────────────────────────────────────────
+  - { user: root,          pass: root }
+  - { user: root,          pass: toor }
+  - { user: root,          pass: "" }
+  - { user: root,          pass: password }
+  - { user: root,          pass: alpine }
+  - { user: root,          pass: admin }
+  - { user: root,          pass: linux }
+  - { user: root,          pass: calvin }
+  - { user: root,          pass: default }
+  - { user: root,          pass: rootpasswd }
+  - { user: root,          pass: rootroot }
+  - { user: root,          pass: "123456" }
+  - { user: root,          pass: "12345" }
+  - { user: root,          pass: vagrant }
+  - { user: root,          pass: reverse }
+  - { user: root,          pass: ubuntu }
+  - { user: root,          pass: debian }
+  - { user: root,          pass: plex }
+  - { user: root,          pass: freenas }
+  - { user: root,          pass: nas4free }
+  - { user: root,          pass: wazuh }
+  - { user: root,          pass: ubnt }
+  - { user: root,          pass: openvpnas }
+  - { user: root,          pass: openelec }
+  - { user: root,          pass: libreelec }
+  - { user: root,          pass: compass }
+  - { user: root,          pass: blackarch }
+  - { user: root,          pass: ascend }
+  - { user: root,          pass: attack }
+  - { user: root,          pass: iDirect }
+  - { user: root,          pass: "admin_1" }
+  - { user: root,          pass: "7ujMko0admin" }
+  - { user: root,          pass: "7ujMko0vizxv" }
+  - { user: root,          pass: Zte521 }
+  - { user: root,          pass: "NM1$88" }
+  - { user: root,          pass: malware }
+  - { user: root,          pass: fai }
+  - { user: root,          pass: palosanto }
+  - { user: root,          pass: sipwise }
+  - { user: root,          pass: xoa }
+  - { user: root,          pass: "5up" }
+  - { user: admin,         pass: admin }
+  - { user: admin,         pass: password }
+  - { user: admin,         pass: admin123 }
+  - { user: admin,         pass: "1234" }
+  - { user: admin,         pass: "" }
+  - { user: admin,         pass: insecure }
+  - { user: admin,         pass: system }
+  - { user: admin,         pass: setup }
+  - { user: admin,         pass: cisco }
+  - { user: admin,         pass: pfsense }
+  - { user: admin,         pass: symbol }
+  - { user: admin,         pass: superuser }
+  - { user: admin,         pass: motorola }
+  - { user: admin,         pass: avocent }
+  - { user: admin,         pass: sysAdmin }
+  - { user: admin,         pass: comcomcom }
+  - { user: admin,         pass: bintec }
+  - { user: admin,         pass: Ascend }
+  - { user: admin,         pass: "my_DEMARC" }
+  - { user: admin,         pass: NetCache }
+  - { user: admin,         pass: adslolitec }
+  - { user: admin,         pass: adslroot }
+  - { user: admin,         pass: leviton }
+  - { user: admin,         pass: conexant }
+  - { user: admin,         pass: noway }
+  - { user: admin,         pass: rmnetlm }
+  - { user: admin,         pass: extendnet }
+  - { user: admin,         pass: atlantis }
+  - { user: admin,         pass: giraff }
+  - { user: admin,         pass: passwort }
+  - { user: admin,         pass: hipchat }
+  - { user: admin,         pass: "ManagementConsole2015" }
+  - { user: admin,         pass: "1988" }
+  - { user: admin2,        pass: changeme }
+  - { user: administrator, pass: administrator }
+  - { user: administrator, pass: password }
+  - { user: administrator, pass: changeme }
+  - { user: administrator, pass: "" }
+  - { user: Administrator, pass: smcadmin }
+  - { user: Administrator, pass: ganteng }
+  - { user: Administrator, pass: "p@ssw0rd" }
+  - { user: Administrator, pass: "Vision2" }
+  - { user: adminstrator,  pass: changeme }
+  - { user: ADMN,          pass: admn }
+  - { user: user,          pass: user }
+  - { user: user,          pass: password }
+  - { user: user,          pass: public }
+  # ── Device / appliance ────────────────────────────────────────────
+  - { user: pi,            pass: raspberry }
+  - { user: ubuntu,        pass: ubuntu }
+  - { user: vagrant,       pass: vagrant }
+  - { user: debian,        pass: debian }
+  - { user: debian,        pass: temppwd }
+  - { user: centos,        pass: centos }
+  - { user: centos,        pass: reverse }
+  - { user: cirros,        pass: "cubswin:)" }
+  - { user: ubnt,          pass: ubnt }
+  - { user: netscreen,     pass: netscreen }
+  - { user: cisco,         pass: cisco }
+  - { user: apc,           pass: apc }
+  - { user: device,        pass: apc }
+  - { user: cloudera,      pass: cloudera }
+  - { user: stackato,      pass: stackato }
+  - { user: localadmin,    pass: localadmin }
+  - { user: fwupgrade,     pass: fwupgrade }
+  - { user: openhabian,    pass: openhabian }
+  - { user: samurai,       pass: samurai }
+  - { user: hunter,        pass: hunter }
+  - { user: zyfwp,         pass: "PrOw!aN_fXp" }
+  - { user: USERID,        pass: PASSW0RD }
+  - { user: CISCO15,       pass: "otbu+1" }
+  - { user: radware,       pass: radware }
+  # ── Service accounts ──────────────────────────────────────────────
+  - { user: oracle,        pass: oracle }
+  - { user: postgres,      pass: postgres }
+  - { user: git,           pass: git }
+  - { user: deploy,        pass: deploy }
+  - { user: developer,     pass: developer }
+  - { user: msfadmin,      pass: msfadmin }
+  - { user: ec2-user,      pass: "" }
+  - { user: ec2-user,      pass: ec2-user }
+  - { user: nao,           pass: nao }
+  - { user: hxeadm,        pass: HXEHana1 }
+  - { user: misp,          pass: Password1234 }
+  - { user: remnux,        pass: malware }
+  - { user: padmin,        pass: padmin }
+  - { user: hscroot,       pass: abc123 }
+  - { user: test,          pass: test }
+  - { user: test,          pass: password }
+  - { user: guest,         pass: guest }
+  - { user: guest,         pass: "" }
+  - { user: support,       pass: support }
+  - { user: support,       pass: symantec }
+  - { user: support,       pass: supportpw }
+  - { user: backup,        pass: backup }
+  - { user: service,       pass: service }
+  - { user: operator,      pass: operator }
+  - { user: operator,      pass: "1234" }
+  - { user: ansible,       pass: ansible }
+  - { user: monitor,       pass: monitor }
+  - { user: manage,        pass: "!manage" }
+  - { user: security,      pass: security }
+  - { user: maint,         pass: maint }
+  - { user: maint,         pass: password }
+  - { user: maint,         pass: ntacdmax }
+  - { user: manager,       pass: manager }
+  - { user: manager,       pass: friend }
+  - { user: netman,        pass: netman }
+  - { user: netscreen,     pass: netscreen }
+  - { user: install,       pass: secret }
+  - { user: setup,         pass: setup }
+  - { user: setup,         pass: changeme }
+  - { user: craft,         pass: craft }
+  - { user: craft,         pass: craftpw }
+  - { user: diag,          pass: danger }
+  - { user: tiger,         pass: tiger123 }
+  - { user: scout,         pass: scout }
+  - { user: sysadmin,      pass: sysadmin }
+  - { user: sysadmin,      pass: PASS }
+  - { user: SYSADM,        pass: sysadm }
+  - { user: SYSDBA,        pass: masterkey }
+  - { user: stratacom,     pass: stratauser }
+  - { user: replicator,    pass: replicator }
+  - { user: readonly,      pass: lucenttech2 }
+  - { user: readwrite,     pass: lucenttech1 }
+  - { user: storwatch,     pass: specialist }
+  - { user: scmadmin,      pass: scmchangeme }
+  - { user: intermec,      pass: intermec }
+  - { user: davox,         pass: davox }
+  - { user: www-data,      pass: www-data }
+  # ── Vendor-specific (OpenVAS-equivalent coverage) ─────────────────
+  # Huawei devices
+  - { user: admin,         pass: "Admin@123" }
+  - { user: admin,         pass: "Huawei@123" }
+  - { user: root,          pass: "Admin@123" }
+  - { user: root,          pass: "Huawei@123" }
+  - { user: root,          pass: "Root@123" }
+  - { user: huawei,        pass: huawei }
+  - { user: huawei,        pass: "Huawei@123" }
+  # H3C / HP Comware networking
+  - { user: admin,         pass: h3c }
+  - { user: admin,         pass: "Admin@h3c" }
+  - { user: admin,         pass: hp }
+  - { user: h3c,           pass: h3c }
+  # Hikvision IP cameras / NVR
+  - { user: admin,         pass: "12345" }
+  - { user: admin,         pass: admin12345 }
+  - { user: admin,         pass: hikadmin }
+  # Dahua cameras
+  - { user: admin,         pass: "admin@123" }
+  - { user: "888888",      pass: "888888" }
+  # F5 BIG-IP
+  - { user: root,          pass: "default" }
+  - { user: admin,         pass: "f5site02" }
+  # VMware ESXi / vSphere
+  - { user: root,          pass: vmware }
+  - { user: root,          pass: "VMware1!" }
+  - { user: vpxuser,       pass: vpxuser }
+  # Check Point
+  - { user: expert,        pass: expert }
+  - { user: admin,         pass: checkpoint }
+  # Extreme Networks
+  - { user: admin,         pass: extreme }
+  - { user: extreme,       pass: extreme }
+  # Brocade
+  - { user: user,          pass: fibranne }
+  - { user: admin,         pass: fibranne }
+  # Aruba Networks
+  - { user: admin,         pass: aruba }
+  - { user: aruba,         pass: aruba }
+  # Nortel
+  - { user: nortel,        pass: nortel }
+  - { user: admin,         pass: nortel }
+  # Alcatel-Lucent
+  - { user: admin,         pass: alcatel }
+  - { user: alcatel,       pass: alcatel }
+  # Ericsson
+  - { user: admin,         pass: ericsson }
+  - { user: root,          pass: ericsson }
+  # ZTE
+  - { user: zte,           pass: zte }
+  - { user: admin,         pass: "ZTE@321" }
+  - { user: root,          pass: zte521 }
+  # Mikrotik RouterOS
+  - { user: admin,         pass: mikrotik }
+  - { user: mikrotik,      pass: mikrotik }
+  # Avaya
+  - { user: admin,         pass: avaya }
+  - { user: root,          pass: avaya }
+  # Palo Alto Networks
+  - { user: admin,         pass: "Admin@123" }
+  - { user: admin,         pass: paloalto }
+  # OpenWRT / DD-WRT
+  - { user: root,          pass: openwrt }
+  - { user: admin,         pass: ddwrt }
+  # pfSense / OPNsense
+  - { user: root,          pass: pfsense }
+  - { user: root,          pass: opnsense }
+  # QNAP NAS
+  - { user: admin,         pass: qnap }
+  - { user: admin,         pass: "1234qwer" }
+  # Synology NAS
+  - { user: admin,         pass: synology }
+  # Axis cameras
+  - { user: root,          pass: pass }
+  # Vivotek cameras
+  - { user: root,          pass: "" }
+  # ── OpenVAS default_credentials.inc (merged) ──────────────────────
+  # Huawei VRP (gb_vrp_ssh_default_credentials.nasl)
+  - { user: admin,         pass: "admin@huawei.com" }
+  # Alcatel
+  - { user: at4400,        pass: at4400 }
+  - { user: mtch,          pass: mtch }
+  - { user: mtcl,          pass: mtcl }
+  - { user: dhs3pms,       pass: dhs3pms }
+  - { user: dhs3mt,        pass: dhs3mt }
+  - { user: adfexc,        pass: adfexc }
+  - { user: client,        pass: client }
+  - { user: kermit,        pass: kermit }
+  - { user: halt,          pass: tlah }
+  - { user: root,          pass: letacla }
+  - { user: root,          pass: permit }
+  - { user: install,       pass: llatsni }
+  - { user: diag,          pass: switch }
+  # 3COM / Bay Networks
+  - { user: 3comcso,       pass: RIP000 }
+  - { user: debug,         pass: synnet }
+  - { user: admin,         pass: synnet }
+  - { user: adminttd,      pass: adminttd }
+  - { user: tech,          pass: tech }
+  - { user: recovery,      pass: recovery }
+  - { user: adm,           pass: "" }
+  - { user: operator,      pass: "" }
+  - { user: Root,          pass: "" }
+  # Cisco specific
+  - { user: Cisco,         pass: Cisco }
+  - { user: cisco,         pass: "" }
+  - { user: cmaker,        pass: cmaker }
+  - { user: netrangr,      pass: attack }
+  - { user: bbsd-client,   pass: changeme2 }
+  - { user: sa,            pass: "" }
+  # Avaya
+  - { user: root,          pass: ROOT500 }
+  - { user: root,          pass: cms500 }
+  - { user: craft,         pass: "" }
+  - { user: manuf,         pass: xxyyzz }
+  # F5 / Brocade / networking
+  - { user: root,          pass: fivranne }
+  - { user: rwa,           pass: rwa }
+  - { user: vt100,         pass: public }
+  # Cyclades
+  - { user: root,          pass: tslinux }
+  - { user: super,         pass: surt }
+  # HP / Compaq
+  - { user: admin,         pass: hp.com }
+  - { user: admin,         pass: netadmin }
+  - { user: admin,         pass: radius }
+  - { user: admin,         pass: linga }
+  - { user: admin,         pass: secure }
+  - { user: admin,         pass: diamond }
+  - { user: admin,         pass: hello }
+  - { user: admin,         pass: epicrouter }
+  - { user: admin,         pass: PASS }
+  - { user: PFCUser,       pass: "240653C9467E45" }
+  # IBM
+  - { user: superadmin,    pass: secret }
+  # Generic / misc
+  - { user: Administrator, pass: admin }
+  - { user: Administrator, pass: letmein }
+  - { user: manager,       pass: admin }
+  - { user: User,          pass: "" }
+  - { user: Manager,       pass: "" }
+  - { user: Anonymous,     pass: "" }
+  - { user: anonymous,     pass: "any@" }
+  - { user: patrol,        pass: patrol }
+  - { user: supervisor,    pass: supervisor }
+  - { user: cgadmin,       pass: cgadmin }
+  - { user: intel,         pass: intel }
+  - { user: sysadm,        pass: anicust }
+  - { user: sysadm,        pass: sysadm }
+  - { user: cellit,        pass: cellit }
+  - { user: netman,        pass: "" }
+  - { user: security,      pass: security }
+  - { user: superuser,     pass: "" }
+  - { user: superuser,     pass: superuser }
+  - { user: IntraSwitch,   pass: Asante }
+  - { user: D-Link,        pass: D-Link }
+  - { user: acc,           pass: acc }
+  - { user: user,          pass: pass }
+  - { user: root,          pass: "Mau'dib" }
+  - { user: root,          pass: tini }
+  - { user: root,          pass: abcd1234 }
+  - { user: root,          pass: "nutanix/4u" }
+  - { user: root,          pass: davox }
+  - { user: login,         pass: password }
+  - { user: login,         pass: admin }
+  - { user: mobile,        pass: dottie }
+  - { user: skyboxview,    pass: skyboxview }
+  - { user: TANDBERG,      pass: "" }
+  - { user: disttech,      pass: 4tas }
+  - { user: piranha,       pass: piranha }
+  - { user: siteadmin,     pass: toplayer }
+  - { user: wradmin,       pass: trancell }
+  - { user: enable,        pass: "" }
+  - { user: e250,          pass: e250changeme }
+  - { user: e500,          pass: e500changeme }

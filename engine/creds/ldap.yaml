@@ -1,0 +1,24 @@
+service: ldap
+attempts:
+  - { user: admin,        pass: admin }
+  - { user: admin,        pass: password }
+  - { user: admin,        pass: "secret" }
+  - { user: admin,        pass: ldap }
+  - { user: admin,        pass: "" }
+  - { user: administrator, pass: administrator }
+  - { user: administrator, pass: password }
+  - { user: administrator, pass: "" }
+  - { user: ldap,         pass: ldap }
+  - { user: manager,      pass: manager }
+  - { user: manager,      pass: password }
+  - { user: root,         pass: root }
+  - { user: root,         pass: password }
+  - { user: user,         pass: user }
+  - { user: guest,        pass: "" }
+  - { user: readonly,     pass: readonly }
+  - { user: service,      pass: service }
+  - { user: bind,         pass: bind }
+  - { user: "cn=admin,dc=local", pass: admin }
+  - { user: "cn=admin,dc=local", pass: password }
+  - { user: "cn=Manager,dc=example,dc=com", pass: password }
+  - { user: "cn=Manager,dc=example,dc=com", pass: secret }
