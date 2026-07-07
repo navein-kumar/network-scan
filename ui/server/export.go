@@ -59,10 +59,13 @@ func serveFileDownload(w http.ResponseWriter, path, filename, ctype string) {
 }
 
 // exportXLSX runs the xlsx bridge and streams the workbook.
+// --include-info ensures info-level findings are included.
 func exportXLSX(w http.ResponseWriter, sc *Scan) {
 	findings := filepath.Join(sc.dir, "findings.ndjson")
 	out := filepath.Join(sc.dir, sc.Status.ID+".xlsx")
-	if err := runScript(scriptXLSX, findings, out); err != nil {
+	cmd := exec.Command(pythonBin(), scriptXLSX, "-i", findings, "-o", out, "--include-info")
+	cmd.Dir = engineRoot
+	if err := cmd.Run(); err != nil {
 		writeErr(w, http.StatusInternalServerError, "xlsx export failed: "+err.Error())
 		return
 	}
