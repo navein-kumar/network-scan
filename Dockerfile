@@ -139,7 +139,7 @@ COPY --from=builder /out/playwright-cache/ /root/.cache/ms-playwright/
 # Copy support files baked into the image (dev-only scripts excluded via .dockerignore)
 ARG CACHEBUST=1
 COPY scripts/          /opt/fastscan/scripts/
-COPY engine/plugins/   /opt/fastscan/engine/plugins/
+COPY engine/plugins/   /opt/fastscan/plugins/
 COPY engine/creds/     /opt/fastscan/creds/
 
 RUN chmod +x /opt/fastscan/scripts/*.py \
