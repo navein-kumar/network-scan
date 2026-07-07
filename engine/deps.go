@@ -60,18 +60,6 @@ var deps = []Dep{
 		Required:    false,
 		InstallHint: "pipx install netexec",
 	},
-	{
-		Name: "gosec", Binary: []string{"gosec"},
-		UsedBy:      "scripts/audit.sh -- SAST scan of fastscan Go source",
-		Required:    false,
-		InstallHint: "go install github.com/securego/gosec/v2/cmd/gosec@latest",
-	},
-	{
-		Name: "govulncheck", Binary: []string{"govulncheck"},
-		UsedBy:      "scripts/audit.sh -- CVE check against fastscan dep tree",
-		Required:    false,
-		InstallHint: "go install golang.org/x/vuln/cmd/govulncheck@latest",
-	},
 }
 
 // CheckDeps probes each dep and returns the list with resolved paths.

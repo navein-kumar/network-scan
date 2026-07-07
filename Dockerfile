@@ -117,8 +117,11 @@ COPY engine/creds/     /opt/fastscan/engine/creds/
 
 RUN chmod +x /opt/fastscan/scripts/*.py
 
-# Pull nuclei templates at image build time so first scan doesn't need internet
-RUN nuclei -update-templates 2>/dev/null || true
+# Pull nuclei templates to /tmp/all-tpl/ — the engine's default templates path
+RUN nuclei -update-templates 2>/dev/null; \
+    mkdir -p /tmp/all-tpl && \
+    cp -rn /root/nuclei-templates/. /tmp/all-tpl/ 2>/dev/null; \
+    touch /tmp/all-tpl/.nuclei-last-update || true
 
 # Entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
