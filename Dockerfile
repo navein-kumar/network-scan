@@ -38,10 +38,10 @@ RUN cd engine && go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
  && cp /go/bin/httpx  /out/httpx \
  && cp /go/bin/nuclei /out/nuclei
 
-# Install playwright chromium driver into /out (used by webshot.go)
+# Install playwright chromium driver into /out (used by webshot.go) — optional
 RUN cd /src/engine && go run github.com/playwright-community/playwright-go/cmd/playwright install chromium \
- && mkdir -p /out/playwright-cache \
- && cp -r /root/.cache/ms-playwright /out/playwright-cache/
+ && cp -r /root/.cache/ms-playwright /out/playwright-cache/ \
+ || mkdir -p /out/playwright-cache/ms-playwright
 
 # ── Stage 2: runtime ────────────────────────────────────────────────────────
 FROM ubuntu:22.04
@@ -100,7 +100,7 @@ COPY --from=builder /out/httpx           /usr/local/bin/httpx
 COPY --from=builder /out/nuclei          /usr/local/bin/nuclei
 
 COPY --from=builder /out/drivers.count              /opt/fastscan/drivers.count
-COPY --from=builder /out/playwright-cache/ms-playwright /root/.cache/ms-playwright
+COPY --from=builder /out/playwright-cache/ /root/.cache/ms-playwright/
 
 # Copy support files baked into the image
 COPY scripts/          /opt/fastscan/scripts/
