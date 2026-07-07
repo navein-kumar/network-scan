@@ -86,9 +86,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
       libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
       libxrandr2 libgbm1 libasound2 libpango-1.0-0 libpangocairo-1.0-0 \
-      chromium \
     && pip3 install --no-cache-dir openpyxl Pillow \
     && rm -rf /var/lib/apt/lists/*
+
+# Google Chrome for headless web screenshots
+RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+      | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+ && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+      > /etc/apt/sources.list.d/google-chrome.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends google-chrome-stable \
+ && rm -rf /var/lib/apt/lists/*
 
 # nxc/netexec — copied from nxc-builder stage (avoids Rust toolchain in runtime)
 COPY --from=nxc-builder /opt/nxc-env /opt/nxc-env
