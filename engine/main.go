@@ -1452,7 +1452,14 @@ func runNuclei(tag string, targets []string, templatesDir string, writer *writer
 		mu   sync.Mutex
 		hits int
 	)
+	// Nuclei templates superseded by our own YAML plugins (avoids duplicates).
+	nucleiSuperseded := map[string]bool{
+		"smb-signing": true, // duplicate of smb-signing-not-required plugin
+	}
 	err = ne.ExecuteWithCallback(func(event *output.ResultEvent) {
+		if nucleiSuperseded[event.TemplateID] {
+			return
+		}
 		mu.Lock()
 		defer mu.Unlock()
 		hits++

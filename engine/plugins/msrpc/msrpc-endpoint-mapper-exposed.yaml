@@ -1,6 +1,6 @@
 id: msrpc-endpoint-mapper-exposed
 title: Microsoft RPC Endpoint Mapper exposed to network
-severity: medium
+severity: info
 source: msrpc
 when: bind_ack_received == true
 evidence: '{{ .host }}:{{ .port }} responded with DCERPC BIND_ACK; epmapper reachable'
