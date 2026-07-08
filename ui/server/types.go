@@ -17,6 +17,7 @@ type Config struct {
 	MaxHosts      int    `json:"max_hosts"`
 	NmapIntensity int    `json:"nmap_intensity"`
 	ForceService  string `json:"force_service"`
+	FolderID      string `json:"folder_id"`
 }
 
 type Severity struct {
@@ -48,6 +49,9 @@ type Status struct {
 	Severity     Severity   `json:"severity"`
 	HostsDone    int        `json:"hosts_done"`
 	HostsTotal   int        `json:"hosts_total"`
+	HostsScanned int        `json:"hosts_scanned"`
+	HostsNoPorts int        `json:"hosts_no_ports"`
+	HostsSkipped int        `json:"hosts_skipped"`
 	HostStats    []HostStat `json:"host_stats,omitempty"`
 	Config       Config     `json:"config"`
 }
@@ -79,6 +83,7 @@ type listItem struct {
 	HostCount    int      `json:"host_count"`
 	FindingCount int      `json:"finding_count"`
 	Severity     Severity `json:"severity"`
+	FolderID     string   `json:"folder_id"`
 }
 
 func (st Status) toListItem() listItem {
@@ -92,5 +97,6 @@ func (st Status) toListItem() listItem {
 		HostCount:    st.HostCount,
 		FindingCount: st.FindingCount,
 		Severity:     st.Severity,
+		FolderID:     st.Config.FolderID,
 	}
 }

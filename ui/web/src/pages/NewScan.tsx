@@ -9,7 +9,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { api, ApiError } from '../api'
-import type { ScanConfig, Template } from '../types'
+import type { Folder, ScanConfig, Template } from '../types'
 import { classNames } from '../lib'
 import { TopBar, PrimaryButton } from '../Layout'
 import { Card } from '../ui'
@@ -130,6 +130,8 @@ export default function NewScan() {
   const [udpPorts, setUdpPorts] = useState('')
   const [skipUdp, setSkipUdp] = useState(false)
   const [skipNuclei, setSkipNuclei] = useState(false)
+  const [folderID, setFolderID] = useState('default')
+  const [folders, setFolders] = useState<Folder[]>([])
   const [deepTls, setDeepTls] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [maxHosts, setMaxHosts] = useState(0)
@@ -165,6 +167,10 @@ export default function NewScan() {
     }
   }, [])
 
+  useEffect(() => {
+    api.listFolders().then(setFolders).catch(() => {})
+  }, [])
+
   function resolvePorts(): string {
     if (portMode === 'all') return 'all'
     if (portMode === 'custom') return customPorts.trim()
@@ -195,6 +201,7 @@ export default function NewScan() {
       max_hosts: Number.isFinite(maxHosts) ? Math.max(0, maxHosts) : 0,
       nmap_intensity: Math.max(0, Math.min(9, nmapIntensity)),
       force_service: forceService.trim(),
+      folder_id: folderID,
     }
     setSubmitting(true)
     try {
@@ -270,6 +277,19 @@ export default function NewScan() {
                 ))}
               </div>
             </Field>
+            {folders.length > 1 && (
+              <Field label="Project Folder" hint="Organise this scan under a folder.">
+                <select
+                  value={folderID}
+                  onChange={(e) => setFolderID(e.target.value)}
+                  className="w-full rounded-md border border-surface-border bg-surface-base px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {folders.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
           </FormCard>
 
           <FormCard

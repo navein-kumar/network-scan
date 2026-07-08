@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sort"
 	"strconv"
@@ -260,4 +261,105 @@ func computeCounts(path string) (hostCount, findingCount, rulesFired int, sev Se
 		}
 	}
 	return len(hostSet), findingCount, len(ruleSet), sev
+}
+
+// countScannedHosts parses the engine stderr.log and returns the count of
+// unique hosts that the engine started (appeared in [phase 1] lines).
+func countScannedHosts(logPath string) int {
+	f, err := os.Open(logPath)
+	if err != nil {
+		return 0
+	}
+	defer f.Close()
+	seen := map[string]bool{}
+	sc := bufio.NewScanner(f)
+	sc.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
+	for sc.Scan() {
+		if m := newHostRe.FindStringSubmatch(sc.Text()); m != nil {
+			seen[m[1]] = true
+		}
+	}
+	return len(seen)
+}
+
+// generatePortsReport produces a plain-text port table + scan summary.
+func generatePortsReport(findingsPath, targetsFile, logPath, scanName, started, finished string,
+	hostsScanned, hostsUp, hostsNoPorts, hostsSkipped, targetsTotal int) string {
+
+	events := readEvents(findingsPath)
+
+	type row struct {
+		host    string
+		port    int
+		service string
+		version string
+	}
+	var rows []row
+	seen := map[string]bool{}
+	for _, e := range events {
+		if e.Phase == "fingerprint" && e.Host != "" && e.Port != 0 {
+			key := fmt.Sprintf("%s:%d", e.Host, e.Port)
+			if !seen[key] {
+				seen[key] = true
+				ver := strings.TrimSpace(e.Product + " " + e.Version)
+				rows = append(rows, row{e.Host, e.Port, e.Service, ver})
+			}
+		}
+	}
+
+	var targetLines []string
+	if b, err := os.ReadFile(targetsFile); err == nil {
+		for _, t := range strings.Split(string(b), "\n") {
+			t = strings.TrimSpace(t)
+			if t != "" {
+				targetLines = append(targetLines, t)
+			}
+		}
+	}
+
+	_ = logPath // reserved for future use
+
+	hr := "============================================================"
+	var sb strings.Builder
+	sb.WriteString(hr + "\n")
+	sb.WriteString("PORT SCAN REPORT\n")
+	sb.WriteString(hr + "\n")
+	fmt.Fprintf(&sb, "Scan Name : %s\n", scanName)
+	fmt.Fprintf(&sb, "Started   : %s\n", started)
+	if finished != "" {
+		fmt.Fprintf(&sb, "Finished  : %s\n", finished)
+	}
+	sb.WriteString("\n")
+
+	sb.WriteString("OPEN PORTS\n")
+	sb.WriteString(hr + "\n")
+	if len(rows) > 0 {
+		fmt.Fprintf(&sb, "%-20s %-7s %-15s %s\n", "HOST", "PORT", "SERVICE", "VERSION")
+		fmt.Fprintf(&sb, "%-20s %-7s %-15s %s\n", "----", "----", "-------", "-------")
+		for _, r := range rows {
+			fmt.Fprintf(&sb, "%-20s %-7d %-15s %s\n", r.host, r.port, r.service, r.version)
+		}
+	} else {
+		sb.WriteString("No open ports found.\n")
+	}
+	sb.WriteString("\n")
+
+	sb.WriteString("SCAN SUMMARY\n")
+	sb.WriteString(hr + "\n")
+	fmt.Fprintf(&sb, "Total Targets Given   : %d\n", targetsTotal)
+	fmt.Fprintf(&sb, "Total Hosts Scanned   : %d\n", hostsScanned)
+	fmt.Fprintf(&sb, "Total Hosts Up        : %d  (had open ports)\n", hostsUp)
+	fmt.Fprintf(&sb, "Total Hosts No Ports  : %d  (responsive but no open ports)\n", hostsNoPorts)
+	fmt.Fprintf(&sb, "Total Hosts Skipped   : %d  (not reached)\n", hostsSkipped)
+	sb.WriteString("\n")
+
+	if len(targetLines) > 0 {
+		sb.WriteString("FULL TARGET LIST\n")
+		sb.WriteString(hr + "\n")
+		for _, t := range targetLines {
+			sb.WriteString(t + "\n")
+		}
+	}
+
+	return sb.String()
 }

@@ -20,6 +20,7 @@ const uiVersion = "1.1.1"
 
 type Server struct {
 	store    *Store
+	folders  *FolderStore
 	settings *SettingsStore
 	spa      fs.FS
 	spaIndex []byte
@@ -53,6 +54,7 @@ func main() {
 
 	srv := &Server{
 		store:    store,
+		folders:  NewFolderStore(*dataDir),
 		settings: NewSettingsStore(*dataDir),
 		spa:      sub,
 		spaIndex: index,
@@ -91,6 +93,15 @@ func (srv *Server) routeAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	case p == "scans/import" && r.Method == http.MethodPost:
 		srv.handleImportScan(w, r)
+		return
+	case p == "scans/bulk-delete" && r.Method == http.MethodPost:
+		srv.handleBulkDelete(w, r)
+		return
+	case p == "folders" && r.Method == http.MethodGet:
+		srv.handleListFolders(w, r)
+		return
+	case p == "folders" && r.Method == http.MethodPost:
+		srv.handleCreateFolder(w, r)
 		return
 	case p == "scans" && r.Method == http.MethodPost:
 		srv.handleCreateScan(w, r)
@@ -137,8 +148,29 @@ func (srv *Server) routeAPI(w http.ResponseWriter, r *http.Request) {
 			srv.handleExport(w, r, s)
 		case strings.HasPrefix(sub, "evidence/") && r.Method == http.MethodGet:
 			evidenceForRule(w, s, strings.TrimPrefix(sub, "evidence/"))
+		case sub == "move" && r.Method == http.MethodPost:
+			srv.handleMoveScan(w, r, s)
 		default:
 			writeErr(w, http.StatusNotFound, "unknown scan route")
+		}
+		return
+	}
+
+	// /api/folders/{id}
+	if rest, ok := strings.CutPrefix(p, "folders/"); ok {
+		folderID, sub2, _ := strings.Cut(rest, "/")
+		if folderID == "" {
+			writeErr(w, http.StatusNotFound, "folder id required")
+			return
+		}
+		_ = sub2
+		switch {
+		case r.Method == http.MethodDelete:
+			srv.handleDeleteFolder(w, r, folderID)
+		case r.Method == http.MethodPatch:
+			srv.handleRenameFolder(w, r, folderID)
+		default:
+			writeErr(w, http.StatusNotFound, "unknown folder route")
 		}
 		return
 	}

@@ -22,6 +22,7 @@ export interface ScanConfig {
   max_hosts: number
   nmap_intensity: number
   force_service: string
+  folder_id: string
 }
 
 // Persisted scan defaults used to pre-fill the New Scan form
@@ -35,6 +36,12 @@ export interface Settings {
   max_hosts: number
 }
 
+export interface Folder {
+  id: string
+  name: string
+  created: string
+}
+
 export interface ScanSummary {
   id: string
   name: string
@@ -46,12 +53,16 @@ export interface ScanSummary {
   finding_count: number
   rules_fired: number
   severity: SeverityCounts
+  folder_id: string
 }
 
 export interface ScanDetail extends ScanSummary {
   config: ScanConfig
   hosts_done: number
   hosts_total: number
+  hosts_scanned: number
+  hosts_no_ports: number
+  hosts_skipped: number
 }
 
 export interface Finding {

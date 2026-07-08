@@ -341,6 +341,8 @@ func (srv *Server) scanProgress(sc *Scan, logPath string, offset *int64, current
 func (srv *Server) finishScan(sc *Scan, state string) {
 	findingsPath := filepath.Join(sc.dir, "findings.ndjson")
 	hostCount, findingCount, rulesFired, sev := computeCounts(findingsPath)
+	logPath := filepath.Join(sc.dir, "stderr.log")
+	hostsScanned := countScannedHosts(logPath)
 
 	sc.mu.Lock()
 	if sc.Status.State != "running" && sc.Status.State != "paused" {
@@ -356,12 +358,38 @@ func (srv *Server) finishScan(sc *Scan, state string) {
 	sc.Status.FindingCount = findingCount
 	sc.Status.RulesFired = rulesFired
 	sc.Status.Severity = sev
-	if hostCount > 0 {
-		sc.Status.HostsTotal = hostCount
-		sc.Status.HostsDone = hostCount
+	if hostsScanned > 0 {
+		sc.Status.HostsScanned = hostsScanned
+	} else if hostCount > 0 {
+		sc.Status.HostsScanned = hostCount
 	}
+	hostsNoPorts := sc.Status.HostsScanned - hostCount
+	if hostsNoPorts < 0 {
+		hostsNoPorts = 0
+	}
+	sc.Status.HostsNoPorts = hostsNoPorts
+	hostsSkipped := sc.Status.HostsTotal - sc.Status.HostsScanned
+	if hostsSkipped < 0 {
+		hostsSkipped = 0
+	}
+	sc.Status.HostsSkipped = hostsSkipped
+	sc.Status.HostsDone = sc.Status.HostsScanned
+	finished := sc.Status.Finished
+	scanName := sc.Status.Name
+	started := sc.Status.Started
+	targetsTotal := sc.Status.HostsTotal
+	dir := sc.dir
 	sc.mu.Unlock()
 	sc.save()
+
+	portsReport := generatePortsReport(
+		findingsPath,
+		filepath.Join(dir, "targets.txt"),
+		logPath,
+		scanName, started, finished,
+		hostsScanned, hostCount, hostsNoPorts, hostsSkipped, targetsTotal,
+	)
+	_ = os.WriteFile(filepath.Join(dir, "ports_report.txt"), []byte(portsReport), 0o644)
 }
 
 // progressEvent is the SSE progress payload.

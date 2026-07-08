@@ -3,6 +3,7 @@ import type {
   CreateScanResponse,
   DepInfo,
   Finding,
+  Folder,
   HostInfo,
   Meta,
   ScanConfig,
@@ -112,6 +113,17 @@ export const api = {
 
   resumeScan: (id: string) =>
     request<{ status: string }>(`/api/scans/${encodeURIComponent(id)}/resume`, { method: 'POST' }),
+
+  // Folder management
+  listFolders: () => request<Folder[]>('/api/folders'),
+  createFolder: (name: string) => request<Folder>('/api/folders', { method: 'POST', body: JSON.stringify({ name }) }),
+  deleteFolder: (id: string) => request<{ status: string }>(`/api/folders/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  renameFolder: (id: string, name: string) =>
+    request<{ status: string }>(`/api/folders/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  moveScan: (id: string, folder_id: string) =>
+    request<{ status: string }>(`/api/scans/${encodeURIComponent(id)}/move`, { method: 'POST', body: JSON.stringify({ folder_id }) }),
+  bulkDelete: (ids: string[]) =>
+    request<{ deleted: number }>('/api/scans/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
 
   exportUrl: (id: string, format: 'xlsx' | 'docx' | 'evidence' | 'bundle') =>
     `/api/scans/${encodeURIComponent(id)}/export?format=${format}`,

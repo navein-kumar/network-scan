@@ -1152,13 +1152,21 @@ function DoneView({ scan }: { scan: ScanDetailType }) {
             <SummaryRow label="Status" value={<StatusBadge status={scan.status} />} />
             <SummaryRow label="Template" value={scan.config?.template ?? '-'} />
             <SummaryRow label="Rules Fired" value={scan.rules_fired ? String(scan.rules_fired) : '-'} />
-            <SummaryRow label="Hosts" value={String(scan.host_count)} />
+            <SummaryRow label="Hosts (open ports)" value={String(scan.host_count)} />
             <SummaryRow label="Findings" value={String(scan.finding_count)} />
             <SummaryRow label="Started" value={formatDate(scan.started)} />
             <SummaryRow
               label="Duration"
               value={durationBetween(scan.started, scan.finished)}
             />
+            {(scan.hosts_total > 0 || scan.hosts_scanned > 0) && (
+              <>
+                <SummaryRow label="Targets Given" value={String(scan.hosts_total || '-')} />
+                <SummaryRow label="Hosts Scanned" value={String(scan.hosts_scanned || '-')} />
+                <SummaryRow label="Hosts No Ports" value={String(scan.hosts_no_ports ?? '-')} />
+                <SummaryRow label="Hosts Skipped" value={String(scan.hosts_skipped ?? '-')} />
+              </>
+            )}
             <SummaryRow
               label="Targets"
               value={
