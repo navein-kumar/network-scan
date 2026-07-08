@@ -13,6 +13,17 @@ import (
 	"time"
 )
 
+// screenshotDir returns the directory where webshot PNGs are written.
+// Preference order:
+//  1. <scan output dir>/screenshots  — persistent, lives on the /data volume in Docker
+//  2. $TMPDIR/fastscan/screenshots   — legacy fallback for standalone engine runs
+func screenshotDir() string {
+	if flagOut != nil && *flagOut != "" {
+		return filepath.Join(*flagOut, "screenshots")
+	}
+	return filepath.Join(os.TempDir(), "fastscan", "screenshots")
+}
+
 // webShotPath derives a safe screenshot output path for a web URL.
 func webShotPath(rawurl string) (string, error) {
 	u, err := url.Parse(rawurl)
@@ -31,7 +42,7 @@ func webShotPath(rawurl string) (string, error) {
 			port = "80"
 		}
 	}
-	dir := filepath.Join(os.TempDir(), "fastscan", "screenshots")
+	dir := screenshotDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}

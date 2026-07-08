@@ -119,7 +119,7 @@ func buildEvidenceDir(sc *Scan) (string, error) {
 	// name prefix and can be automatically paired.
 	imgDir := filepath.Join(evDir, "images")
 	_ = os.MkdirAll(imgDir, 0o755)
-	matchScreenshotsToFindings(findings, imgDir)
+	matchScreenshotsToFindings(findings, imgDir, sc.dir)
 
 	return evDir, nil
 }
@@ -254,15 +254,25 @@ func addDirToZip(zw *zip.Writer, dir, prefix string) error {
 //
 // Matching strategy (first hit wins per finding):
 //  1. Use meta.screenshot_path if the finding carries an explicit path.
-//  2. Fall back to scanning /tmp/fastscan/screenshots/ for any file whose
-//     name ends with _<host>_<port>.png (protocol-agnostic match).
-func matchScreenshotsToFindings(findingsPath, imgDir string) {
-	shotBase := filepath.Join(os.TempDir(), "fastscan", "screenshots")
+//  2. Fall back to scanning <scanDir>/screenshots/ then $TMPDIR/fastscan/screenshots/
+//     for any file whose name ends with _<host>_<port>.png (protocol-agnostic match).
+func matchScreenshotsToFindings(findingsPath, imgDir, scanDir string) {
+	// Scan-dir screenshots take precedence over the legacy /tmp location so
+	// Docker deployments (where /tmp is ephemeral, /data is the mounted
+	// volume) always resolve to the persistent copy.
+	shotBases := []string{
+		filepath.Join(scanDir, "screenshots"),
+		filepath.Join(os.TempDir(), "fastscan", "screenshots"),
+	}
 
-	// Build host:port → screenshot path lookup from the screenshots dir.
+	// Build host:port → screenshot path lookup from the screenshots dirs.
 	type hpKey struct{ host, port string }
 	shotMap := map[hpKey]string{}
-	if entries, err := os.ReadDir(shotBase); err == nil {
+	for _, shotBase := range shotBases {
+		entries, err := os.ReadDir(shotBase)
+		if err != nil {
+			continue
+		}
 		for _, e := range entries {
 			n := e.Name()
 			if !strings.HasSuffix(n, ".png") {
@@ -273,7 +283,10 @@ func matchScreenshotsToFindings(findingsPath, imgDir string) {
 			if len(parts) >= 3 {
 				port := parts[len(parts)-1]
 				host := parts[len(parts)-2]
-				shotMap[hpKey{host, port}] = filepath.Join(shotBase, n)
+				key := hpKey{host, port}
+				if _, seen := shotMap[key]; !seen {
+					shotMap[key] = filepath.Join(shotBase, n)
+				}
 			}
 		}
 	}
