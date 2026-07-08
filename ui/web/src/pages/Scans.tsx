@@ -1,8 +1,8 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Upload, RefreshCw, Eye, Repeat, Download, Trash2, Loader2, Radar,
-  Square, Pause, Play, FolderPlus, Folder, FolderOpen, X, Check, ChevronDown,
+  Square, Pause, Play, ChevronDown, Folder,
 } from 'lucide-react'
 import { api, ApiError } from '../api'
 import type { Folder as FolderType, ScanSummary } from '../types'
@@ -25,8 +25,11 @@ function ScansSkeleton() {
 export default function Scans() {
   const navigate = useNavigate()
   const toast = useToast()
+  const [params] = useSearchParams()
+  const folderFilter = params.get('folder')
+
   const { data, loading, error, reload } = usePolling<ScanSummary[]>(() => api.listScans(), 5000)
-  const { data: folders, reload: reloadFolders } = usePolling<FolderType[]>(() => api.listFolders(), 30000)
+  const { data: folders } = usePolling<FolderType[]>(() => api.listFolders(), 30000)
 
   const [deleting, setDeleting] = useState<string | null>(null)
   const [exporting, setExporting] = useState<string | null>(null)
@@ -36,22 +39,23 @@ export default function Scans() {
   const [pausing, setPausing] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
-  const [activeFolderID, setActiveFolderID] = useState<string | null>(null)
-  const [creatingFolder, setCreatingFolder] = useState(false)
-  const [newFolderName, setNewFolderName] = useState('')
   const [moveMenuID, setMoveMenuID] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const scans = data ?? []
+  const allScans = data ?? []
   const folderList = folders ?? []
 
-  const visibleScans = activeFolderID
-    ? scans.filter((s) => (s.folder_id || 'default') === activeFolderID)
-    : scans
+  const scans = folderFilter
+    ? allScans.filter((s) => (s.folder_id || 'default') === folderFilter)
+    : allScans
 
-  const allSelected = visibleScans.length > 0 && visibleScans.every((s) => selected.has(s.id))
-  const someSelected = visibleScans.some((s) => selected.has(s.id))
-  const selectedCount = visibleScans.filter((s) => selected.has(s.id)).length
+  const folderName = folderFilter
+    ? (folderList.find((f) => f.id === folderFilter)?.name ?? 'Folder')
+    : 'All Scans'
+
+  const allSelected = scans.length > 0 && scans.every((s) => selected.has(s.id))
+  const someSelected = scans.some((s) => selected.has(s.id))
+  const selectedCount = scans.filter((s) => selected.has(s.id)).length
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -64,22 +68,14 @@ export default function Scans() {
 
   function toggleAll() {
     if (allSelected) {
-      setSelected((prev) => {
-        const next = new Set(prev)
-        visibleScans.forEach((s) => next.delete(s.id))
-        return next
-      })
+      setSelected((prev) => { const n = new Set(prev); scans.forEach((s) => n.delete(s.id)); return n })
     } else {
-      setSelected((prev) => {
-        const next = new Set(prev)
-        visibleScans.forEach((s) => next.add(s.id))
-        return next
-      })
+      setSelected((prev) => { const n = new Set(prev); scans.forEach((s) => n.add(s.id)); return n })
     }
   }
 
   async function handleBulkDelete() {
-    const ids = [...selected].filter((id) => visibleScans.some((s) => s.id === id))
+    const ids = [...selected].filter((id) => scans.some((s) => s.id === id))
     if (ids.length === 0) return
     if (!window.confirm(`Delete ${ids.length} scan(s)? This cannot be undone.`)) return
     setBulkDeleting(true)
@@ -95,38 +91,10 @@ export default function Scans() {
     }
   }
 
-  async function handleCreateFolder() {
-    const name = newFolderName.trim()
-    if (!name) return
-    try {
-      await api.createFolder(name)
-      setNewFolderName('')
-      setCreatingFolder(false)
-      reloadFolders()
-      toast.success(`Folder "${name}" created.`)
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Failed to create folder.')
-    }
-  }
-
-  async function handleDeleteFolder(id: string, name: string) {
-    if (id === 'default') return
-    if (!window.confirm(`Delete folder "${name}"? Scans will be moved to Default.`)) return
-    try {
-      await api.deleteFolder(id)
-      if (activeFolderID === id) setActiveFolderID(null)
-      reloadFolders()
-      reload()
-      toast.success('Folder deleted.')
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Failed to delete folder.')
-    }
-  }
-
-  async function handleMoveToFolder(scanID: string, folderID: string) {
+  async function handleMoveToFolder(scanID: string, fid: string) {
     setMoveMenuID(null)
     try {
-      await api.moveScan(scanID, folderID)
+      await api.moveScan(scanID, fid)
       reload()
       toast.success('Scan moved.')
     } catch (err) {
@@ -182,11 +150,11 @@ export default function Scans() {
     setRescanning(id)
     try {
       const res = await api.rescan(id)
-      toast.success('Rescan started. When it finishes, open the Compare tab to see fixed vs still-open.')
+      toast.success('Rescan started.')
       reload()
       navigate(`/scan/${res.id}`)
     } catch {
-      toast.error('Rescan failed: could not start the scan.')
+      toast.error('Rescan failed.')
     } finally {
       setRescanning(null)
     }
@@ -194,38 +162,23 @@ export default function Scans() {
 
   async function handleStop(id: string) {
     setStopping(id)
-    try {
-      await api.stopScan(id)
-      toast.success('Scan stopped.')
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Failed to stop scan.')
-    } finally {
-      setStopping(null)
-    }
+    try { await api.stopScan(id); toast.success('Scan stopped.') }
+    catch (err) { toast.error(err instanceof ApiError ? err.message : 'Failed to stop.') }
+    finally { setStopping(null) }
   }
 
   async function handlePause(id: string) {
     setPausing(id)
-    try {
-      await api.pauseScan(id)
-      toast.success('Scan paused.')
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Failed to pause scan.')
-    } finally {
-      setPausing(null)
-    }
+    try { await api.pauseScan(id); toast.success('Scan paused.') }
+    catch (err) { toast.error(err instanceof ApiError ? err.message : 'Failed to pause.') }
+    finally { setPausing(null) }
   }
 
   async function handleResume(id: string) {
     setPausing(id)
-    try {
-      await api.resumeScan(id)
-      toast.success('Scan resumed.')
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Failed to resume scan.')
-    } finally {
-      setPausing(null)
-    }
+    try { await api.resumeScan(id); toast.success('Scan resumed.') }
+    catch (err) { toast.error(err instanceof ApiError ? err.message : 'Failed to resume.') }
+    finally { setPausing(null) }
   }
 
   async function handleDelete(id: string, name: string) {
@@ -237,21 +190,17 @@ export default function Scans() {
       setSelected((prev) => { const n = new Set(prev); n.delete(id); return n })
       reload()
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Failed to delete scan.')
+      toast.error(err instanceof ApiError ? err.message : 'Failed to delete.')
     } finally {
       setDeleting(null)
     }
   }
 
-  const activeName = activeFolderID
-    ? (folderList.find((f) => f.id === activeFolderID)?.name ?? 'Folder')
-    : 'All Scans'
-
   return (
     <>
       <TopBar
-        title={activeName}
-        subtitle={activeFolderID ? 'Filtered by folder' : 'All vulnerability scans'}
+        title={folderName}
+        subtitle={folderFilter ? 'Filtered by folder' : 'All vulnerability scans'}
         action={
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept=".zip,application/zip" className="hidden" onChange={handleImport} />
@@ -284,177 +233,84 @@ export default function Scans() {
           </div>
         }
       />
-      <main className="flex gap-0">
-        {/* Folder Sidebar */}
-        <aside className="w-52 shrink-0 border-r border-surface-border min-h-[calc(100vh-4rem)] p-3">
-          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Projects</p>
-          <button
-            onClick={() => setActiveFolderID(null)}
-            className={classNames(
-              'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
-              activeFolderID === null
-                ? 'bg-blue-600/15 text-blue-300'
-                : 'text-slate-400 hover:bg-surface-hover hover:text-slate-200',
-            )}
-          >
-            <FolderOpen size={15} />
-            All Scans
-            <span className="ml-auto text-xs tabular-nums opacity-60">{scans.length}</span>
-          </button>
-          {folderList.map((folder) => {
-            const count = scans.filter((s) => (s.folder_id || 'default') === folder.id).length
-            return (
-              <div key={folder.id} className="group relative">
-                <button
-                  onClick={() => setActiveFolderID(folder.id)}
-                  className={classNames(
-                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
-                    activeFolderID === folder.id
-                      ? 'bg-blue-600/15 text-blue-300'
-                      : 'text-slate-400 hover:bg-surface-hover hover:text-slate-200',
-                  )}
-                >
-                  <Folder size={15} />
-                  <span className="flex-1 truncate text-left">{folder.name}</span>
-                  <span className="text-xs tabular-nums opacity-60">{count}</span>
-                </button>
-                {folder.id !== 'default' && (
-                  <button
-                    onClick={() => handleDeleteFolder(folder.id, folder.name)}
-                    className="absolute right-1 top-1 hidden rounded p-0.5 text-slate-600 hover:text-red-400 group-hover:block"
-                    title="Delete folder"
-                  >
-                    <X size={12} />
-                  </button>
-                )}
-              </div>
-            )
-          })}
-          <div className="mt-3 border-t border-surface-border pt-3">
-            {creatingFolder ? (
-              <div className="space-y-1.5 px-1">
-                <input
-                  autoFocus
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') { setCreatingFolder(false); setNewFolderName('') } }}
-                  placeholder="Folder name"
-                  className="w-full rounded border border-surface-border bg-surface-base px-2 py-1 text-xs text-slate-200 focus:border-blue-500 focus:outline-none"
-                />
-                <div className="flex gap-1">
-                  <button onClick={handleCreateFolder} className="flex-1 rounded bg-blue-600 py-1 text-xs text-white hover:bg-blue-500">
-                    <Check size={11} className="mx-auto" />
-                  </button>
-                  <button onClick={() => { setCreatingFolder(false); setNewFolderName('') }} className="flex-1 rounded bg-surface-raised py-1 text-xs text-slate-400 hover:text-slate-200">
-                    <X size={11} className="mx-auto" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setCreatingFolder(true)}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-slate-500 hover:bg-surface-hover hover:text-slate-300"
-              >
-                <FolderPlus size={13} />
-                New folder
-              </button>
-            )}
-          </div>
-        </aside>
-
-        {/* Scan Table */}
-        <div className="flex-1 p-8">
-          <Card>
-            {loading && !data ? (
-              <ScansSkeleton />
-            ) : error && !data ? (
-              <ErrorState title="Could not load scans" message={error} onRetry={reload} />
-            ) : visibleScans.length === 0 ? (
-              <EmptyState
-                icon={<Radar size={36} />}
-                title="No scans yet"
-                message={activeFolderID ? 'No scans in this folder.' : 'Launch your first scan to begin assessing your network.'}
-                action={
-                  <Link to="/scan/new" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-                    New Scan
-                  </Link>
-                }
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500">
-                      <th className="px-3 py-3">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={toggleAll}
-                          className="accent-blue-500"
-                          title="Select all"
-                        />
-                      </th>
-                      <th className="px-5 py-3 font-medium">Name</th>
-                      <th className="px-5 py-3 font-medium">Status</th>
-                      <th className="px-5 py-3 font-medium">Progress</th>
-                      <th className="px-5 py-3 font-medium">Started</th>
-                      <th className="px-5 py-3 font-medium">Hosts</th>
-                      <th className="px-5 py-3 font-medium">Findings</th>
-                      <th className="px-5 py-3 text-right font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleScans.map((s) => (
-                      <tr
-                        key={s.id}
-                        className={classNames(
-                          'border-b border-surface-border/60 last:border-0 hover:bg-surface-hover/40',
-                          selected.has(s.id) && 'bg-blue-600/5',
-                        )}
-                      >
-                        <td className="px-3 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selected.has(s.id)}
-                            onChange={() => toggleSelect(s.id)}
-                            className="accent-blue-500"
-                          />
-                        </td>
-                        <td className="px-5 py-3">
-                          <Link to={`/scan/${s.id}`} className="font-medium text-slate-100 hover:text-blue-300">
-                            {s.name || s.id}
-                          </Link>
-                          <div className="font-mono text-[11px] text-slate-600">{s.id}</div>
-                        </td>
-                        <td className="px-5 py-3">
-                          <StatusBadge status={s.status} />
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex w-36 items-center gap-2">
-                            <ProgressBar value={s.status === 'done' ? 100 : s.progress} />
-                            <span className="w-9 text-right text-xs tabular-nums text-slate-400">
-                              {s.status === 'done' ? 100 : Math.round(s.progress)}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-3 text-slate-400">{formatDate(s.started)}</td>
-                        <td className="px-5 py-3 tabular-nums text-slate-300">{s.host_count}</td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <span className={classNames('font-semibold tabular-nums', s.finding_count > 0 ? 'text-slate-100' : 'text-slate-500')}>
-                              {s.finding_count}
-                            </span>
-                            <div className="w-24">
-                              <SeverityMiniBar severity={s.severity} />
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => navigate(`/scan/${s.id}`)} title="View" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-slate-200">
-                              <Eye size={16} />
-                            </button>
-                            {/* Move to folder */}
+      <main className="p-8">
+        <Card>
+          {loading && !data ? (
+            <ScansSkeleton />
+          ) : error && !data ? (
+            <ErrorState title="Could not load scans" message={error} onRetry={reload} />
+          ) : scans.length === 0 ? (
+            <EmptyState
+              icon={<Radar size={36} />}
+              title="No scans yet"
+              message={folderFilter ? 'No scans in this folder.' : 'Launch your first scan to begin assessing your network.'}
+              action={
+                <Link to="/scan/new" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+                  New Scan
+                </Link>
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-slate-500">
+                    <th className="px-3 py-3">
+                      <input type="checkbox" checked={allSelected} onChange={toggleAll} className="accent-blue-500" title="Select all" />
+                    </th>
+                    <th className="px-5 py-3 font-medium">Name</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Progress</th>
+                    <th className="px-5 py-3 font-medium">Started</th>
+                    <th className="px-5 py-3 font-medium">Hosts</th>
+                    <th className="px-5 py-3 font-medium">Findings</th>
+                    <th className="px-5 py-3 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scans.map((s) => (
+                    <tr
+                      key={s.id}
+                      className={classNames(
+                        'border-b border-surface-border/60 last:border-0 hover:bg-surface-hover/40',
+                        selected.has(s.id) && 'bg-blue-600/5',
+                      )}
+                    >
+                      <td className="px-3 py-3">
+                        <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)} className="accent-blue-500" />
+                      </td>
+                      <td className="px-5 py-3">
+                        <Link to={`/scan/${s.id}`} className="font-medium text-slate-100 hover:text-blue-300">
+                          {s.name || s.id}
+                        </Link>
+                        <div className="font-mono text-[11px] text-slate-600">{s.id}</div>
+                      </td>
+                      <td className="px-5 py-3"><StatusBadge status={s.status} /></td>
+                      <td className="px-5 py-3">
+                        <div className="flex w-36 items-center gap-2">
+                          <ProgressBar value={s.status === 'done' ? 100 : s.progress} />
+                          <span className="w-9 text-right text-xs tabular-nums text-slate-400">
+                            {s.status === 'done' ? 100 : Math.round(s.progress)}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-3 text-slate-400">{formatDate(s.started)}</td>
+                      <td className="px-5 py-3 tabular-nums text-slate-300">{s.host_count}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          <span className={classNames('font-semibold tabular-nums', s.finding_count > 0 ? 'text-slate-100' : 'text-slate-500')}>
+                            {s.finding_count}
+                          </span>
+                          <div className="w-24"><SeverityMiniBar severity={s.severity} /></div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => navigate(`/scan/${s.id}`)} title="View" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-slate-200">
+                            <Eye size={16} />
+                          </button>
+                          {/* Move to folder */}
+                          {folderList.length > 1 && (
                             <div className="relative">
                               <button
                                 onClick={() => setMoveMenuID(moveMenuID === s.id ? null : s.id)}
@@ -482,47 +338,47 @@ export default function Scans() {
                                 </div>
                               )}
                             </div>
-                            {s.status === 'running' && (
-                              <>
-                                <button onClick={() => handlePause(s.id)} disabled={pausing === s.id} title="Pause scan" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-amber-300 disabled:opacity-50">
-                                  {pausing === s.id ? <Loader2 size={16} className="animate-spin" /> : <Pause size={16} />}
-                                </button>
-                                <button onClick={() => handleStop(s.id)} disabled={stopping === s.id} title="Stop scan" className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
-                                  {stopping === s.id ? <Loader2 size={16} className="animate-spin" /> : <Square size={16} />}
-                                </button>
-                              </>
-                            )}
-                            {s.status === 'paused' && (
-                              <>
-                                <button onClick={() => handleResume(s.id)} disabled={pausing === s.id} title="Resume scan" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-green-300 disabled:opacity-50">
-                                  {pausing === s.id ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                                </button>
-                                <button onClick={() => handleStop(s.id)} disabled={stopping === s.id} title="Stop scan" className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
-                                  {stopping === s.id ? <Loader2 size={16} className="animate-spin" /> : <Square size={16} />}
-                                </button>
-                              </>
-                            )}
-                            {(s.status === 'done' || s.status === 'stopped' || s.status === 'error') && (
-                              <button onClick={() => handleRescan(s.id)} disabled={rescanning === s.id} title="Rescan" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-sky-300 disabled:opacity-50">
-                                {rescanning === s.id ? <Loader2 size={16} className="animate-spin" /> : <Repeat size={16} />}
+                          )}
+                          {s.status === 'running' && (
+                            <>
+                              <button onClick={() => handlePause(s.id)} disabled={pausing === s.id} title="Pause" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-amber-300 disabled:opacity-50">
+                                {pausing === s.id ? <Loader2 size={16} className="animate-spin" /> : <Pause size={16} />}
                               </button>
-                            )}
-                            <button onClick={() => handleExport(s.id)} disabled={exporting === s.id} title="Export bundle" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-slate-200 disabled:opacity-50">
-                              {exporting === s.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                              <button onClick={() => handleStop(s.id)} disabled={stopping === s.id} title="Stop" className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
+                                {stopping === s.id ? <Loader2 size={16} className="animate-spin" /> : <Square size={16} />}
+                              </button>
+                            </>
+                          )}
+                          {s.status === 'paused' && (
+                            <>
+                              <button onClick={() => handleResume(s.id)} disabled={pausing === s.id} title="Resume" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-green-300 disabled:opacity-50">
+                                {pausing === s.id ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                              </button>
+                              <button onClick={() => handleStop(s.id)} disabled={stopping === s.id} title="Stop" className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
+                                {stopping === s.id ? <Loader2 size={16} className="animate-spin" /> : <Square size={16} />}
+                              </button>
+                            </>
+                          )}
+                          {(s.status === 'done' || s.status === 'stopped' || s.status === 'error') && (
+                            <button onClick={() => handleRescan(s.id)} disabled={rescanning === s.id} title="Rescan" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-sky-300 disabled:opacity-50">
+                              {rescanning === s.id ? <Loader2 size={16} className="animate-spin" /> : <Repeat size={16} />}
                             </button>
-                            <button onClick={() => handleDelete(s.id, s.name)} disabled={deleting === s.id} title="Delete" className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
-                              {deleting === s.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
-        </div>
+                          )}
+                          <button onClick={() => handleExport(s.id)} disabled={exporting === s.id} title="Export bundle" className="rounded-md p-1.5 text-slate-400 hover:bg-surface-hover hover:text-slate-200 disabled:opacity-50">
+                            {exporting === s.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                          </button>
+                          <button onClick={() => handleDelete(s.id, s.name)} disabled={deleting === s.id} title="Delete" className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
+                            {deleting === s.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
       </main>
     </>
   )

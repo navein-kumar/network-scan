@@ -153,6 +153,8 @@ func webScreenshot(rawurl, outPath string, timeout time.Duration) error {
 	args := []string{
 		"--headless=new",
 		"--no-sandbox",
+		"--disable-setuid-sandbox",
+		"--no-zygote",
 		"--disable-gpu",
 		"--disable-dev-shm-usage",
 		"--disable-software-rasterizer",

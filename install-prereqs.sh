@@ -349,30 +349,33 @@ install_screenshot() {
 }
 
 # ---------------------------------------------------------------------------
-# Web screenshots (playwright-go headless Chromium)
-#   The engine grabs a PNG of every HTTP/HTTPS service via playwright-go. That
-#   needs the Chromium browser + driver in the playwright cache. Web
-#   screenshots degrade gracefully without it, so this step is optional.
+# Web screenshots (headless Chrome/Chromium)
+#   The engine takes PNG screenshots of HTTP/HTTPS services using the system
+#   Chrome or Chromium binary. Degrades gracefully if not installed.
 # ---------------------------------------------------------------------------
 webshot_ok() {
-  # The playwright-go headless browser unpacks as
-  # /root/.cache/ms-playwright/chromium_headless_shell-<rev>.
-  ls -d /root/.cache/ms-playwright/chromium_headless_shell-* >/dev/null 2>&1
+  command -v google-chrome-stable >/dev/null 2>&1 \
+    || command -v google-chrome >/dev/null 2>&1 \
+    || command -v chromium-browser >/dev/null 2>&1 \
+    || command -v chromium >/dev/null 2>&1
 }
 
 install_webshot() {
-  if webshot_ok; then green "playwright Chromium present (web screenshots)"; return 0; fi
-  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: playwright Chromium (web screenshots)"; return 0; }
-  if ! go_ok; then
-    yellow "playwright Chromium not installed (optional; Go missing, web screenshots skipped)"
-    return 0
-  fi
+  if webshot_ok; then green "Chrome/Chromium present (web screenshots)"; return 0; fi
+  [ "$CHECK_ONLY" -eq 1 ] && { yellow "MISSING: Chrome/Chromium (web screenshots)"; return 0; }
   need_root
-  log "installing playwright Chromium browser + driver"
-  # Run from the fastscan source dir so the CLI version matches go.mod.
-  ( cd "$FASTSCAN_DIR/engine" && "$GO_BIN" run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps chromium ) >/dev/null 2>&1
-  webshot_ok && green "playwright Chromium installed" \
-    || yellow "playwright Chromium not installed (optional; web screenshots skipped)"
+  if command -v apt-get >/dev/null 2>&1; then
+    log "installing Google Chrome stable (web screenshots)"
+    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+      | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg 2>/dev/null
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+      > /etc/apt/sources.list.d/google-chrome.list
+    apt-get update -qq && apt-get install -y --no-install-recommends google-chrome-stable >/dev/null 2>&1
+    webshot_ok && green "Google Chrome installed" \
+      || yellow "Chrome install failed (optional; web screenshots skipped)"
+  else
+    yellow "Non-Debian system: install Chrome/Chromium manually for web screenshots (optional)"
+  fi
 }
 
 # ---------------------------------------------------------------------------

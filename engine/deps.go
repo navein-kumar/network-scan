@@ -10,7 +10,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -55,7 +57,7 @@ var deps = []Dep{
 		InstallHint: "git clone https://github.com/drwetter/testssl.sh /opt/testssl.sh && ln -s /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh",
 	},
 	{
-		Name: "nxc (netexec)", Binary: []string{"nxc", "netexec", "/root/.local/bin/nxc"},
+		Name: "nxc (netexec)", Binary: []string{"nxc", "netexec"},
 		UsedBy:      "Phase 2.5 SMB vuln modules (MS17-010, Zerologon, SMBGhost)",
 		Required:    false,
 		InstallHint: "pipx install netexec",
@@ -82,6 +84,22 @@ func CheckDeps() []DepStatus {
 				st.Path = p
 				st.Version = probeVersion(name)
 				break
+			}
+		}
+		// Also probe $HOME/.local/bin/<name> for pipx-installed tools not on PATH.
+		if st.Path == "" {
+			if home, err := os.UserHomeDir(); err == nil {
+				for _, name := range d.Binary {
+					if strings.HasPrefix(name, "/") {
+						continue
+					}
+					p := filepath.Join(home, ".local", "bin", name)
+					if _, err := os.Stat(p); err == nil {
+						st.Path = p
+						st.Version = probeVersion(p)
+						break
+					}
+				}
 			}
 		}
 		out = append(out, st)

@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -33,18 +34,19 @@ type SMBVulnReport struct {
 	ProbeErrors          []string `json:"probe_errors,omitempty"`
 }
 
-// nxcCandidates lists every place we'll look for the nxc binary, in
-// preference order. /root/.local/bin/nxc is what pipx put it on
-// idsserver.
-var nxcCandidates = []string{
-	"/root/.local/bin/nxc",
-	"nxc",
-	"netexec",
+// nxcCandidates returns every place we look for nxc, in preference order.
+// Uses os.UserHomeDir() so it works for any user, not just root.
+func nxcCandidates() []string {
+	base := []string{"nxc", "netexec"}
+	if home, err := os.UserHomeDir(); err == nil {
+		return append([]string{filepath.Join(home, ".local", "bin", "nxc")}, base...)
+	}
+	return base
 }
 
 // nxcBinary returns the first nxc binary that exists, or "" if none.
 func nxcBinary() string {
-	for _, c := range nxcCandidates {
+	for _, c := range nxcCandidates() {
 		if strings.HasPrefix(c, "/") {
 			if _, err := os.Stat(c); err == nil {
 				return c

@@ -57,6 +57,17 @@ var fixedProfiles = []string{"fast", "medium", "slow", "crawl"}
 // depSpecs lists the external tools probed for /api/deps and /api/meta. Each
 // entry may carry candidate binary names (httpx ships as httpx-pd) and explicit
 // fallback paths for tools not on PATH.
+
+// nxcFallbacks returns user-relative fallback paths for nxc so the check
+// works regardless of which user runs the service.
+func nxcFallbacks() []string {
+	paths := []string{"/usr/local/bin/nxc"}
+	if home, err := os.UserHomeDir(); err == nil {
+		paths = append([]string{filepath.Join(home, ".local", "bin", "nxc")}, paths...)
+	}
+	return paths
+}
+
 var depSpecs = []struct {
 	name        string
 	candidates  []string
@@ -69,7 +80,7 @@ var depSpecs = []struct {
 	{name: "httpx", candidates: []string{"httpx-pd", "httpx"}, required: true, description: "HTTP probing and web fingerprinting"},
 	{name: "nuclei", candidates: []string{"nuclei"}, required: true, description: "Template-based vuln detection (accounts for ~40% of findings)"},
 	{name: "testssl.sh", candidates: []string{"testssl.sh"}, fallbacks: []string{"/usr/local/bin/testssl.sh"}, description: "TLS/SSL vulnerability scanning"},
-	{name: "nxc", candidates: []string{"nxc", "netexec"}, fallbacks: []string{"/root/.local/bin/nxc", "/usr/local/bin/nxc"}, description: "SMB/AD enumeration and relay testing"},
+	{name: "nxc", candidates: []string{"nxc", "netexec"}, fallbacks: nxcFallbacks(), description: "SMB/AD enumeration and relay testing"},
 	{name: "ike-scan", candidates: []string{"ike-scan"}, description: "IKE/IPsec VPN protocol fingerprinting"},
 	{name: "scrying", candidates: []string{"scrying"}, description: "RDP and VNC desktop screenshots"},
 	{name: "python3", candidates: []string{"python3", "python"}, required: true, description: "Evidence and Excel export scripts"},
@@ -105,7 +116,10 @@ func resolveDeps() []dep {
 // deployments it counts *probe.go files; in binary-only deployments (Docker)
 // it falls back to a drivers.count marker file written at build time.
 func countDrivers() int {
-	matches, _ := filepath.Glob(filepath.Join(engineRoot, "engine", "*probe.go"))
+	matches, _ := filepath.Glob(filepath.Join(engineRoot, "*probe.go"))
+	if len(matches) == 0 {
+		matches, _ = filepath.Glob(filepath.Join(engineRoot, "engine", "*probe.go"))
+	}
 	n := 0
 	for _, m := range matches {
 		if strings.HasSuffix(m, "_test.go") {

@@ -119,7 +119,7 @@ var (
 	flagHTTPTotalS   = flag.String("http-total-timeout", "", "HTTP total request timeout. Empty = use profile default")
 	flagNucleiConcurrency = flag.Int("nuclei-concurrency", 0, "nuclei templates in flight per host (0 = use profile default)")
 	flagNucleiRateLimit   = flag.Int("nuclei-rate-limit", 0, "nuclei global request rate, req/sec (0 = use profile default)")
-	flagTemplates = flag.String("templates", "/tmp/all-tpl/", "nuclei templates directory")
+	flagTemplates = flag.String("templates", resolveTemplatesDir(), "nuclei templates directory")
 	flagOut       = flag.String("out", "fastscan_out", "output directory")
 	flagBatch     = flag.Int("batch", 0, "rustscan batch size (0 = use profile default)")
 	flagTimeout   = flag.Int("timeout", 0, "rustscan timeout ms per port (0 = use profile default)")
@@ -314,6 +314,30 @@ func ensureCreds() *CredStore {
 	}
 	globalCreds = store
 	return globalCreds
+}
+
+
+// resolveTemplatesDir finds the nuclei templates directory for the current
+// environment. Docker images pre-download to /tmp/all-tpl/; local installs
+// use ~/nuclei-templates (the nuclei default). Never hardcodes a user path.
+func resolveTemplatesDir() string {
+	candidates := []string{"/tmp/all-tpl"}
+	if home, err := os.UserHomeDir(); err == nil {
+		candidates = append(candidates,
+			filepath.Join(home, "nuclei-templates"),
+			filepath.Join(home, ".nuclei-templates"),
+		)
+	}
+	for _, c := range candidates {
+		if info, err := os.Stat(c); err == nil && info.IsDir() {
+			return c
+		}
+	}
+	// Default: let nuclei -update-templates create it
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, "nuclei-templates")
+	}
+	return "/tmp/all-tpl"
 }
 
 func main() {
