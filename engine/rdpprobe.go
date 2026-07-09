@@ -33,7 +33,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 	"unicode/utf16"
 
