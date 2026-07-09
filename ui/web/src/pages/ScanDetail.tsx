@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -125,6 +125,28 @@ function usePagination<T>(items: T[], pageSize: number) {
   return { paged: sliced, page: clampedPage, setPage, totalPages, start, end }
 }
 
+// pageWindow builds a compact list of page tokens: [1, 'left-gap', 4, 5, 6,
+// 'right-gap', 36]. The current page always sits inside the window with a
+// couple of neighbours on either side; first and last pages are always
+// visible so long lists (thousands of pages) stay one click away.
+function pageWindow(current: number, total: number): Array<number | 'gap'> {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const window = new Set<number>([1, total, current, current - 1, current + 1])
+  // pad the current-page window so we always show 3 numbers near the
+  // current one; drop anything out of range afterwards.
+  if (current <= 3) [2, 3, 4].forEach((n) => window.add(n))
+  if (current >= total - 2) [total - 1, total - 2, total - 3].forEach((n) => window.add(n))
+  const numbers = Array.from(window).filter((n) => n >= 1 && n <= total).sort((a, b) => a - b)
+  const out: Array<number | 'gap'> = []
+  for (let i = 0; i < numbers.length; i++) {
+    if (i > 0 && numbers[i] - numbers[i - 1] > 1) out.push('gap')
+    out.push(numbers[i])
+  }
+  return out
+}
+
 function PageBar({
   total, pageSize, onPageSize,
   page, totalPages, onPage,
@@ -135,33 +157,81 @@ function PageBar({
   start: number; end: number
 }) {
   if (total <= 10) return null
+  const [jumpValue, setJumpValue] = useState('')
+  const tokens = pageSize === 0 ? [] : pageWindow(page, totalPages)
+  const jumpTo = () => {
+    const n = parseInt(jumpValue, 10)
+    if (!Number.isFinite(n) || n < 1) return
+    onPage(Math.min(n, totalPages))
+    setJumpValue('')
+  }
+  const pagerBtn = (
+    active: boolean,
+    disabled: boolean,
+    label: ReactNode,
+    onClick: () => void,
+    key?: string | number,
+  ) => (
+    <button
+      key={key}
+      disabled={disabled}
+      onClick={onClick}
+      className={classNames(
+        'inline-flex h-7 min-w-[28px] items-center justify-center rounded px-2 text-xs font-medium transition-colors',
+        active
+          ? 'bg-emerald-600 text-white'
+          : 'text-slate-400 hover:bg-slate-700/40 hover:text-slate-100 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400',
+      )}
+    >{label}</button>
+  )
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-border px-5 py-2.5">
-      <span className="text-xs text-slate-500">
-        {pageSize === 0 ? `All ${total}` : `${start + 1}–${end} of ${total}`}
-      </span>
-      <div className="flex items-center gap-1">
-        <span className="mr-1 text-xs text-slate-500">Show</span>
-        {PAGE_SIZES.map((n) => (
-          <button
-            key={n}
-            onClick={() => { onPageSize(n); onPage(1) }}
-            className={classNames(
-              'rounded px-2 py-0.5 text-xs font-medium transition-colors',
-              pageSize === n ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200',
-            )}
-          >{PAGE_LABELS[n]}</button>
-        ))}
-        {pageSize !== 0 && totalPages > 1 && (
-          <>
-            <button disabled={page <= 1} onClick={() => onPage(page - 1)}
-              className="ml-2 rounded px-1.5 py-0.5 text-xs text-slate-400 hover:text-slate-200 disabled:opacity-30">‹</button>
-            <span className="text-xs text-slate-500">{page}/{totalPages}</span>
-            <button disabled={page >= totalPages} onClick={() => onPage(page + 1)}
-              className="rounded px-1.5 py-0.5 text-xs text-slate-400 hover:text-slate-200 disabled:opacity-30">›</button>
-          </>
-        )}
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-border px-5 py-2.5">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-slate-500">Rows per page</span>
+        <select
+          value={pageSize}
+          onChange={(e) => { onPageSize(parseInt(e.target.value, 10)); onPage(1) }}
+          className="h-7 rounded border border-surface-border bg-slate-900/60 px-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        >
+          {PAGE_SIZES.map((n) => (
+            <option key={n} value={n}>{PAGE_LABELS[n]}</option>
+          ))}
+        </select>
+        <span className="ml-2 text-xs text-slate-500">
+          {pageSize === 0 ? `Showing all ${total}` : `Showing ${start + 1} to ${end} of ${total}`}
+        </span>
       </div>
+      {pageSize !== 0 && totalPages > 1 && (
+        <div className="flex items-center gap-1">
+          {pagerBtn(false, page <= 1, '«', () => onPage(1), 'first')}
+          {pagerBtn(false, page <= 1, '‹', () => onPage(page - 1), 'prev')}
+          {tokens.map((tok, i) =>
+            tok === 'gap'
+              ? <span key={`gap-${i}`} className="px-1 text-xs text-slate-500">…</span>
+              : pagerBtn(tok === page, false, tok, () => onPage(tok), tok)
+          )}
+          {pagerBtn(false, page >= totalPages, '›', () => onPage(page + 1), 'next')}
+          {pagerBtn(false, page >= totalPages, '»', () => onPage(totalPages), 'last')}
+          {totalPages > 20 && (
+            <div className="ml-2 flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={jumpValue}
+                onChange={(e) => setJumpValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') jumpTo() }}
+                placeholder={String(totalPages)}
+                className="h-7 w-20 rounded border border-surface-border bg-slate-900/60 px-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+              <button
+                onClick={jumpTo}
+                className="h-7 rounded bg-slate-700/40 px-2 text-xs text-slate-200 hover:bg-slate-700"
+              >Go</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
