@@ -1482,14 +1482,25 @@ func runNuclei(tag string, targets []string, templatesDir string, writer *writer
 	nucleiSuperseded := map[string]bool{
 		"smb-signing": true, // duplicate of smb-signing-not-required plugin
 	}
+	// Templates that are noisy on internal networks: internal PKI, dev
+	// boxes, private CAs, and IT-managed self-signed certs are normal
+	// there and produce a wall of low-severity findings that drown the
+	// real ones. We still report them for public IPs and hostnames.
+	internalCertNoise := map[string]bool{
+		"self-signed-ssl":            true,
+		"untrusted-root-certificate": true,
+	}
 	err = ne.ExecuteWithCallback(func(event *output.ResultEvent) {
 		if nucleiSuperseded[event.TemplateID] {
+			return
+		}
+		host, portNum := hostPortFromMatched(event.Matched)
+		if internalCertNoise[event.TemplateID] && isInternalHost(host) {
 			return
 		}
 		mu.Lock()
 		defer mu.Unlock()
 		hits++
-		host, portNum := hostPortFromMatched(event.Matched)
 		writer.write(Finding{
 			Phase:     "nuclei",
 			Host:     host,
@@ -1508,6 +1519,21 @@ func runNuclei(tag string, targets []string, templatesDir string, writer *writer
 		log.Printf("nuclei[%s] exec: %v", tag, err)
 	}
 	return hits
+}
+
+// isInternalHost reports whether host is a private / loopback / link-local IP
+// address. Hostnames and public IPs return false. Used to suppress
+// noisy-on-intranet nuclei templates (self-signed-ssl, untrusted-root-cert)
+// while keeping them for public IPs and domains.
+func isInternalHost(host string) bool {
+	if host == "" {
+		return false
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	return ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast()
 }
 
 // hostPortFromMatched extracts host and port from a nuclei ResultEvent.Matched
