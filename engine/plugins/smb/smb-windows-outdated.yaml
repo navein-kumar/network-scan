@@ -1,7 +1,7 @@
 id: smb-windows-outdated
 title: Windows build nearing or at end of support
 severity: medium
-source: smb
+source: smbvuln
 when: >
   windows_build > 0 &&
   windows_build in [
@@ -9,7 +9,7 @@ when: >
     19044, 19045,
     22000, 22621, 22631
   ]
-evidence: '{{ .host }}:{{ .port }} advertises {{ .os_version }} ({{ .os }}); this Windows build has reached or is close to its client end-of-support date and should be upgraded'
+evidence: '{{ .host }}:{{ .port }} reports {{ .windows_product }} build {{ .windows_build }} ({{ .windows_arch }}); this Windows build has reached or is close to its client end-of-support date and should be upgraded'
 references:
   - https://learn.microsoft.com/en-us/lifecycle/products/
   - https://learn.microsoft.com/en-us/lifecycle/announcements

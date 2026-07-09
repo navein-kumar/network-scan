@@ -18,6 +18,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -30,9 +32,21 @@ type SMBVulnReport struct {
 	MS17010Vulnerable    bool     `json:"ms17010_vulnerable"`
 	ZerologonVulnerable  bool     `json:"zerologon_vulnerable"`
 	SMBGhostVulnerable   bool     `json:"smbghost_vulnerable"`
+	WindowsProduct       string   `json:"windows_product,omitempty"` // e.g. "Windows Server 2019 Standard"
+	WindowsBuild         int      `json:"windows_build,omitempty"`   // e.g. 17763
+	WindowsArch          string   `json:"windows_arch,omitempty"`    // e.g. "x64"
+	NetBIOSName          string   `json:"netbios_name,omitempty"`
+	Domain               string   `json:"domain,omitempty"`
 	RawOutput            string   `json:"raw_output,omitempty"`
 	ProbeErrors          []string `json:"probe_errors,omitempty"`
 }
+
+// nxcInfoRe matches the identity header line every nxc smb module prints, e.g.
+//   SMB   172.19.12.65   445   VDSELT218  [*] Windows 11 / Server 2025 Build 26100 x64 (name:VDSELT218) (domain:VDARTINC.COM) (signing:True) (SMBv1:None)
+// Groups: 1=netbios name  2=product string  3=build number  4=arch  5=domain
+var nxcInfoRe = regexp.MustCompile(
+	`^SMB\s+\S+\s+\d+\s+(\S+)\s+\[\*\]\s+(.+?)\s+Build\s+(\d{3,6})\s+(x\d+)(?:.*\(domain:([^)]+)\))?`,
+)
 
 // nxcCandidates returns every place we look for nxc, in preference order.
 // Uses os.UserHomeDir() so it works for any user, not just root.
@@ -98,7 +112,38 @@ func ProbeSMBVuln(host string, port int, timeout time.Duration) (*SMBVulnReport,
 		}
 	}
 	rep.RawOutput = strings.TrimSpace(rawBuf.String())
+	parseNXCWindowsInfo(rep)
 	return rep, nil
+}
+
+// parseNXCWindowsInfo scans the aggregated nxc output for the [*] identity
+// line and populates the Windows product / build / arch / netbios / domain
+// fields on the report. Each module prints the same line; the first match
+// wins so we get consistent values.
+func parseNXCWindowsInfo(rep *SMBVulnReport) {
+	if rep.RawOutput == "" {
+		return
+	}
+	for _, line := range strings.Split(rep.RawOutput, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		m := nxcInfoRe.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		rep.NetBIOSName = m[1]
+		rep.WindowsProduct = strings.TrimSpace(m[2])
+		if n, err := strconv.Atoi(m[3]); err == nil {
+			rep.WindowsBuild = n
+		}
+		rep.WindowsArch = m[4]
+		if len(m) > 5 && m[5] != "" {
+			rep.Domain = m[5]
+		}
+		return
+	}
 }
 
 // runNXCModule runs a single nxc smb module and returns combined output.
