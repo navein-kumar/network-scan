@@ -165,7 +165,7 @@ func captureVNCScreenshot(host string, port int, rep *VNCReport, timeout time.Du
 		return
 	}
 
-	dir := filepath.Join(os.TempDir(), "fastscan", "screenshots")
+	dir := screenshotDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}

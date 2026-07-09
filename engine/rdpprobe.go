@@ -394,7 +394,7 @@ func captureRDPScreenshot(host string, port int, rep *RDPReport, timeout time.Du
 		return
 	}
 
-	dir := filepath.Join(os.TempDir(), "fastscan", "screenshots")
+	dir := screenshotDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}
