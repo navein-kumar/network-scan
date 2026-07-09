@@ -129,11 +129,30 @@ func tlsCertError(rawurl string) bool {
 }
 
 // chromiumBin finds the system chromium binary.
+//
+// Preference order:
+//  1. google-chrome-stable / google-chrome  — deb-installed by our
+//     install-prereqs.sh, headless-safe, writes screenshots to arbitrary
+//     paths.
+//  2. chromium-browser  — Debian/Ubuntu apt package (not snap).
+//  3. chromium  — last resort. On Ubuntu this often resolves to
+//     /snap/bin/chromium which sandboxes filesystem writes and quietly
+//     drops --screenshot to a snap-local dir; if google-chrome or the
+//     apt chromium-browser exists we always prefer those.
 func chromiumBin() string {
-	for _, name := range []string{"chromium", "chromium-browser", "google-chrome", "google-chrome-stable"} {
+	for _, name := range []string{"google-chrome-stable", "google-chrome", "chromium-browser", "chromium"} {
 		if p, err := exec.LookPath(name); err == nil {
+			// Skip snap-wrapped binaries when a non-snap alternative
+			// might still show up later in the list.
+			if strings.HasPrefix(p, "/snap/") && name != "chromium" {
+				continue
+			}
 			return p
 		}
+	}
+	// Fallback: allow snap chromium only if nothing else exists.
+	if p, err := exec.LookPath("chromium"); err == nil {
+		return p
 	}
 	return ""
 }
