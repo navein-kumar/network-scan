@@ -16,6 +16,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1487,8 +1489,11 @@ func runNuclei(tag string, targets []string, templatesDir string, writer *writer
 		mu.Lock()
 		defer mu.Unlock()
 		hits++
+		host, portNum := hostPortFromMatched(event.Matched)
 		writer.write(Finding{
 			Phase:     "nuclei",
+			Host:     host,
+			Port:     portNum,
 			URL:       event.Matched,
 			Template:  event.TemplateID,
 			Severity:  event.Info.SeverityHolder.Severity.String(),
@@ -1503,6 +1508,37 @@ func runNuclei(tag string, targets []string, templatesDir string, writer *writer
 		log.Printf("nuclei[%s] exec: %v", tag, err)
 	}
 	return hits
+}
+
+// hostPortFromMatched extracts host and port from a nuclei ResultEvent.Matched
+// value. Accepts full URLs (http://host:port/path), bare host:port strings, or
+// plain host. Falls back to default HTTP/HTTPS ports when the URL omits one.
+func hostPortFromMatched(matched string) (string, int) {
+	if matched == "" {
+		return "", 0
+	}
+	if u, err := url.Parse(matched); err == nil && u.Host != "" {
+		host := u.Hostname()
+		portStr := u.Port()
+		if portStr != "" {
+			if p, err := strconv.Atoi(portStr); err == nil {
+				return host, p
+			}
+		}
+		switch strings.ToLower(u.Scheme) {
+		case "https":
+			return host, 443
+		case "http":
+			return host, 80
+		}
+		return host, 0
+	}
+	if h, p, err := net.SplitHostPort(matched); err == nil {
+		if pn, err := strconv.Atoi(p); err == nil {
+			return h, pn
+		}
+	}
+	return matched, 0
 }
 
 // ──────────────────────────────────────────────────────────────────────

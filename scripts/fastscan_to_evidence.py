@@ -216,8 +216,8 @@ def make_header(host, port, ts):
         when = ts or "n/a"
     target = host if not port else f"{host}:{port}"
     return [
-        f"Starting nuclei v1.0 ( https://github.com/projectdiscovery ) at {when}",
-        f"nuclei report for {target}",
+        f"fastscan report at {when}",
+        f"target {target}",
         "Host is up.",
         "",
     ]
@@ -342,25 +342,21 @@ def build_txt(finding, driver_report, httpx_rec=None):
     lines.extend(make_header(host, port, ts))
 
     # Command header (rendered bright white by txt_to_img.py)
-    if source == "nuclei":
-        # Authentic nuclei command form: nuclei -t <template> -u host:port
-        tgt = f"{host}:{port}" if port else host
-        cmd = f"# nuclei -t {rule_id} -u {tgt}"
-    elif source == "os":
-        cmd = f"# nuclei -os-test {host}"
+    if source == "os":
+        cmd = f"# fastscan --os-test {host}"
     elif source == "traceroute":
-        cmd = f"# nuclei -traceroute-test {host}"
+        cmd = f"# fastscan --traceroute-test {host}"
     elif port:
-        cmd = f"# nuclei -{source}-test {host}:{port}"
+        cmd = f"# fastscan --{source}-test {host}:{port}"
     else:
-        cmd = f"# nuclei -{source}-test {host}"
+        cmd = f"# fastscan --{source}-test {host}"
     lines.append(cmd)
     lines.append("")
 
     # Context lines from the driver report ([*] info)
     if driver_report:
         # Fields that are file/share/export listings: render one entry per
-        # line (Nessus-style) instead of a single comma-joined line.
+        # line instead of a single comma-joined line.
         LIST_FIELDS = ("root_listing", "exported_paths", "exports", "shares",
                        "share_files", "readable_shares", "keys", "databases",
                        "collections", "tables", "entries", "vrfy_users",

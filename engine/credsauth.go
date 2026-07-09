@@ -34,8 +34,15 @@ import (
 // md5New returns a fresh md5 hash for tryCredsPostgreSQL MD5 auth.
 func md5New() hash.Hash { return md5.New() }
 
-// tryCredsSSH dials SSH with password auth, requiring a clean banner
-// exchange. Returns nil on accepted login.
+// tryCredsSSH dials SSH with password auth and verifies the login gives
+// us actual shell execution, not just a protocol-layer accept.
+//
+// Some devices (Cisco/Mikrotik/embedded IoT, SSH honeypots) accept ANY
+// password at the SSH transport layer, then gate real access behind
+// their own captive login prompt. ssh.Dial returns nil on those, which
+// used to give us false-positive "default creds" findings. To defend
+// against that, we open a session and require a marker echo to come
+// back before declaring success.
 func tryCredsSSH(host string, port int, user, pass string, timeout time.Duration) error {
 	cfg := &ssh.ClientConfig{
 		User:            user,
@@ -48,8 +55,39 @@ func tryCredsSSH(host string, port int, user, pass string, timeout time.Duration
 	if err != nil {
 		return err
 	}
-	conn.Close()
-	return nil
+	defer conn.Close()
+
+	sess, err := conn.NewSession()
+	if err != nil {
+		return fmt.Errorf("no session: %w", err)
+	}
+	defer sess.Close()
+
+	const marker = "FASTSCAN_" + "SHELL_OK"
+	done := make(chan struct {
+		out []byte
+		err error
+	}, 1)
+	go func() {
+		out, err := sess.Output("echo " + marker)
+		done <- struct {
+			out []byte
+			err error
+		}{out, err}
+	}()
+
+	select {
+	case r := <-done:
+		if r.err != nil {
+			return fmt.Errorf("exec: %w", r.err)
+		}
+		if !strings.Contains(string(r.out), marker) {
+			return fmt.Errorf("captive shell: marker not returned")
+		}
+		return nil
+	case <-time.After(timeout):
+		return fmt.Errorf("session hung (captive shell)")
+	}
 }
 
 // tryCredsFTP runs the minimal USER/PASS exchange. 230 = login OK.
