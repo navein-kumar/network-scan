@@ -1,0 +1,28 @@
+id: smb-windows-eol
+title: Windows build past extended-support end of life
+severity: high
+source: smb
+when: >
+  windows_build > 0 &&
+  windows_build in [
+    6003, 7601,
+    9200, 9600,
+    10240, 10586,
+    14393,
+    15063, 16299, 17134,
+    18362, 18363,
+    19041, 19042, 19043
+  ]
+evidence: '{{ .host }}:{{ .port }} advertises {{ .os_version }} ({{ .os }}); this Windows build is past its extended-support end date and no longer receives security patches from Microsoft'
+references:
+  - https://learn.microsoft.com/en-us/lifecycle/products/
+  - https://learn.microsoft.com/en-us/lifecycle/announcements
+remediation: |
+  Upgrade the host to a supported Windows build. Common landing versions:
+    * Client: Windows 10 22H2 (build 19045), Windows 11 23H2+ (22631+)
+    * Server: Windows Server 2019 (17763), 2022 (20348), 2025 (26100)
+  Running EOL Windows means unpatched Local Privilege Escalation, RCE,
+  and post-auth vulns accumulate indefinitely. If the box hosts business
+  data or is exposed to the network, treat it as a compensating-control
+  problem: isolate the host, add EDR, and schedule a migration.
+tags: [smb, windows, eol, patch-management]

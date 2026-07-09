@@ -1,0 +1,25 @@
+id: smb-windows-outdated
+title: Windows build nearing or at end of support
+severity: medium
+source: smb
+when: >
+  windows_build > 0 &&
+  windows_build in [
+    17763,
+    19044, 19045,
+    22000, 22621, 22631
+  ]
+evidence: '{{ .host }}:{{ .port }} advertises {{ .os_version }} ({{ .os }}); this Windows build has reached or is close to its client end-of-support date and should be upgraded'
+references:
+  - https://learn.microsoft.com/en-us/lifecycle/products/
+  - https://learn.microsoft.com/en-us/lifecycle/announcements
+remediation: |
+  Roll the host to a currently-supported feature update:
+    * Windows 10 clients: move to 22H2 (build 19045) if not already, then
+      plan the Windows 11 migration before the Oct 2025 client EOL.
+    * Windows 11 clients: install 24H2 (build 26100) or later.
+    * Servers on 17763 (Windows Server 2019 build): this is still in
+      extended support until Jan 2029, but consider migrating to Server
+      2022/2025 for the newer security stack (Kerberos hardening, SMB
+      signing/encryption defaults, credential guard changes).
+tags: [smb, windows, outdated, patch-management]

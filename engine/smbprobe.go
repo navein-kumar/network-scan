@@ -9,6 +9,8 @@ package main
 import (
 	"fmt"
 	"net"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/jfjallid/go-smb/dcerpc"
@@ -24,6 +26,8 @@ type SMBReport struct {
 	Port             int      `json:"port"`
 	Dialect          string   `json:"dialect"`
 	OS               string   `json:"os,omitempty"`
+	OSVersion        string   `json:"os_version,omitempty"`      // e.g. "Windows NT 10.0 Build 17763"
+	WindowsBuild     int      `json:"windows_build,omitempty"`   // e.g. 17763
 	NetBIOSName      string   `json:"netbios_name,omitempty"`
 	DNSName          string   `json:"dns_name,omitempty"`
 	Domain           string   `json:"domain,omitempty"`
@@ -33,6 +37,10 @@ type SMBReport struct {
 	Shares           []string `json:"shares,omitempty"`
 	ProbeErrors      []string `json:"probe_errors,omitempty"`
 }
+
+// smbBuildRe extracts the numeric build from go-smb's GuessedOSVersion
+// string, formatted as "Windows NT <maj>.<min> Build <build>".
+var smbBuildRe = regexp.MustCompile(`Build (\d{3,6})`)
 
 // enumSMBShares lists the server's shares via srvsvc NetShareEnumAll over the
 // existing (null/guest) session. Best-effort: returns nil on any failure and
@@ -102,8 +110,27 @@ func ProbeSMB(host string, port int, timeout time.Duration) (*SMBReport, error) 
 		// but doesn't expose a "negotiated dialect" getter on all versions.
 		// We just mark "SMB2/3" since NewConnection succeeded.
 		rep.Dialect = "SMB2/3"
+		// Windows build + hostname/domain from NTLMSSP CHALLENGE Version and
+		// TargetInfo AVPairs. go-smb parses these during SessionSetup.
+		if ti := conn.GetTargetInfo(); ti != nil {
+			rep.OSVersion = ti.GuessedOSVersion
+			if m := smbBuildRe.FindStringSubmatch(ti.GuessedOSVersion); len(m) == 2 {
+				if n, err := strconv.Atoi(m[1]); err == nil {
+					rep.WindowsBuild = n
+				}
+			}
+			if ti.NBComputerName != "" && rep.NetBIOSName == "" {
+				rep.NetBIOSName = ti.NBComputerName
+			}
+			if ti.DnsComputerName != "" && rep.DNSName == "" {
+				rep.DNSName = ti.DnsComputerName
+			}
+			if ti.DnsDomainName != "" && rep.Domain == "" {
+				rep.Domain = ti.DnsDomainName
+			}
+		}
 		// Enumerate shares over the null/guest session so the evidence
-		// shows the actual exposed shares (like the nxc/smbclient -L output).
+		// shows the actual exposed shares (like the smbclient -L output).
 		rep.Shares = enumSMBShares(conn, host)
 	}
 
