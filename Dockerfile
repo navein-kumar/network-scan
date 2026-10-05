@@ -1,5 +1,5 @@
 # ── Stage 1: build ──────────────────────────────────────────────────────────
-FROM golang:1.25-bookworm AS builder
+FROM golang:1.26-bookworm AS builder
 
 # Install Node.js 20 for the React frontend build
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
@@ -46,7 +46,7 @@ RUN cd engine && go install github.com/projectdiscovery/httpx/cmd/httpx@latest \
 # ── Stage 2: nxc builder (Ubuntu 22.04 = same Python 3.10 as runtime) ───────
 # NetExec (nxc) requires Rust (aardwolf dep) and poetry build system.
 # We build it here in an isolated venv then copy only /opt/nxc-env to runtime.
-FROM ubuntu:22.04 AS nxc-builder
+FROM ubuntu:24.04 AS nxc-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -66,7 +66,7 @@ RUN python3 -m venv /opt/nxc-env \
  && rm -rf /tmp/nfsclient /tmp/netexec
 
 # ── Stage 3: runtime ────────────────────────────────────────────────────────
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
