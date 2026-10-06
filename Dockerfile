@@ -86,7 +86,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
       libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
       libxrandr2 libgbm1 libasound2t64 libpango-1.0-0 libpangocairo-1.0-0 \
-    && pip3 install --no-cache-dir openpyxl Pillow \
+    && pip3 install --break-system-packages --no-cache-dir openpyxl Pillow \
     && rm -rf /var/lib/apt/lists/*
 
 # Google Chrome for headless web screenshots
@@ -153,7 +153,7 @@ COPY engine/plugins/   /opt/fastscan/plugins/
 COPY engine/creds/     /opt/fastscan/creds/
 
 RUN chmod +x /opt/fastscan/scripts/*.py \
- && pip3 install --no-cache-dir PyYAML \
+ && pip3 install --break-system-packages --no-cache-dir PyYAML \
  && rm -f /opt/fastscan/scripts/nasl_to_rules.py \
            /opt/fastscan/scripts/audit.sh \
            /opt/fastscan/scripts/install_deps.sh \
