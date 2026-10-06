@@ -178,11 +178,11 @@ def group_findings(ndjson_path, include_info=False):
             # Fold them into the same grouped-by-rule structure so they
             # land in the engagement workbook alongside plugin findings.
             sev = (r.get("severity") or "").lower()
-            rid = r.get("template") or "nuclei-finding"
+            rid = r.get("template") or "nxc-finding"
             title = nuclei_title(rid)
-            source = "nuclei"
-            tags = ["nuclei", rid]
-            refs = ["https://github.com/projectdiscovery/nuclei-templates"]
+            source = "nxc"
+            tags = ["nxc", rid]
+            refs = []
             remediation = ""
             host, port = parse_nuclei_url(r.get("url") or "")
             ev = (r.get("extract") or "").strip()
@@ -237,7 +237,7 @@ def build_row(no, finding):
 
     # POC = evidence strings concatenated, one per line
     poc = "\n".join(finding["evidence"]) if finding["evidence"] else \
-          "See raw fastscan NDJSON for the driver output that triggered this rule."
+          "See raw nxc NDJSON for the driver output that triggered this rule."
 
     fix = finding["remediation"] or "See plugin remediation field."
 

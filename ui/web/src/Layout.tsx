@@ -158,7 +158,7 @@ function Sidebar() {
           <ShieldCheck size={20} />
         </div>
         <div className="leading-tight">
-          <div className="text-base font-bold tracking-tight text-white">fastscan</div>
+          <div className="text-base font-bold tracking-tight text-white">nxc</div>
           <div className="text-[10px] font-medium uppercase tracking-widest text-slate-500">
             Vulnerability Scanner
           </div>

@@ -334,8 +334,8 @@ function ScanDefaultsForm() {
         <DefaultsToggle
           checked={skipNuclei}
           onChange={setSkipNuclei}
-          label="Skip nuclei by default"
-          hint="Do not run the nuclei template engine on new scans."
+          label="Skip nxc by default"
+          hint="Do not run the nxc template engine on new scans."
         />
       </div>
       <div className="flex items-center justify-end border-t border-surface-border pt-4">

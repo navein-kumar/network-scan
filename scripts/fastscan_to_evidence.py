@@ -70,7 +70,7 @@ SOURCE_LABEL = {
     "winrm": "WINRM", "oracle": "ORA", "msrpc": "MSRPC",
     "mqtt": "MQTT", "sip": "SIP", "modbus": "MODBUS",
     "traceroute": "TRACE", "os_heuristic": "OS",
-    "tlsfp": "TLS", "nuclei": "NUCLEI",
+    "tlsfp": "TLS", "nuclei": "NXC",
 }
 
 
@@ -216,7 +216,7 @@ def make_header(host, port, ts):
         when = ts or "n/a"
     target = host if not port else f"{host}:{port}"
     return [
-        f"fastscan report at {when}",
+        f"nxc report at {when}",
         f"target {target}",
         "Host is up.",
         "",
@@ -343,13 +343,13 @@ def build_txt(finding, driver_report, httpx_rec=None):
 
     # Command header (rendered bright white by txt_to_img.py)
     if source == "os":
-        cmd = f"# fastscan --os-test {host}"
+        cmd = f"# nxc --os-test {host}"
     elif source == "traceroute":
-        cmd = f"# fastscan --traceroute-test {host}"
+        cmd = f"# nxc --traceroute-test {host}"
     elif port:
-        cmd = f"# fastscan --{source}-test {host}:{port}"
+        cmd = f"# nxc --{source}-test {host}:{port}"
     else:
-        cmd = f"# fastscan --{source}-test {host}"
+        cmd = f"# nxc --{source}-test {host}"
     lines.append(cmd)
     lines.append("")
 
@@ -599,10 +599,12 @@ def main():
             source = r.get("source") or ""
             rule_id = r.get("rule_id") or "unknown"
         elif phase == "nuclei":
-            # Build a finding-shaped dict from the nuclei hit record.
+            # Build a finding-shaped dict from the template-engine hit record.
+            # Internal phase marker stays "nuclei" to match the engine ndjson;
+            # client-visible labels say "nxc".
             host, port = parse_nuclei_url(r.get("url") or "")
-            source = "nuclei"
-            rule_id = r.get("template") or "nuclei-finding"
+            source = "nxc"
+            rule_id = r.get("template") or "nxc-finding"
             finding = {
                 "source": source,
                 "host": host,

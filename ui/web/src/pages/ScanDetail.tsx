@@ -109,6 +109,26 @@ function groupFindings(findings: Finding[]): DisplayFinding[] {
   return [...ungrouped, ...grouped]
 }
 
+// ---------- Client-visible label mapping ----------
+// Internal source/engine names are left intact in the backend (fastscan, nuclei).
+// clientLabel rewrites them for every string the end-user actually sees so the
+// product shows a single consistent "nxc" brand in UI columns and live log tail.
+const CLIENT_LABEL_MAP: Record<string, string> = {
+  fastscan: 'nxc',
+  FastScan: 'nxc',
+  nuclei: 'nxc',
+  Nuclei: 'nxc',
+  NUCLEI: 'NXC',
+}
+function clientLabel(input: string | undefined | null): string {
+  if (!input) return ''
+  let out = input
+  for (const [from, to] of Object.entries(CLIENT_LABEL_MAP)) {
+    if (out.includes(from)) out = out.split(from).join(to)
+  }
+  return out
+}
+
 // ---------- Pagination helpers ----------
 
 const PAGE_SIZES = [10, 25, 50, 100, 0] as const
@@ -396,7 +416,7 @@ function RunningView({ id }: { id: string }) {
                 <span className="text-slate-600">Waiting for log output...</span>
               ) : (
                 logLines.map((line, i) => (
-                  <div key={i} className="whitespace-pre-wrap break-all text-slate-400">{line}</div>
+                  <div key={i} className="whitespace-pre-wrap break-all text-slate-400">{clientLabel(line)}</div>
                 ))
               )}
             </div>
@@ -618,7 +638,7 @@ function FindingRow({
         </td>
         <td className="px-3 py-3 font-mono text-xs text-slate-300">{finding.host || '-'}</td>
         <td className="px-3 py-3 tabular-nums text-slate-300">{finding.port || '-'}</td>
-        <td className="px-3 py-3 text-slate-400">{finding.source || '-'}</td>
+        <td className="px-3 py-3 text-slate-400">{clientLabel(finding.source) || '-'}</td>
       </tr>
       {isOpen && (
         <tr className="border-b border-surface-border/60 bg-surface-base/40">

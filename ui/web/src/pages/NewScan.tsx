@@ -380,8 +380,8 @@ export default function NewScan() {
             <Toggle
               checked={skipNuclei}
               onChange={setSkipNuclei}
-              label="Skip nuclei"
-              hint="Do not run the nuclei template engine."
+              label="Skip nxc"
+              hint="Do not run the nxc template engine."
             />
             <div className="border-t border-surface-border pt-4">
               <Toggle
