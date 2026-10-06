@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"net/url"
@@ -106,7 +107,12 @@ except Exception:
 	_ = exec.CommandContext(ctx, py, "-c", script, pngPath, rawurl, badgeText, badgeBg, badgeFg).Run()
 }
 
-// tlsCertError returns true when the HTTPS endpoint's certificate fails validation.
+// tlsCertError returns true when the HTTPS endpoint's certificate is actually
+// broken — expired, not yet valid, or signed by an untrusted CA. It does NOT
+// trip on a plain hostname / IP mismatch, because fastscan commonly connects
+// to a resolved IP (e.g. https://142.251.156.119:443). A valid Google cert on
+// www.google.com would otherwise look "invalid" to a strict verifier just
+// because the SNI target is the IP.
 func tlsCertError(rawurl string) bool {
 	u, err := url.Parse(rawurl)
 	if err != nil || !strings.EqualFold(u.Scheme, "https") {
@@ -116,15 +122,40 @@ func tlsCertError(rawurl string) bool {
 	if port == "" {
 		port = "443"
 	}
+	host := u.Hostname()
+
+	// Skip Go's built-in verification (it checks hostname), then do our own
+	// expiry + chain-of-trust check manually.
 	conn, err := tls.DialWithDialer(
 		&net.Dialer{Timeout: 4 * time.Second},
-		"tcp", u.Hostname()+":"+port,
-		&tls.Config{InsecureSkipVerify: false},
+		"tcp", host+":"+port,
+		&tls.Config{InsecureSkipVerify: true, ServerName: host},
 	)
 	if err != nil {
 		return true
 	}
-	conn.Close()
+	defer conn.Close()
+
+	certs := conn.ConnectionState().PeerCertificates
+	if len(certs) == 0 {
+		return true
+	}
+	leaf := certs[0]
+	now := time.Now()
+	if now.Before(leaf.NotBefore) || now.After(leaf.NotAfter) {
+		return true // expired or not yet valid
+	}
+
+	// Chain-of-trust check without the DNSName constraint. If this fails the
+	// cert is self-signed, untrusted, or has a broken chain — all legitimate
+	// "CERT WARNING" cases we still want to flag.
+	opts := x509.VerifyOptions{Intermediates: x509.NewCertPool()}
+	for _, c := range certs[1:] {
+		opts.Intermediates.AddCert(c)
+	}
+	if _, err := leaf.Verify(opts); err != nil {
+		return true
+	}
 	return false
 }
 
