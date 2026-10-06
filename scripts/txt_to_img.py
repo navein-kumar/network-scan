@@ -2,11 +2,13 @@
 #
 # txt_to_img.py: render an evidence .txt as a dark terminal PNG.
 #
-# Canvas auto-sizes to content:
-#   Width  — widest rendered line + margins, minimum 600, maximum 1600 px.
-#   Height — lines * line-height + margins, maximum 830 px.
-# Short files produce compact images; long files are capped and show a
-# "... +N more lines" footer. The source .txt always holds the full text.
+# Fixed canvas: every evidence PNG is rendered at exactly CANVAS_W x CANVAS_H
+# so the deliverable has a uniform grid. Web screenshots from Chromium are
+# also 1280x760 by default, so text evidence tiles sit flush alongside them.
+#
+# If the content is longer than the canvas can show, the visible rows are
+# capped and a "... +N more lines" footer is appended. The source .txt
+# always holds the full text so nothing is lost from the evidence record.
 #
 # Usage:
 #   txt_to_img.py <file.txt> [out.png]   render one file
@@ -18,9 +20,10 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-MAX_W  = 1600
-MIN_W  = 600
-MAX_H  = 830
+# Fixed canvas — matches the Chromium web-screenshot aspect so the whole
+# evidence/images/ directory renders as a uniform tile grid.
+CANVAS_W = 1280
+CANVAS_H = 760
 
 BG     = (13, 17, 23)
 FG     = (201, 209, 217)
@@ -73,30 +76,15 @@ def render(txt_path, png_path):
     font   = find_font(FONT_SIZE)
     line_h = FONT_SIZE + LINE_PAD
 
-    # How many lines fit before hitting the max height.
-    usable_h  = MAX_H - MARGIN_Y * 2
+    # Fixed canvas: how many lines fit before we need the "+N more" footer.
+    usable_h  = CANVAS_H - MARGIN_Y * 2
     max_lines = max(1, (usable_h - line_h) // line_h)  # reserve 1 row for footer
 
     truncated = len(lines) > max_lines
     visible   = lines[:max_lines]
     overflow  = len(lines) - max_lines
 
-    # Height: fits content exactly, capped at MAX_H.
-    content_h = line_h * len(visible) + MARGIN_Y * 2
-    if truncated:
-        content_h += line_h
-    height = min(content_h, MAX_H)
-
-    # Width: measure the widest rendered line, add margins, clamp to [MIN_W, MAX_W].
-    probe = Image.new("RGB", (1, 1))
-    probe_draw = ImageDraw.Draw(probe)
-    max_text_w = max(
-        (probe_draw.textlength(ln, font=font) for ln in visible if ln),
-        default=0,
-    )
-    width = int(max(MIN_W, min(MAX_W, max_text_w + MARGIN_X * 2)))
-
-    img  = Image.new("RGB", (width, height), BG)
+    img  = Image.new("RGB", (CANVAS_W, CANVAS_H), BG)
     draw = ImageDraw.Draw(img)
 
     y = MARGIN_Y

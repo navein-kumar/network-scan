@@ -376,7 +376,12 @@ def build_txt(finding, driver_report, httpx_rec=None):
                 continue
             if f in LIST_FIELDS and isinstance(v, list):
                 lines.append(line(label, host, port, "[*]", f + ":"))
-                for entry in v[:60]:
+                # Cap long list items at 10, show "+N more" indicator so
+                # the evidence stays compact when the server has many
+                # shares, hosts, exports, etc.
+                LIST_PREVIEW_CAP = 10
+                items_shown = v[:LIST_PREVIEW_CAP]
+                for entry in items_shown:
                     if isinstance(entry, dict):
                         # e.g. NFS export: {path, allowed_hosts, world_readable}
                         text = entry.get("path") or entry.get("name") or str(entry)
@@ -388,6 +393,9 @@ def build_txt(finding, driver_report, httpx_rec=None):
                     else:
                         text = str(entry)
                     lines.extend(wrap_line(label, host, port, "   ", "  " + text))
+                if len(v) > LIST_PREVIEW_CAP:
+                    lines.extend(wrap_line(label, host, port, "   ",
+                                           f"  ... +{len(v) - LIST_PREVIEW_CAP} more"))
                 continue
             rendered = format_value(v)
             if not rendered:
