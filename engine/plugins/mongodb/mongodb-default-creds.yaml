@@ -1,0 +1,22 @@
+id: mongodb-default-creds
+title: MongoDB server accepts default credentials
+severity: critical
+source: mongodb
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://www.mongodb.com/docs/manual/core/security-users/
+remediation: |
+  Change the password on this MongoDB account immediately. Rotate any
+  other accounts that share the same password. Enable authorisation
+  (security.authorization: enabled in mongod.conf), use SCRAM-SHA-256
+  as the auth mechanism, and bind the mongod listener to loopback or
+  the private management network rather than 0.0.0.0. If MongoDB is
+  reachable from the internet, place it behind a VPN or restrict access
+  by firewall allowlist.
+tags: [creds, default-credentials, critical-cve]

@@ -126,10 +126,24 @@ func tryCredsFTP(host string, port int, user, pass string, timeout time.Duration
 	if err != nil {
 		return err
 	}
-	if strings.HasPrefix(line, "230") {
-		return nil
+	if !strings.HasPrefix(line, "230") {
+		return fmt.Errorf("PASS rejected: %s", strings.TrimSpace(line))
 	}
-	return fmt.Errorf("PASS rejected: %s", strings.TrimSpace(line))
+
+	// Post-auth sanity: a 230 can be returned by welcome banners of
+	// captive-FTP devices that then reject every real command. Send PWD
+	// and require 257 (path reply) to prove the session actually works.
+	if _, err := fmt.Fprintf(conn, "PWD\r\n"); err != nil {
+		return err
+	}
+	line, err = readFTPLine(r)
+	if err != nil {
+		return err
+	}
+	if !strings.HasPrefix(line, "257") {
+		return fmt.Errorf("post-auth PWD rejected: %s", strings.TrimSpace(line))
+	}
+	return nil
 }
 
 func readFTPLine(r *bufio.Reader) (string, error) {
@@ -705,10 +719,24 @@ func tryCredsRedis(host string, port int, user, pass string, timeout time.Durati
 	buf := make([]byte, 256)
 	n, _ := conn.Read(buf)
 	reply := string(buf[:n])
-	if strings.HasPrefix(reply, "+OK") {
-		return nil
+	if !strings.HasPrefix(reply, "+OK") {
+		return fmt.Errorf("AUTH rejected: %s", strings.TrimSpace(reply))
 	}
-	return fmt.Errorf("AUTH rejected: %s", strings.TrimSpace(reply))
+
+	// Post-auth sanity: AUTH alone can succeed on captive-redis / honeypot
+	// setups that then refuse every real command. Send DBSIZE and require
+	// an integer reply (":<n>\r\n"). This closes the Redis equivalent of
+	// the SSH captive-shell false positive.
+	if _, err := conn.Write([]byte("*1\r\n$6\r\nDBSIZE\r\n")); err != nil {
+		return err
+	}
+	buf = make([]byte, 64)
+	n, _ = conn.Read(buf)
+	reply = string(buf[:n])
+	if !strings.HasPrefix(reply, ":") {
+		return fmt.Errorf("post-auth DBSIZE rejected: %s", strings.TrimSpace(reply))
+	}
+	return nil
 }
 
 // tryCredsWinRM POSTs an empty SOAP envelope with Basic auth. 200 or

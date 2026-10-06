@@ -18,9 +18,10 @@ type CouchDBReport struct {
 	Port           int      `json:"port"`
 	Reachable      bool     `json:"reachable"`
 	Version        string   `json:"version,omitempty"`
-	AllDBs         []string `json:"all_dbs,omitempty"`
-	AdminPartyMode bool     `json:"admin_party_mode"`
-	ProbeErrors    []string `json:"probe_errors,omitempty"`
+	AllDBs         []string      `json:"all_dbs,omitempty"`
+	AdminPartyMode bool          `json:"admin_party_mode"`
+	CredAttempts   []CredAttempt `json:"cred_attempts,omitempty"`
+	ProbeErrors    []string      `json:"probe_errors,omitempty"`
 }
 
 func ProbeCouchDB(host string, port int, timeout time.Duration) (*CouchDBReport, error) {

@@ -19,9 +19,10 @@ type TelnetReport struct {
 	Port                  int      `json:"port"`
 	OptionsNegotiated     []string `json:"options_negotiated,omitempty"`
 	Banner                string   `json:"banner,omitempty"`
-	AuthenticationOffered bool     `json:"authentication_offered"`
-	EncryptOffered        bool     `json:"encrypt_offered"`
-	ProbeErrors           []string `json:"probe_errors,omitempty"`
+	AuthenticationOffered bool          `json:"authentication_offered"`
+	EncryptOffered        bool          `json:"encrypt_offered"`
+	CredAttempts          []CredAttempt `json:"cred_attempts,omitempty"`
+	ProbeErrors           []string      `json:"probe_errors,omitempty"`
 }
 
 // telnetOptionName maps RFC 854/855/2941/2946 option numbers to names.

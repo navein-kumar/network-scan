@@ -2982,6 +2982,14 @@ func attachCredAttempts(report any, attempts []CredAttempt) {
 		r.CredAttempts = attempts
 	case *WinRMReport:
 		r.CredAttempts = attempts
+	case *SMBReport:
+		r.CredAttempts = attempts
+	case *MongoDBReport:
+		r.CredAttempts = attempts
+	case *CouchDBReport:
+		r.CredAttempts = attempts
+	case *TelnetReport:
+		r.CredAttempts = attempts
 	}
 }
 

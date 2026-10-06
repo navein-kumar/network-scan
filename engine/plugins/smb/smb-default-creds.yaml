@@ -1,0 +1,21 @@
+id: smb-default-creds
+title: SMB server accepts default credentials
+severity: critical
+source: smb
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://learn.microsoft.com/en-us/windows-server/storage/file-server/smb-security
+remediation: |
+  Change default or weak passwords on this SMB server immediately.
+  Enforce a strong password policy, enable account lockout, and prefer
+  Kerberos/NTLM with multi-factor where possible. If this host is on an
+  external network, block TCP/445 at the perimeter and expose SMB only
+  through a VPN or ZTNA gateway. Review the Windows event log for prior
+  logons with the same credentials.
+tags: [creds, default-credentials, critical-cve]

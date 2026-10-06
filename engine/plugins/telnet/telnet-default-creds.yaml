@@ -1,0 +1,21 @@
+id: telnet-default-creds
+title: Telnet server accepts default credentials
+severity: critical
+source: telnet
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://attack.mitre.org/techniques/T1021/004/
+remediation: |
+  Decommission Telnet. The protocol transmits credentials and session
+  data in cleartext and is not safe to use even with a strong password.
+  Replace with SSH on this host and block TCP/23 at the firewall. If
+  Telnet must be kept temporarily for a legacy appliance, change the
+  password immediately, restrict source IPs to the management network,
+  and plan the migration.
+tags: [creds, default-credentials, critical-cve, cleartext]

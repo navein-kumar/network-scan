@@ -1,0 +1,21 @@
+id: couchdb-default-creds
+title: CouchDB server accepts default credentials
+severity: critical
+source: couchdb
+when: cred_attempts != nil and any(cred_attempts, {.success == true})
+evidence: |
+  {{- range .cred_attempts -}}
+  {{- if .success }}{{ .host }}:{{ .port }} authenticated as {{ .user }}:{{ .pass }}
+  {{ end -}}
+  {{- end -}}
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://docs.couchdb.org/en/stable/intro/security.html
+remediation: |
+  Rotate the admin password on this CouchDB instance. Set a strong value
+  for admin via the Fauxton web UI or by writing it to local.ini under
+  [admins]. Disable the historical admin-party by making sure at least
+  one admin user exists. Bind CouchDB to loopback or an internal
+  interface and front it with a reverse proxy that enforces mTLS or
+  additional authentication where appropriate.
+tags: [creds, default-credentials, critical-cve]

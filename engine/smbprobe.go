@@ -34,8 +34,9 @@ type SMBReport struct {
 	SigningRequired  bool     `json:"signing_required"`
 	NullSession      bool     `json:"null_session"`
 	SMBv1Enabled     bool     `json:"smbv1_enabled"`
-	Shares           []string `json:"shares,omitempty"`
-	ProbeErrors      []string `json:"probe_errors,omitempty"`
+	Shares           []string      `json:"shares,omitempty"`
+	CredAttempts     []CredAttempt `json:"cred_attempts,omitempty"`
+	ProbeErrors      []string      `json:"probe_errors,omitempty"`
 }
 
 // smbBuildRe extracts the numeric build from go-smb's GuessedOSVersion

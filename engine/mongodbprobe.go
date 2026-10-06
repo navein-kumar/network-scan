@@ -30,8 +30,9 @@ type MongoDBReport struct {
 	MaxWireVersion int      `json:"max_wire_version,omitempty"`
 	ReplicaSet     string   `json:"replica_set,omitempty"`
 	Primary        string   `json:"primary,omitempty"`
-	Databases      []string `json:"databases,omitempty"`
-	ProbeErrors    []string `json:"probe_errors,omitempty"`
+	Databases      []string      `json:"databases,omitempty"`
+	CredAttempts   []CredAttempt `json:"cred_attempts,omitempty"`
+	ProbeErrors    []string      `json:"probe_errors,omitempty"`
 }
 
 const (
